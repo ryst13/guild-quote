@@ -1,0 +1,100 @@
+import { json, error } from '@sveltejs/kit';
+import { db } from '$lib/server/db.js';
+import { submissions, tenants } from '$lib/server/schema.js';
+import { eq } from 'drizzle-orm';
+import { getTenantById } from '$lib/server/tenant.js';
+import { calculateInteriorQuote, calculateExteriorQuote, calculateEpoxyQuote } from '$lib/server/pricing.js';
+import { generateEstimatePDF } from '$lib/server/pdf.js';
+import { createEstimateDoc } from '$lib/server/google-docs.js';
+import { v4 as uuidv4 } from 'uuid';
+import { writeFileSync, mkdirSync } from 'fs';
+import type { RequestHandler } from './$types.js';
+import type { InteriorScopeData, ExteriorScopeData, EpoxyScopeData, TradeType } from '$lib/types/index.js';
+
+export const POST: RequestHandler = async ({ request, locals }) => {
+  if (!locals.user) throw error(401, 'Unauthorized');
+  if (!locals.user.tenant_id) throw error(400, 'No tenant');
+
+  const tenant = getTenantById(locals.user.tenant_id);
+  if (!tenant) throw error(400, 'Tenant not found');
+
+  const body = await request.json();
+  const { trade_type, scope } = body as { trade_type: TradeType; scope: any };
+
+  if (!trade_type || !scope) throw error(400, 'Missing trade_type or scope');
+
+  // Calculate quote
+  let quote;
+  const multiplier = tenant.labor_price_multiplier;
+  switch (trade_type) {
+    case 'interior':
+      quote = calculateInteriorQuote(scope as InteriorScopeData, tenant.catalog, multiplier);
+      break;
+    case 'exterior':
+      quote = calculateExteriorQuote(scope as ExteriorScopeData, tenant.catalog, multiplier);
+      break;
+    case 'epoxy':
+      quote = calculateEpoxyQuote(scope as EpoxyScopeData, tenant.catalog, multiplier);
+      break;
+    default:
+      throw error(400, 'Invalid trade type');
+  }
+
+  const client = scope.client;
+  const submissionId = uuidv4();
+
+  // Create submission record
+  db.insert(submissions).values({
+    id: submissionId,
+    tenant_id: locals.user.tenant_id,
+    user_id: locals.user.id,
+    email: client.email || '',
+    first_name: client.name?.split(' ')[0] || '',
+    last_name: client.name?.split(' ').slice(1).join(' ') || '',
+    phone: client.phone || null,
+    address: client.address || '',
+    form_data: JSON.stringify(body),
+    scope_json: JSON.stringify(scope),
+    quote_json: JSON.stringify(quote),
+    sales_price: quote.grand_total,
+    trade_type,
+    estimate_status: 'draft',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }).run();
+
+  // Generate output
+  let googleDocUrl: string | null = null;
+  let pdfUrl: string | null = null;
+
+  if (tenant.output_format === 'google_docs' && tenant.google_refresh_token) {
+    try {
+      googleDocUrl = await createEstimateDoc(tenant, client, quote, submissionId);
+      if (googleDocUrl) {
+        db.update(submissions).set({ google_doc_url: googleDocUrl }).where(eq(submissions.id, submissionId)).run();
+      }
+    } catch (err) {
+      console.error('[google-docs] Failed to create doc:', err);
+    }
+  }
+
+  // Always generate PDF as backup
+  try {
+    const pdfBuffer = await generateEstimatePDF(client, quote, submissionId, tenant);
+    mkdirSync('./data/pdfs', { recursive: true });
+    const pdfPath = `./data/pdfs/${submissionId}.pdf`;
+    writeFileSync(pdfPath, pdfBuffer);
+    pdfUrl = `/api/estimate-pdf/${submissionId}`;
+    db.update(submissions).set({ estimate_pdf_url: pdfUrl }).where(eq(submissions.id, submissionId)).run();
+  } catch (err) {
+    console.error('[pdf] Failed to generate PDF:', err);
+  }
+
+  return json({
+    success: true,
+    submission_id: submissionId,
+    quote,
+    google_doc_url: googleDocUrl,
+    pdf_url: pdfUrl,
+  });
+};
