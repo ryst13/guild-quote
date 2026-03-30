@@ -17,6 +17,8 @@ export const load: PageServerLoad = async ({ locals }) => {
   if (!tenant) throw redirect(303, '/auth/register');
 
   const tenantConfig = getTenantById(locals.user.tenant_id);
+  let enabledTrades: string[] = [];
+  try { enabledTrades = JSON.parse(tenant.enabled_trades); } catch {}
 
   return {
     tenant: {
@@ -31,8 +33,9 @@ export const load: PageServerLoad = async ({ locals }) => {
       accent_color: tenant.accent_color,
       logo_url: tenant.logo_url,
       onboarding_completed: tenant.onboarding_completed,
+      enabled_trades: enabledTrades,
+      google_refresh_token: tenant.google_refresh_token,
     },
     catalog: tenantConfig?.catalog || defaultCatalog,
-    baseUrl: process.env.BASE_URL || 'http://localhost:5173',
   };
 };
