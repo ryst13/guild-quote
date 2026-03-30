@@ -574,10 +574,126 @@ export function calculateExteriorQuote(formData: ExteriorScopeData, _catalog: Ca
 }
 
 // ═══════════════════════════════════════════════════════════════
-// EPOXY PRICING ENGINE (stub — will be implemented next)
+// EPOXY PRICING ENGINE
 // ═══════════════════════════════════════════════════════════════
+
+const EPOXY_COATING_RATES: Record<string, number> = {
+  "Standard Epoxy": 5.00,
+  "Premium Epoxy": 8.50,
+  "Polyurea": 7.50,
+  "Polyaspartic": 8.50,
+};
+
+const EPOXY_CONDITION_MOD: Record<string, number> = { Good: 1.0, Fair: 1.15, Poor: 1.35 };
+
+const EPOXY_OPTIONS = {
+  concrete_grinding_light: 1.50,
+  concrete_grinding_heavy: 3.50,
+  crack_repair_minor: 2.00,
+  crack_repair_major: 4.00,
+  moisture_mitigation: 2.25,
+  existing_coating_removal: 3.00,
+  cove_base: 12.00,
+  flake_standard: 1.00,
+  flake_full: 2.00,
+  flake_metallic: 3.00,
+};
+
 export function calculateEpoxyQuote(formData: EpoxyScopeData, _catalog: CatalogConfig, multiplier: number = 1.1): QuoteResult {
-  return emptyQuote('epoxy');
+  const sections: SectionResult[] = [];
+  let totalSalesPrice = 0;
+
+  for (const floor of formData.floors) {
+    const items: LineItem[] = [];
+    const coatingRate = EPOXY_COATING_RATES[floor.coating_type] || 5.00;
+    const condMod = EPOXY_CONDITION_MOD[floor.floor_condition] || 1.0;
+
+    // Base coating
+    const baseCost = floor.sqft * coatingRate * condMod * (multiplier / 1.1);
+    items.push({ label: `${floor.coating_type} (${floor.sqft} sqft, ${floor.floor_condition})`, quantity: floor.sqft, sub_cost: baseCost * 0.5, sales_price: baseCost, allocated_time: floor.sqft / 200 });
+
+    // Options
+    if (floor.existing_coating_removal) {
+      const cost = floor.sqft * EPOXY_OPTIONS.existing_coating_removal;
+      items.push({ label: 'Existing Coating Removal', quantity: floor.sqft, sub_cost: cost * 0.5, sales_price: cost, allocated_time: floor.sqft / 150 });
+    }
+    if (floor.moisture_issues) {
+      const cost = floor.sqft * EPOXY_OPTIONS.moisture_mitigation;
+      items.push({ label: 'Moisture Mitigation', quantity: floor.sqft, sub_cost: cost * 0.5, sales_price: cost, allocated_time: floor.sqft / 200 });
+    }
+    if (floor.color_flake !== 'none') {
+      const flakeRate = floor.color_flake === 'standard' ? EPOXY_OPTIONS.flake_standard :
+        floor.color_flake === 'full' ? EPOXY_OPTIONS.flake_full : EPOXY_OPTIONS.flake_metallic;
+      const cost = floor.sqft * flakeRate;
+      items.push({ label: `${floor.color_flake} Flake`, quantity: floor.sqft, sub_cost: cost * 0.5, sales_price: cost, allocated_time: floor.sqft / 300 });
+    }
+    if (floor.cove_base && floor.cove_base_linear_feet > 0) {
+      const cost = floor.cove_base_linear_feet * EPOXY_OPTIONS.cove_base;
+      items.push({ label: `Cove Base (${floor.cove_base_linear_feet} lf)`, quantity: floor.cove_base_linear_feet, sub_cost: cost * 0.5, sales_price: cost, allocated_time: floor.cove_base_linear_feet / 20 });
+    }
+
+    const sectionSales = items.reduce((s, i) => s + i.sales_price, 0);
+    const sectionSub = items.reduce((s, i) => s + i.sub_cost, 0);
+    sections.push({ label: `${floor.area_type} (${floor.sqft} sqft)`, items, sub_cost: sectionSub, sales_price: sectionSales });
+    totalSalesPrice += sectionSales;
+  }
+
+  const totalSubCost = sections.reduce((s, sec) => s + sec.sub_cost, 0);
+  const totalTime = sections.reduce((s, sec) => s + sec.items.reduce((a, i) => a + i.allocated_time, 0), 0);
+
+  // Project-level options
+  const surcharges: { label: string; sub_amount: number; sales_amount: number }[] = [];
+  const totalSqft = formData.floors.reduce((s, f) => s + f.sqft, 0);
+
+  if (formData.project.concrete_grinding) {
+    const grindingRate = formData.floors.some(f => f.floor_condition === 'Poor') ? EPOXY_OPTIONS.concrete_grinding_heavy : EPOXY_OPTIONS.concrete_grinding_light;
+    const cost = totalSqft * grindingRate;
+    surcharges.push({ label: 'Concrete Grinding', sub_amount: cost * 0.5, sales_amount: cost });
+  }
+  if (formData.project.crack_repair !== 'none') {
+    const rate = formData.project.crack_repair === 'minor' ? EPOXY_OPTIONS.crack_repair_minor : EPOXY_OPTIONS.crack_repair_major;
+    const affectedSqft = totalSqft * (formData.project.crack_repair === 'minor' ? 0.10 : 0.25);
+    const cost = affectedSqft * rate;
+    surcharges.push({ label: `Crack Repair (${formData.project.crack_repair})`, sub_amount: cost * 0.5, sales_amount: cost });
+  }
+
+  surcharges.push({ label: 'Transportation', sub_amount: 50, sales_amount: 50 });
+
+  const surchargeSales = surcharges.reduce((s, sc) => s + sc.sales_amount, 0);
+  const surchargeSub = surcharges.reduce((s, sc) => s + sc.sub_amount, 0);
+
+  // Materials (epoxy, primer, topcoat)
+  const materials: { label: string; gallons: number; cost: number }[] = [];
+  const epoxyGallons = Math.ceil(totalSqft / 200);
+  materials.push({ label: 'Epoxy / Coating', gallons: epoxyGallons, cost: epoxyGallons * 85 });
+  if (totalSqft > 0) {
+    const primerGallons = Math.ceil(totalSqft / 300);
+    materials.push({ label: 'Concrete Primer', gallons: primerGallons, cost: primerGallons * 55 });
+  }
+
+  const materialSubtotal = materials.reduce((s, m) => s + m.cost, 0);
+  const materialsTotal = materialSubtotal + materialSubtotal * 0.10;
+
+  const laborTotal = totalSalesPrice + surchargeSales;
+  const grandTotal = laborTotal + materialsTotal;
+
+  const crewSize = 2;
+  const durationDays = Math.max(totalTime / crewSize / 8, 1);
+
+  const laborIncome = laborTotal;
+  const materialIncome = materialsTotal;
+  const totalPrice = laborIncome + materialIncome;
+  const laborExpense = totalSubCost + surchargeSub;
+  const materialExpense = materialsTotal * 0.80;
+  const grossProfit = totalPrice - laborExpense - materialExpense;
+
+  return {
+    trade_type: 'epoxy', sections, labor_subtotal: totalSalesPrice, surcharges,
+    labor_total: laborTotal, materials, materials_total: materialsTotal, grand_total: grandTotal,
+    production: { painting_hours: totalTime, crew_size: crewSize, duration_days: durationDays },
+    profitability: { labor_income: laborIncome, material_income: materialIncome, total_price: totalPrice, labor_expense: laborExpense, material_expense: materialExpense, gross_profit: grossProfit, tax: grossProfit * 0.25, overheads: grossProfit * 0.12, net_profit: grossProfit * 0.63 },
+    completeness_warnings: [],
+  };
 }
 
 function emptyQuote(trade_type: 'interior' | 'exterior' | 'epoxy'): QuoteResult {
