@@ -21,7 +21,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
   await sendEmail({
     to: user.email,
-    subject: 'Your Smart Quote Pro login link',
+    subject: 'Your GuildQuote login link',
     html,
   });
 

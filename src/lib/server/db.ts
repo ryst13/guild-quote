@@ -4,7 +4,7 @@ import * as schema from './schema.js';
 import { resolve } from 'path';
 import { mkdirSync } from 'fs';
 
-const dbPath = process.env.DATABASE_URL || './data/smart-quote-pro.db';
+const dbPath = process.env.DATABASE_URL || './data/guildquote.db';
 const resolvedPath = resolve(dbPath);
 
 mkdirSync(resolve(resolvedPath, '..'), { recursive: true });

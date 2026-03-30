@@ -42,7 +42,7 @@
 </script>
 
 <svelte:head>
-  <title>Catalog Editor — Smart Quote Pro</title>
+  <title>Catalog Editor — GuildQuote</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50">

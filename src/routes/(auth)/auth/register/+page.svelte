@@ -1,18 +1,17 @@
 <svelte:head>
-  <title>Sign Up — Smart Quote Pro</title>
+  <title>Sign Up — GuildQuote</title>
 </svelte:head>
 
 <div class="flex min-h-screen items-center justify-center bg-gray-50 px-4">
   <div class="w-full max-w-md">
     <div class="text-center mb-8">
       <a href="/" class="inline-flex items-center gap-2">
-        <span class="text-3xl">🎨</span>
-        <span class="text-2xl font-bold text-gray-900">Smart Quote Pro</span>
+        <span class="text-2xl font-bold text-gray-900">GuildQuote</span>
       </a>
     </div>
     <div class="rounded-2xl bg-white p-8 shadow-sm border border-gray-200">
       <h1 class="text-xl font-bold text-gray-900 mb-2">Create your account</h1>
-      <p class="text-sm text-gray-500 mb-6">Start offering online quoting to your customers today.</p>
+      <p class="text-sm text-gray-500 mb-6">Generate professional estimates for your clients.</p>
 
       {#if error}
         <div class="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</div>
