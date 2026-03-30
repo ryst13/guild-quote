@@ -193,11 +193,5 @@
       </div>
     {/if}
 
-    <!-- Preview button -->
-    <div class="mt-8 text-center">
-      <a href="/{data.tenantSlug}/quote" target="_blank" class="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-6 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-        Preview your quote wizard &rarr;
-      </a>
-    </div>
   </div>
 </div>

@@ -22,9 +22,7 @@
         <span class="font-bold text-gray-900">{data.tenant.company_name}</span>
       </div>
       <div class="flex items-center gap-4">
-        <a href="/{data.tenant.slug}/quote" target="_blank" class="text-sm text-gray-500 hover:text-gray-700">View Quote Wizard</a>
         <a href="/dashboard/settings/catalog" class="text-sm text-gray-500 hover:text-gray-700">Settings</a>
-        <a href="/onboarding" class="text-sm text-gray-500 hover:text-gray-700">Onboarding</a>
         <button onclick={logout} class="text-sm text-gray-500 hover:text-gray-700">Log out</button>
       </div>
     </div>
@@ -47,14 +45,6 @@
       </div>
     </div>
 
-    <!-- Embed code quick access -->
-    <div class="rounded-xl bg-blue-50 border border-blue-200 p-4 mb-6 flex items-center justify-between">
-      <div>
-        <span class="text-sm font-medium text-blue-800">Your quote wizard is live at:</span>
-        <a href="/{data.tenant.slug}/quote" target="_blank" class="ml-2 text-sm text-blue-600 hover:text-blue-700 font-medium">{data.baseUrl}/{data.tenant.slug}/quote</a>
-      </div>
-      <a href="/onboarding" class="text-sm text-blue-600 hover:text-blue-700 font-medium">Get Embed Code &rarr;</a>
-    </div>
 
     <!-- Submissions Table -->
     <div class="rounded-xl bg-white border border-gray-200 overflow-hidden">
@@ -66,7 +56,7 @@
       {#if data.submissions.length === 0}
         <div class="p-12 text-center">
           <p class="text-gray-500 mb-2">No submissions yet.</p>
-          <p class="text-sm text-gray-400">Share your quote wizard link to start receiving quotes.</p>
+          <p class="text-sm text-gray-400">Create your first estimate to get started.</p>
         </div>
       {:else}
         <div class="overflow-x-auto">

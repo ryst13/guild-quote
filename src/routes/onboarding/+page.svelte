@@ -18,9 +18,6 @@
   let primaryColor = $state(data.tenant.primary_color);
   let accentColor = $state(data.tenant.accent_color);
 
-  // Step 4: Embed
-  let embedCode = $derived(`<iframe src="${data.baseUrl}/${data.tenant.slug}/quote" width="100%" height="800" frameborder="0" style="border: none; border-radius: 12px;"></iframe>`);
-
   async function saveProfile() {
     saving = true;
     await fetch('/api/tenant/update', {
@@ -61,44 +58,36 @@
   }
 
   function nextStep() {
-    step = Math.min(step + 1, 4);
+    step = Math.min(step + 1, 3);
   }
   function prevStep() {
     step = Math.max(step - 1, 1);
   }
-
-  let copied = $state(false);
-  function copyEmbed() {
-    navigator.clipboard.writeText(embedCode);
-    copied = true;
-    setTimeout(() => { copied = false; }, 2000);
-  }
 </script>
 
 <svelte:head>
-  <title>Set Up Your Account — Smart Quote Pro</title>
+  <title>Set Up Your Account — GuildQuote</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50">
   <div class="border-b border-gray-200 bg-white">
     <div class="mx-auto max-w-3xl px-4 py-4 flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <span class="text-2xl">🎨</span>
-        <span class="text-lg font-bold text-gray-900">Smart Quote Pro</span>
+        <span class="text-lg font-bold text-gray-900">GuildQuote</span>
       </div>
-      <span class="text-sm text-gray-500">Step {step} of 4</span>
+      <span class="text-sm text-gray-500">Step {step} of 3</span>
     </div>
   </div>
 
   <!-- Progress bar -->
   <div class="mx-auto max-w-3xl px-4 mt-6">
     <div class="flex gap-2">
-      {#each [1, 2, 3, 4] as s}
+      {#each [1, 2, 3] as s}
         <div class="h-2 flex-1 rounded-full {s <= step ? 'bg-blue-600' : 'bg-gray-200'}"></div>
       {/each}
     </div>
     <div class="flex justify-between mt-2 text-xs text-gray-500">
-      <span>Profile</span><span>Branding</span><span>Pricing</span><span>Embed</span>
+      <span>Profile</span><span>Branding</span><span>Pricing</span>
     </div>
   </div>
 
@@ -111,7 +100,7 @@
       <!-- Company Profile -->
       <div class="rounded-2xl bg-white p-8 shadow-sm border border-gray-200">
         <h2 class="text-xl font-bold text-gray-900 mb-1">Company Profile</h2>
-        <p class="text-sm text-gray-500 mb-6">Tell us about your painting business.</p>
+        <p class="text-sm text-gray-500 mb-6">Tell us about your business.</p>
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Company name</label>
@@ -147,7 +136,7 @@
       <!-- Branding -->
       <div class="rounded-2xl bg-white p-8 shadow-sm border border-gray-200">
         <h2 class="text-xl font-bold text-gray-900 mb-1">Branding</h2>
-        <p class="text-sm text-gray-500 mb-6">Choose colors for your customer-facing pages.</p>
+        <p class="text-sm text-gray-500 mb-6">Choose colors for your estimates.</p>
         <div class="grid grid-cols-2 gap-6">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Primary color</label>
@@ -171,7 +160,7 @@
             <span class="text-lg font-bold" style="color: {primaryColor}">{companyName}</span>
           </div>
           <div class="rounded-lg p-4" style="background: {primaryColor}; color: white">
-            <span class="text-sm font-semibold">Get Your Free Quote</span>
+            <span class="text-sm font-semibold">Generate Estimate</span>
           </div>
         </div>
         <div class="mt-6 flex justify-between">
@@ -194,36 +183,10 @@
           <button onclick={prevStep} class="rounded-lg border border-gray-300 px-6 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Back</button>
           <div class="flex gap-3">
             <a href="/dashboard/settings/catalog" class="rounded-lg border border-gray-300 px-6 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Edit Catalog</a>
-            <button onclick={nextStep} class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700">Continue</button>
+            <button onclick={finishOnboarding} class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+              Go to Dashboard
+            </button>
           </div>
-        </div>
-      </div>
-
-    {:else if step === 4}
-      <!-- Embed Code -->
-      <div class="rounded-2xl bg-white p-8 shadow-sm border border-gray-200">
-        <h2 class="text-xl font-bold text-gray-900 mb-1">Get Your Embed Code</h2>
-        <p class="text-sm text-gray-500 mb-4">Add this code to your website to embed the quote wizard.</p>
-
-        <div class="mb-4">
-          <p class="text-sm text-gray-700 mb-2">Your quote wizard is live at:</p>
-          <a href="/{data.tenant.slug}/quote" target="_blank" class="text-blue-600 hover:text-blue-700 font-medium text-sm">
-            {data.baseUrl}/{data.tenant.slug}/quote
-          </a>
-        </div>
-
-        <div class="relative">
-          <pre class="rounded-lg bg-gray-900 p-4 text-sm text-green-400 overflow-x-auto">{embedCode}</pre>
-          <button onclick={copyEmbed} class="absolute top-2 right-2 rounded bg-gray-700 px-3 py-1 text-xs text-white hover:bg-gray-600">
-            {copied ? 'Copied!' : 'Copy'}
-          </button>
-        </div>
-
-        <div class="mt-6 flex justify-between">
-          <button onclick={prevStep} class="rounded-lg border border-gray-300 px-6 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Back</button>
-          <button onclick={finishOnboarding} class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-            Go to Dashboard
-          </button>
         </div>
       </div>
     {/if}
