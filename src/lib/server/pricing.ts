@@ -340,10 +340,237 @@ export function calculateInteriorQuote(formData: InteriorScopeData, _catalog: Ca
 }
 
 // ═══════════════════════════════════════════════════════════════
-// EXTERIOR PRICING ENGINE (stub — will be implemented next)
+// EXTERIOR PRICING ENGINE
 // ═══════════════════════════════════════════════════════════════
+
+// Sub cost = 50% of sales price for all exterior items
+const EXTERIOR_ITEM_RATES: Record<string, Record<string, { sales_price: number; sqft_per_unit: number; material_price?: number }>> = {
+  siding: {
+    "Cedar Shingles": { sales_price: 660, sqft_per_unit: 200 },
+    "Clapboard":      { sales_price: 550, sqft_per_unit: 200 },
+    "HardieBoard":    { sales_price: 440, sqft_per_unit: 200 },
+    "PVC Siding":     { sales_price: 385, sqft_per_unit: 200 },
+    "Decking":        { sales_price: 550, sqft_per_unit: 200 },
+  },
+  doors: {
+    "Standard Frame": { sales_price: 82.50,  sqft_per_unit: 21 },
+    "Double Frame":   { sales_price: 123.75, sqft_per_unit: 42 },
+    "w/Glass":        { sales_price: 110.00, sqft_per_unit: 21 },
+    "w/Panels":       { sales_price: 99.00,  sqft_per_unit: 21 },
+    "Metal":          { sales_price: 71.50,  sqft_per_unit: 21 },
+    "High Gloss":     { sales_price: 137.50, sqft_per_unit: 21 },
+    "Bulkhead":       { sales_price: 165.00, sqft_per_unit: 30 },
+    "Garage":         { sales_price: 220.00, sqft_per_unit: 160 },
+  },
+  windows: {
+    "Standard":     { sales_price: 82.50,  sqft_per_unit: 15 },
+    "Non-Standard": { sales_price: 110.00, sqft_per_unit: 20 },
+    "Dormer":       { sales_price: 137.50, sqft_per_unit: 25 },
+    "Bay":          { sales_price: 165.00, sqft_per_unit: 30 },
+    "Shutters":     { sales_price: 55.00,  sqft_per_unit: 12 },
+    "Basement":     { sales_price: 44.00,  sqft_per_unit: 8 },
+  },
+  trim: {
+    "Fascia (10ft)":    { sales_price: 82.50,  sqft_per_unit: 20 },
+    "Dentil Molding":   { sales_price: 110.00, sqft_per_unit: 10 },
+    "Downspout":        { sales_price: 44.00,  sqft_per_unit: 8 },
+    "Column":           { sales_price: 165.00, sqft_per_unit: 30 },
+    "Soffit (10ft)":    { sales_price: 110.00, sqft_per_unit: 30 },
+    "Spindles (10ft)":  { sales_price: 315.00, sqft_per_unit: 430 },
+    "Staircase":        { sales_price: 275.00, sqft_per_unit: 60 },
+    "Handrail":         { sales_price: 82.50,  sqft_per_unit: 10 },
+    "Fencing (10ft)":   { sales_price: 137.50, sqft_per_unit: 40 },
+    "Dormer Fascia":    { sales_price: 110.00, sqft_per_unit: 20 },
+    "Porch Ceiling":    { sales_price: 220.00, sqft_per_unit: 80 },
+    "Ornate":           { sales_price: 330.00, sqft_per_unit: 40 },
+  },
+  carpentry_repairs: {
+    "Cedar Shingle (1/2 Sq)": { sales_price: 275.00, sqft_per_unit: 100, material_price: 150 },
+    "Cedar Shingle (1 Sq)":   { sales_price: 495.00, sqft_per_unit: 200, material_price: 275 },
+    "Clapboard":              { sales_price: 165.00, sqft_per_unit: 32,  material_price: 45 },
+    "Fascia Board (8ft)":     { sales_price: 110.00, sqft_per_unit: 8,   material_price: 30 },
+    "Molding (8ft)":          { sales_price: 88.00,  sqft_per_unit: 8,   material_price: 25 },
+    "Window Sill":            { sales_price: 110.00, sqft_per_unit: 4,   material_price: 35 },
+    "Window Frame":           { sales_price: 165.00, sqft_per_unit: 12,  material_price: 55 },
+    "Window Flashing":        { sales_price: 88.00,  sqft_per_unit: 6,   material_price: 20 },
+    "Spindle":                { sales_price: 55.00,  sqft_per_unit: 2,   material_price: 18 },
+    "Newel Post":             { sales_price: 220.00, sqft_per_unit: 8,   material_price: 85 },
+    "Handrail Assy":          { sales_price: 330.00, sqft_per_unit: 20,  material_price: 120 },
+    "Deck Board (12ft)":      { sales_price: 88.00,  sqft_per_unit: 12,  material_price: 30 },
+    "Deck Board Premium":     { sales_price: 132.00, sqft_per_unit: 12,  material_price: 55 },
+  },
+};
+
+const EXTERIOR_SURCHARGES = {
+  surface_grade: {
+    A: { sub_pct: 0,    sales_pct: 0 },
+    B: { sub_pct: 0,    sales_pct: 0 },
+    C: { sub_pct: 0.05, sales_pct: 0.10 },
+    D: { sub_pct: 0.10, sales_pct: 0.15 },
+  } as Record<string, { sub_pct: number; sales_pct: number }>,
+  color_scheme: {
+    "1-2 Colors": { sub_pct: 0,    sales_pct: 0 },
+    "3 Colors":   { sub_pct: 0.03, sales_pct: 0.06 },
+    "4 Colors":   { sub_pct: 0.05, sales_pct: 0.10 },
+  } as Record<string, { sub_pct: number; sales_pct: number }>,
+  staging: {
+    No:  { sub_pct: 0,    sales_pct: 0 },
+    Yes: { sub_pct: 0.10, sales_pct: 0.15 },
+  } as Record<string, { sub_pct: number; sales_pct: number }>,
+  prep_level: {
+    Basic:       { sub_pct: -0.075, sales_pct: -0.075 },
+    Standard:    { sub_pct: 0,      sales_pct: 0 },
+    Superior:    { sub_pct: 0.125,  sales_pct: 0.25 },
+    Restoration: { sub_pct: 0.25,   sales_pct: 0.375 },
+  } as Record<string, { sub_pct: number; sales_pct: number }>,
+};
+
+const EXTERIOR_PAINT = {
+  trim:   { product: "Moorgard Soft Gloss", coverage: 300, price_per_gallon: 69.59 },
+  siding: { product: "Moorgard Low Lustre", coverage: 300, price_per_gallon: 69.59 },
+};
+
+const EXTERIOR_BENCHMARKS = {
+  overall: { p25: 3994, p50: 11797, p75: 24447 },
+  by_surfaces: { "1-2": { p50: 3030 }, "3-4": { p50: 17964 }, "5+": { p50: 24447 } } as Record<string, { p50: number }>,
+};
+
 export function calculateExteriorQuote(formData: ExteriorScopeData, _catalog: CatalogConfig, multiplier: number = 1.1): QuoteResult {
-  return emptyQuote('exterior');
+  const sections: SectionResult[] = [];
+  let totalSubCost = 0;
+  let totalSalesPrice = 0;
+  let totalAllocatedTime = 0;
+  let totalSidingSqft = 0;
+  let totalTrimSqft = 0;
+  let totalCarpentryMaterials = 0;
+
+  for (const surface of formData.surfaces) {
+    const items: LineItem[] = [];
+
+    for (const [category, categoryRates] of Object.entries(EXTERIOR_ITEM_RATES)) {
+      const surfaceItems = (surface as any)[category] as Record<string, number> | undefined;
+      if (!surfaceItems) continue;
+
+      for (const [itemName, qty] of Object.entries(surfaceItems)) {
+        if (qty <= 0) continue;
+        const rate = categoryRates[itemName];
+        if (!rate) continue;
+
+        const salesPrice = rate.sales_price * qty * (multiplier / 1.1);
+        const subCost = salesPrice * 0.50;
+
+        items.push({
+          label: `${itemName}`,
+          quantity: qty,
+          sub_cost: subCost,
+          sales_price: salesPrice,
+          allocated_time: subCost / HOURLY_RATE / 3,
+        });
+
+        if (category === 'siding') totalSidingSqft += rate.sqft_per_unit * qty;
+        if (category === 'trim' || category === 'doors' || category === 'windows') totalTrimSqft += rate.sqft_per_unit * qty;
+        if (category === 'carpentry_repairs' && rate.material_price) {
+          totalCarpentryMaterials += rate.material_price * qty * 0.75;
+        }
+      }
+    }
+
+    const sectionSubCost = items.reduce((s, i) => s + i.sub_cost, 0);
+    const sectionSalesPrice = items.reduce((s, i) => s + i.sales_price, 0);
+
+    sections.push({ label: surface.name, items, sub_cost: sectionSubCost, sales_price: sectionSalesPrice });
+    totalSubCost += sectionSubCost;
+    totalSalesPrice += sectionSalesPrice;
+    totalAllocatedTime += items.reduce((s, i) => s + i.allocated_time, 0);
+  }
+
+  // Surcharges
+  const surcharges: { label: string; sub_amount: number; sales_amount: number }[] = [];
+
+  const gradeS = EXTERIOR_SURCHARGES.surface_grade[formData.project.surface_grade];
+  if (gradeS && (gradeS.sub_pct !== 0 || gradeS.sales_pct !== 0)) {
+    surcharges.push({ label: `Surface Grade ${formData.project.surface_grade}`, sub_amount: totalSubCost * gradeS.sub_pct, sales_amount: totalSalesPrice * gradeS.sales_pct });
+  }
+  const colorS = EXTERIOR_SURCHARGES.color_scheme[formData.project.color_scheme];
+  if (colorS && (colorS.sub_pct !== 0 || colorS.sales_pct !== 0)) {
+    surcharges.push({ label: `Color Scheme: ${formData.project.color_scheme}`, sub_amount: totalSubCost * colorS.sub_pct, sales_amount: totalSalesPrice * colorS.sales_pct });
+  }
+  const stagingS = EXTERIOR_SURCHARGES.staging[formData.project.staging ? 'Yes' : 'No'];
+  if (stagingS && (stagingS.sub_pct !== 0 || stagingS.sales_pct !== 0)) {
+    surcharges.push({ label: 'Staging', sub_amount: totalSubCost * stagingS.sub_pct, sales_amount: totalSalesPrice * stagingS.sales_pct });
+  }
+  const prepS = EXTERIOR_SURCHARGES.prep_level[formData.project.prep_level];
+  if (prepS && (prepS.sub_pct !== 0 || prepS.sales_pct !== 0)) {
+    surcharges.push({ label: `Prep: ${formData.project.prep_level}`, sub_amount: totalSubCost * prepS.sub_pct, sales_amount: totalSalesPrice * prepS.sales_pct });
+  }
+
+  if (formData.project.color_samples) surcharges.push({ label: 'Color Samples', sub_amount: 98.95, sales_amount: 98.95 });
+  surcharges.push({ label: 'Trash Removal', sub_amount: 225, sales_amount: 225 });
+  surcharges.push({ label: 'Transportation', sub_amount: 50, sales_amount: 50 });
+
+  const surchargeSalesTotal = surcharges.reduce((s, sc) => s + sc.sales_amount, 0);
+  const surchargeSubTotal = surcharges.reduce((s, sc) => s + sc.sub_amount, 0);
+  const laborTotal = totalSalesPrice + surchargeSalesTotal;
+
+  // Materials
+  const materials: { label: string; gallons: number; cost: number }[] = [];
+  if (totalSidingSqft > 0) {
+    const g = Math.ceil(totalSidingSqft / EXTERIOR_PAINT.siding.coverage);
+    materials.push({ label: EXTERIOR_PAINT.siding.product, gallons: g, cost: g * EXTERIOR_PAINT.siding.price_per_gallon });
+  }
+  if (totalTrimSqft > 0) {
+    const g = Math.ceil(totalTrimSqft / EXTERIOR_PAINT.trim.coverage);
+    materials.push({ label: EXTERIOR_PAINT.trim.product, gallons: g, cost: g * EXTERIOR_PAINT.trim.price_per_gallon });
+  }
+  if (totalCarpentryMaterials > 0) {
+    materials.push({ label: 'Carpentry Materials', gallons: 0, cost: totalCarpentryMaterials });
+  }
+
+  const materialSubtotal = materials.reduce((s, m) => s + m.cost, 0);
+  const materialsTotal = materialSubtotal + materialSubtotal * 0.10;
+
+  const grandBeforeCC = laborTotal + materialsTotal;
+  const ccFee = grandBeforeCC * 0.032;
+  surcharges.push({ label: 'CC Fee (3.2%)', sub_amount: ccFee, sales_amount: ccFee });
+  const grandTotal = grandBeforeCC + ccFee;
+
+  const paintingHours = totalAllocatedTime;
+  const crewSize = paintingHours > 24 ? 3 : 2;
+  const durationDays = Math.max(paintingHours / crewSize / 8, 0.5);
+
+  const laborIncome = laborTotal;
+  const materialIncome = materialsTotal;
+  const totalPrice = laborIncome + materialIncome;
+  const laborExpense = totalSubCost + surchargeSubTotal;
+  const materialExpense = materialsTotal * 0.80;
+  const grossProfit = totalPrice - laborExpense - materialExpense;
+  const tax = grossProfit * 0.25;
+  const overheads = grossProfit * 0.12;
+  const netProfit = grossProfit - tax - overheads;
+
+  // Benchmarks
+  const surfCount = formData.surfaces.length;
+  const bKey = surfCount <= 2 ? '1-2' : surfCount <= 4 ? '3-4' : '5+';
+  const bOverall = EXTERIOR_BENCHMARKS.overall;
+  const pct = grandTotal < bOverall.p25 ? 'below 25th' : grandTotal < bOverall.p50 ? '25th-50th' : grandTotal < bOverall.p75 ? '50th-75th' : 'above 75th';
+  const benchmarks = { percentile: pct, message: `Your estimate of $${Math.round(grandTotal).toLocaleString()} is at the ${pct} percentile for exterior ${surfCount}-surface jobs` };
+
+  // Completeness
+  const completenessWarnings: string[] = [];
+  const hasSiding = formData.surfaces.some(s => Object.values(s.siding).some(v => v > 0));
+  const hasTrim = formData.surfaces.some(s => Object.values(s.trim).some(v => v > 0));
+  const hasRepairs = formData.surfaces.some(s => Object.values(s.carpentry_repairs).some(v => v > 0));
+  if (hasSiding && !hasTrim) completenessWarnings.push('52% of exterior jobs include trim work. Did you check for trim?');
+  if (surfCount >= 3 && !hasRepairs) completenessWarnings.push('27% of multi-surface jobs need repairs. Did you check for carpentry?');
+
+  return {
+    trade_type: 'exterior', sections, labor_subtotal: totalSalesPrice, surcharges,
+    labor_total: laborTotal + ccFee, materials, materials_total: materialsTotal,
+    grand_total: grandTotal,
+    production: { painting_hours: paintingHours, crew_size: crewSize, duration_days: durationDays },
+    profitability: { labor_income: laborIncome, material_income: materialIncome, total_price: totalPrice, labor_expense: laborExpense, material_expense: materialExpense, gross_profit: grossProfit, tax, overheads, net_profit: netProfit },
+    benchmarks, completeness_warnings: completenessWarnings,
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════
