@@ -1,15 +1,355 @@
-import type { InteriorScopeData, ExteriorScopeData, EpoxyScopeData, QuoteResult, CatalogConfig } from '$lib/types/index.js';
+import type { InteriorScopeData, ExteriorScopeData, EpoxyScopeData, QuoteResult, SectionResult, LineItem, CatalogConfig } from '$lib/types/index.js';
 
-// Stub implementations — will be fully built in pricing engine iterations
-export function calculateInteriorQuote(formData: InteriorScopeData, catalog: CatalogConfig, multiplier: number = 1.1): QuoteResult {
-  return emptyQuote('interior');
+const HOURLY_RATE = 40;
+
+// ─── WALL SQFT LOOKUP ───────────────────────────────────────────
+const WALL_SQFT: Record<string, Record<string, number>> = {
+  "Kitchen":            { Small: 240, Medium: 416, Large: 512 },
+  "Living Room":        { Small: 480, Medium: 576, Large: 800 },
+  "Bedroom":            { Small: 320, Medium: 384, Large: 420 },
+  "Master Bedroom":     { Small: 416, Medium: 544, Large: 640 },
+  "Dining Room":        { Small: 352, Medium: 448, Large: 512 },
+  "Bathroom":           { Small: 176, Medium: 256, Large: 304 },
+  "Full Bathroom":      { Small: 240, Medium: 272, Large: 320 },
+  "Foyer/Hallway":      { Small: 192, Medium: 256, Large: 368 },
+  "Closet":             { Small: 80,  Medium: 96,  Large: 128 },
+  "Den":                { Small: 320, Medium: 384, Large: 480 },
+  "Office":             { Small: 372, Medium: 416, Large: 512 },
+  "Media Room":         { Small: 276, Medium: 448, Large: 544 },
+  "Eating Area":        { Small: 320, Medium: 384, Large: 512 },
+  "Pantry":             { Small: 64,  Medium: 112, Large: 168 },
+  "Laundry Room":       { Small: 144, Medium: 224, Large: 372 },
+  "Utility/Mud Room":   { Small: 176, Medium: 224, Large: 372 },
+  "Recreation Room":    { Small: 480, Medium: 640, Large: 768 },
+  "Family Room":        { Small: 448, Medium: 544, Large: 640 },
+  "Staircase Hallway":  { Small: 296, Medium: 576, Large: 864 },
+};
+
+const CEILING_RATIO: Record<string, number> = {
+  "Kitchen": 0.50, "Living Room": 0.40, "Bedroom": 0.45, "Master Bedroom": 0.40,
+  "Dining Room": 0.45, "Bathroom": 0.55, "Full Bathroom": 0.50, "Foyer/Hallway": 0.35,
+  "Closet": 0.60, "Den": 0.45, "Office": 0.45, "Media Room": 0.40,
+  "Eating Area": 0.45, "Pantry": 0.55, "Laundry Room": 0.50, "Utility/Mud Room": 0.50,
+  "Recreation Room": 0.35, "Family Room": 0.40, "Staircase Hallway": 0.30,
+};
+
+// ─── ITEM RATES ─────────────────────────────────────────────────
+interface ItemRate { sub_cost: number; sales_price: number; sqft_per_unit: number; }
+
+const INTERIOR_ITEM_RATES: Record<string, ItemRate> = {
+  "Window - Standard Frame":   { sub_cost: 50.00,  sales_price: 82.50,  sqft_per_unit: 15 },
+  "Window - Small Frame":      { sub_cost: 37.50,  sales_price: 61.88,  sqft_per_unit: 25 },
+  "Door - Frame Standard":     { sub_cost: 25.00,  sales_price: 41.25,  sqft_per_unit: 8 },
+  "Door - Frame Double":       { sub_cost: 37.50,  sales_price: 61.88,  sqft_per_unit: 12 },
+  "Door - Flat":               { sub_cost: 25.00,  sales_price: 61.88,  sqft_per_unit: 21 },
+  "Door - w/ Panels":          { sub_cost: 37.50,  sales_price: 83.88,  sqft_per_unit: 21 },
+  "Door - w/ Glass":           { sub_cost: 50.00,  sales_price: 82.50,  sqft_per_unit: 21 },
+  "Trim - Baseboard/Crown":    { sub_cost: 37.50,  sales_price: 61.88,  sqft_per_unit: 20 },
+  "Trim - Wainscotting":       { sub_cost: 75.00,  sales_price: 165.00, sqft_per_unit: 60 },
+  "Trim - Spindles/Balusters": { sub_cost: 191.50, sales_price: 315.56, sqft_per_unit: 430 },
+  "Trim - Radiator":           { sub_cost: 50.00,  sales_price: 82.50,  sqft_per_unit: 22 },
+  "Trim - Handrail":           { sub_cost: 37.50,  sales_price: 61.88,  sqft_per_unit: 10 },
+  "Repair - Drywall Repair":   { sub_cost: 25.00,  sales_price: 83.88,  sqft_per_unit: 50 },
+};
+
+// ─── CLOSET SQFT ────────────────────────────────────────────────
+const CLOSET_SQFT: Record<string, number> = { small: 48, medium: 64, large: 96 };
+
+// ─── SURCHARGES ─────────────────────────────────────────────────
+const INTERIOR_SURCHARGES = {
+  surface_grade: {
+    A: { sub_pct: 0,     sales_pct: 0 },
+    B: { sub_pct: 0,     sales_pct: 0 },
+    C: { sub_pct: 0.075, sales_pct: 0.10 },
+    D: { sub_pct: 0.125, sales_pct: 0.15 },
+  } as Record<string, { sub_pct: number; sales_pct: number }>,
+  prep_level: {
+    Basic:       { sub_pct: -0.075, sales_pct: -0.075 },
+    Standard:    { sub_pct: 0,      sales_pct: 0 },
+    Superior:    { sub_pct: 0.175,  sales_pct: 0.25 },
+    Restoration: { sub_pct: 0.25,   sales_pct: 0.375 },
+  } as Record<string, { sub_pct: number; sales_pct: number }>,
+};
+
+const FIXED_SURCHARGES = {
+  color_samples: 98.95,
+  cc_pct: 0.032,
+  transportation: 50,
+  trash: 50,
+};
+
+// ─── PAINT PRODUCTS ─────────────────────────────────────────────
+const INTERIOR_PAINT = {
+  walls:   { product: "Regal Select Eggshell",   coverage: 350, price_per_gallon: 63.59 },
+  trim:    { product: "Regal Select Semi Gloss",  coverage: 350, price_per_gallon: 63.59 },
+  primer:  { product: "Fresh Start",              coverage: 400, price_per_gallon: 44.99 },
+  ceiling: { product: "Ben Moore Muresco",         coverage: 400, price_per_gallon: 40.78 },
+};
+
+// ─── BENCHMARKS ─────────────────────────────────────────────────
+const INTERIOR_BENCHMARKS = {
+  overall: { p25: 3546, p50: 6907, p75: 14970 },
+  by_rooms: { "1-2": { p50: 5668 }, "3-4": { p50: 3813 }, "8+": { p50: 13794 } } as Record<string, { p50: number }>,
+};
+
+// ─── WALL PAINT RATE ────────────────────────────────────────────
+// Cost per sqft for walls (sub cost and sales price at 1.1x default multiplier)
+const WALL_RATE_SUB = 0.18;
+const WALL_RATE_SALES = 0.30;
+const CEILING_RATE_SUB = 0.15;
+const CEILING_RATE_SALES = 0.25;
+
+// ═══════════════════════════════════════════════════════════════
+// INTERIOR PRICING ENGINE
+// ═══════════════════════════════════════════════════════════════
+export function calculateInteriorQuote(formData: InteriorScopeData, _catalog: CatalogConfig, multiplier: number = 1.1): QuoteResult {
+  const sections: SectionResult[] = [];
+  let totalSubCost = 0;
+  let totalSalesPrice = 0;
+  let totalAllocatedTime = 0;
+  let totalWallSqft = 0;
+  let totalCeilingSqft = 0;
+  let totalTrimSqft = 0;
+  let totalPrimerSqft = 0;
+
+  for (const room of formData.rooms) {
+    const wallSqft = WALL_SQFT[room.room_type]?.[room.room_size] || 300;
+    const ceilingRatio = CEILING_RATIO[room.room_type] || 0.45;
+    const ceilingSqft = room.ceiling_included ? Math.round(wallSqft * ceilingRatio) : 0;
+
+    const items: LineItem[] = [];
+
+    // Walls
+    const wallSubCost = wallSqft * WALL_RATE_SUB;
+    const wallSalesPrice = wallSqft * WALL_RATE_SALES * multiplier;
+    items.push({
+      label: `Walls (${wallSqft} sqft)`,
+      quantity: 1,
+      sub_cost: wallSubCost,
+      sales_price: wallSalesPrice,
+      allocated_time: wallSubCost / HOURLY_RATE / 3,
+    });
+    totalWallSqft += wallSqft;
+
+    // Ceiling
+    if (room.ceiling_included) {
+      const ceilSubCost = ceilingSqft * CEILING_RATE_SUB;
+      const ceilSalesPrice = ceilingSqft * CEILING_RATE_SALES * multiplier;
+      items.push({
+        label: `Ceiling (${ceilingSqft} sqft)`,
+        quantity: 1,
+        sub_cost: ceilSubCost,
+        sales_price: ceilSalesPrice,
+        allocated_time: ceilSubCost / HOURLY_RATE / 3,
+      });
+      totalCeilingSqft += ceilingSqft;
+    }
+
+    // Closet
+    if (room.closet !== 'not_included') {
+      const closetSqft = CLOSET_SQFT[room.closet] || 0;
+      const closetSubCost = closetSqft * WALL_RATE_SUB;
+      const closetSalesPrice = closetSqft * WALL_RATE_SALES * multiplier;
+      items.push({
+        label: `Closet (${room.closet})`,
+        quantity: 1,
+        sub_cost: closetSubCost,
+        sales_price: closetSalesPrice,
+        allocated_time: closetSubCost / HOURLY_RATE / 3,
+      });
+      totalWallSqft += closetSqft;
+    }
+
+    // Primer
+    if (room.primer_required) {
+      const primerSqft = wallSqft + ceilingSqft;
+      totalPrimerSqft += primerSqft;
+      const primerSubCost = primerSqft * 0.10;
+      const primerSalesPrice = primerSqft * 0.16 * multiplier;
+      items.push({
+        label: `Primer (${primerSqft} sqft)`,
+        quantity: 1,
+        sub_cost: primerSubCost,
+        sales_price: primerSalesPrice,
+        allocated_time: primerSubCost / HOURLY_RATE / 3,
+      });
+    }
+
+    // Line items (doors, windows, trim, repairs)
+    for (const [itemName, qty] of Object.entries(room.items)) {
+      if (qty <= 0) continue;
+      const rate = INTERIOR_ITEM_RATES[itemName];
+      if (!rate) continue;
+
+      const lineSubCost = rate.sub_cost * qty;
+      const lineSalesPrice = rate.sales_price * qty * (multiplier / 1.1); // rates already at 1.1x base
+      items.push({
+        label: itemName,
+        quantity: qty,
+        sub_cost: lineSubCost,
+        sales_price: lineSalesPrice,
+        allocated_time: (rate.sub_cost / HOURLY_RATE) * qty / 3,
+      });
+
+      // Track trim sqft for materials
+      if (itemName.startsWith('Trim') || itemName.startsWith('Door') || itemName.startsWith('Window')) {
+        totalTrimSqft += rate.sqft_per_unit * qty;
+      }
+    }
+
+    const sectionSubCost = items.reduce((s, i) => s + i.sub_cost, 0);
+    const sectionSalesPrice = items.reduce((s, i) => s + i.sales_price, 0);
+    const sectionTime = items.reduce((s, i) => s + i.allocated_time, 0);
+
+    sections.push({
+      label: `${room.room_type} (${room.room_size})`,
+      items,
+      sub_cost: sectionSubCost,
+      sales_price: sectionSalesPrice,
+    });
+
+    totalSubCost += sectionSubCost;
+    totalSalesPrice += sectionSalesPrice;
+    totalAllocatedTime += sectionTime;
+  }
+
+  // ─── SURCHARGES ─────────────────────────────────────────────
+  const surcharges: { label: string; sub_amount: number; sales_amount: number }[] = [];
+
+  const gradeS = INTERIOR_SURCHARGES.surface_grade[formData.project.surface_grade];
+  if (gradeS && (gradeS.sub_pct !== 0 || gradeS.sales_pct !== 0)) {
+    surcharges.push({
+      label: `Surface Grade ${formData.project.surface_grade}`,
+      sub_amount: totalSubCost * gradeS.sub_pct,
+      sales_amount: totalSalesPrice * gradeS.sales_pct,
+    });
+  }
+
+  const prepS = INTERIOR_SURCHARGES.prep_level[formData.project.prep_level];
+  if (prepS && (prepS.sub_pct !== 0 || prepS.sales_pct !== 0)) {
+    surcharges.push({
+      label: `Prep Level: ${formData.project.prep_level}`,
+      sub_amount: totalSubCost * prepS.sub_pct,
+      sales_amount: totalSalesPrice * prepS.sales_pct,
+    });
+  }
+
+  if (formData.project.color_samples) {
+    surcharges.push({ label: 'Color Samples', sub_amount: FIXED_SURCHARGES.color_samples, sales_amount: FIXED_SURCHARGES.color_samples });
+  }
+  if (formData.project.transportation) {
+    surcharges.push({ label: 'Transportation', sub_amount: FIXED_SURCHARGES.transportation, sales_amount: FIXED_SURCHARGES.transportation });
+  }
+  surcharges.push({ label: 'Trash Removal', sub_amount: FIXED_SURCHARGES.trash, sales_amount: FIXED_SURCHARGES.trash });
+
+  const surchargeSubTotal = surcharges.reduce((s, sc) => s + sc.sub_amount, 0);
+  const surchargeSalesTotal = surcharges.reduce((s, sc) => s + sc.sales_amount, 0);
+
+  const laborTotal = totalSalesPrice + surchargeSalesTotal;
+
+  // CC fee on grand total (we'll calc after materials)
+  // ─── MATERIALS ──────────────────────────────────────────────
+  const materials: { label: string; gallons: number; cost: number }[] = [];
+
+  const wallGallons = Math.ceil(totalWallSqft / INTERIOR_PAINT.walls.coverage);
+  if (wallGallons > 0) {
+    materials.push({ label: INTERIOR_PAINT.walls.product, gallons: wallGallons, cost: wallGallons * INTERIOR_PAINT.walls.price_per_gallon });
+  }
+
+  const trimGallons = Math.ceil(totalTrimSqft / INTERIOR_PAINT.trim.coverage);
+  if (trimGallons > 0) {
+    materials.push({ label: INTERIOR_PAINT.trim.product, gallons: trimGallons, cost: trimGallons * INTERIOR_PAINT.trim.price_per_gallon });
+  }
+
+  if (totalPrimerSqft > 0) {
+    const primerGallons = Math.ceil(totalPrimerSqft / INTERIOR_PAINT.primer.coverage);
+    materials.push({ label: INTERIOR_PAINT.primer.product, gallons: primerGallons, cost: primerGallons * INTERIOR_PAINT.primer.price_per_gallon });
+  }
+
+  if (totalCeilingSqft > 0) {
+    const ceilingGallons = Math.ceil(totalCeilingSqft / INTERIOR_PAINT.ceiling.coverage);
+    materials.push({ label: INTERIOR_PAINT.ceiling.product, gallons: ceilingGallons, cost: ceilingGallons * INTERIOR_PAINT.ceiling.price_per_gallon });
+  }
+
+  const materialSubtotal = materials.reduce((s, m) => s + m.cost, 0);
+  const wastage = materialSubtotal * 0.10;
+  const materialsTotal = materialSubtotal + wastage;
+
+  // CC surcharge on grand total
+  const grandBeforeCC = laborTotal + materialsTotal;
+  const ccFee = grandBeforeCC * FIXED_SURCHARGES.cc_pct;
+  surcharges.push({ label: `CC Fee (${(FIXED_SURCHARGES.cc_pct * 100).toFixed(1)}%)`, sub_amount: ccFee, sales_amount: ccFee });
+
+  const grandTotal = grandBeforeCC + ccFee;
+
+  // ─── PRODUCTION ─────────────────────────────────────────────
+  const paintingHours = totalAllocatedTime;
+  const crewSize = paintingHours > 48 ? 3 : 2;
+  const durationDays = Math.max(paintingHours / crewSize / 8, 0.5);
+
+  // ─── PROFITABILITY ──────────────────────────────────────────
+  const laborIncome = laborTotal;
+  const materialIncome = materialsTotal;
+  const totalPrice = laborIncome + materialIncome;
+  const laborExpense = totalSubCost + surchargeSubTotal;
+  const materialExpense = materialsTotal * 0.80;
+  const grossProfit = totalPrice - laborExpense - materialExpense;
+  const tax = grossProfit * 0.25;
+  const overheads = grossProfit * 0.12;
+  const netProfit = grossProfit - tax - overheads;
+
+  // ─── BENCHMARKS ─────────────────────────────────────────────
+  let benchmarks: { percentile: string; message: string } | undefined;
+  const roomCount = formData.rooms.length;
+  const benchmarkKey = roomCount <= 2 ? '1-2' : roomCount <= 4 ? '3-4' : '8+';
+  const p50 = INTERIOR_BENCHMARKS.by_rooms[benchmarkKey]?.p50;
+  if (p50) {
+    const pct = grandTotal < INTERIOR_BENCHMARKS.overall.p25 ? 'below 25th' :
+      grandTotal < INTERIOR_BENCHMARKS.overall.p50 ? '25th-50th' :
+      grandTotal < INTERIOR_BENCHMARKS.overall.p75 ? '50th-75th' : 'above 75th';
+    benchmarks = { percentile: pct, message: `Your estimate of $${Math.round(grandTotal).toLocaleString()} is at the ${pct} percentile for interior ${roomCount}-room jobs` };
+  }
+
+  // ─── COMPLETENESS WARNINGS ──────────────────────────────────
+  const completenessWarnings: string[] = [];
+  const totalItems = formData.rooms.reduce((s, r) => s + Object.values(r.items).reduce((a, b) => a + b, 0), 0);
+  const hasTrim = formData.rooms.some(r => Object.entries(r.items).some(([k, v]) => k.startsWith('Trim') && v > 0));
+  const hasDoors = formData.rooms.some(r => Object.entries(r.items).some(([k, v]) => k.startsWith('Door') && v > 0));
+
+  if (roomCount >= 3 && !hasTrim) {
+    completenessWarnings.push('Most 3+ room jobs include baseboard trim. Did you check for trim work?');
+  }
+  if (roomCount >= 2 && !hasDoors) {
+    completenessWarnings.push('Did you check for door painting?');
+  }
+
+  return {
+    trade_type: 'interior',
+    sections,
+    labor_subtotal: totalSalesPrice,
+    surcharges,
+    labor_total: laborTotal + ccFee,
+    materials,
+    materials_total: materialsTotal,
+    grand_total: grandTotal,
+    production: { painting_hours: paintingHours, crew_size: crewSize, duration_days: durationDays },
+    profitability: { labor_income: laborIncome, material_income: materialIncome, total_price: totalPrice, labor_expense: laborExpense, material_expense: materialExpense, gross_profit: grossProfit, tax, overheads, net_profit: netProfit },
+    benchmarks,
+    completeness_warnings: completenessWarnings,
+  };
 }
 
-export function calculateExteriorQuote(formData: ExteriorScopeData, catalog: CatalogConfig, multiplier: number = 1.1): QuoteResult {
+// ═══════════════════════════════════════════════════════════════
+// EXTERIOR PRICING ENGINE (stub — will be implemented next)
+// ═══════════════════════════════════════════════════════════════
+export function calculateExteriorQuote(formData: ExteriorScopeData, _catalog: CatalogConfig, multiplier: number = 1.1): QuoteResult {
   return emptyQuote('exterior');
 }
 
-export function calculateEpoxyQuote(formData: EpoxyScopeData, catalog: CatalogConfig, multiplier: number = 1.1): QuoteResult {
+// ═══════════════════════════════════════════════════════════════
+// EPOXY PRICING ENGINE (stub — will be implemented next)
+// ═══════════════════════════════════════════════════════════════
+export function calculateEpoxyQuote(formData: EpoxyScopeData, _catalog: CatalogConfig, multiplier: number = 1.1): QuoteResult {
   return emptyQuote('epoxy');
 }
 
@@ -24,17 +364,7 @@ function emptyQuote(trade_type: 'interior' | 'exterior' | 'epoxy'): QuoteResult 
     materials_total: 0,
     grand_total: 0,
     production: { painting_hours: 0, crew_size: 2, duration_days: 0 },
-    profitability: {
-      labor_income: 0,
-      material_income: 0,
-      total_price: 0,
-      labor_expense: 0,
-      material_expense: 0,
-      gross_profit: 0,
-      tax: 0,
-      overheads: 0,
-      net_profit: 0,
-    },
+    profitability: { labor_income: 0, material_income: 0, total_price: 0, labor_expense: 0, material_expense: 0, gross_profit: 0, tax: 0, overheads: 0, net_profit: 0 },
     completeness_warnings: [],
   };
 }
