@@ -6,7 +6,7 @@ declare global {
         email: string;
         first_name: string;
         last_name: string;
-        role: 'contractor_admin' | 'contractor_staff' | 'homeowner';
+        role: 'contractor_admin' | 'contractor_staff';
         tenant_id: string | null;
       };
       tenant?: {

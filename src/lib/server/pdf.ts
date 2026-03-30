@@ -1,8 +1,8 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import type { QuoteResult, IntakeFormData, TenantConfig } from '$lib/types/index.js';
+import type { QuoteResult, ClientInfo, TenantConfig } from '$lib/types/index.js';
 
 export async function generateEstimatePDF(
-  formData: IntakeFormData,
+  client: ClientInfo,
   quote: QuoteResult,
   submissionId: string,
   tenant: TenantConfig
@@ -19,7 +19,6 @@ export async function generateEstimatePDF(
   let page = pdfDoc.addPage([pageWidth, pageHeight]);
   let y = pageHeight - margin;
 
-  // Parse tenant primary color for PDF accent
   const accent = hexToRgb(tenant.primary_color) || { r: 0.15, g: 0.35, b: 0.65 };
   const darkGray = rgb(0.15, 0.15, 0.15);
   const medGray = rgb(0.4, 0.4, 0.4);
@@ -42,10 +41,13 @@ export async function generateEstimatePDF(
     }
   }
 
+  const tradeLabel = quote.trade_type === 'interior' ? 'Interior Painting' :
+    quote.trade_type === 'exterior' ? 'Exterior Painting' : 'Epoxy & Garage Coatings';
+
   // Header
   drawText(tenant.company_name, margin, y, { font: fontBold, size: 18, color: accentColor });
   y -= 18;
-  drawText('Interior Painting Estimate', margin, y, { size: 12, color: medGray });
+  drawText(`${tradeLabel} Estimate`, margin, y, { size: 12, color: medGray });
   y -= 24;
   drawLine(y);
   y -= 20;
@@ -53,10 +55,10 @@ export async function generateEstimatePDF(
   // Client info
   drawText('Prepared for:', margin, y, { font: fontBold, size: 10, color: medGray });
   y -= 16;
-  drawText(`${formData.first_name} ${formData.last_name}`, margin, y, { size: 11 });
+  drawText(client.name, margin, y, { size: 11 });
   y -= 14;
-  drawText(formData.email, margin, y, { size: 10, color: medGray });
-  if (formData.phone) { y -= 14; drawText(formData.phone, margin, y, { size: 10, color: medGray }); }
+  drawText(client.email, margin, y, { size: 10, color: medGray });
+  if (client.phone) { y -= 14; drawText(client.phone, margin, y, { size: 10, color: medGray }); }
 
   const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   drawText(`Date: ${dateStr}`, pageWidth - margin - 200, pageHeight - margin - 42, { size: 9, color: medGray });
@@ -66,83 +68,90 @@ export async function generateEstimatePDF(
   y -= 10;
   drawText('Property:', margin, y, { font: fontBold, size: 10, color: medGray });
   y -= 14;
-  drawText(formData.address, margin, y, { size: 10 });
+  drawText(client.address, margin, y, { size: 10 });
   y -= 24;
   drawLine(y);
   y -= 20;
 
-  // Room breakdown header
-  drawText('Room', margin, y, { font: fontBold, size: 9, color: medGray });
+  // Section breakdown
+  drawText('Item', margin, y, { font: fontBold, size: 9, color: medGray });
+  drawText('Qty', pageWidth - margin - 160, y, { font: fontBold, size: 9, color: medGray });
   drawText('Amount', pageWidth - margin - 60, y, { font: fontBold, size: 9, color: medGray });
   y -= 8;
   drawLine(y);
   y -= 16;
 
-  for (const room of quote.rooms) {
-    checkPage(60);
-    drawText(room.room_label, margin, y, { font: fontBold, size: 10 });
-    drawText(`$${room.subtotal.toLocaleString()}`, pageWidth - margin - 60, y, { size: 10 });
+  for (const section of quote.sections) {
+    checkPage(40);
+    drawText(section.label, margin, y, { font: fontBold, size: 10 });
+    drawText(`$${Math.round(section.sales_price).toLocaleString()}`, pageWidth - margin - 60, y, { size: 10 });
     y -= 14;
-    for (const mod of room.modifiers) {
-      drawText(`  ${mod.label}: +$${mod.amount.toLocaleString()}`, margin + 10, y, { size: 8, color: medGray });
+    for (const item of section.items) {
+      checkPage(16);
+      drawText(`  ${item.label}`, margin + 10, y, { size: 8, color: medGray });
+      drawText(`${item.quantity}`, pageWidth - margin - 160, y, { size: 8, color: medGray });
+      drawText(`$${Math.round(item.sales_price).toLocaleString()}`, pageWidth - margin - 60, y, { size: 8, color: medGray });
       y -= 12;
     }
     y -= 4;
   }
 
-  if (quote.project_adders.length > 0) {
+  // Surcharges
+  if (quote.surcharges.length > 0) {
     checkPage(40);
     drawLine(y);
     y -= 16;
-    for (const adder of quote.project_adders) {
-      drawText(adder.label, margin, y, { size: 10 });
-      drawText(`$${adder.amount.toLocaleString()}`, pageWidth - margin - 60, y, { size: 10 });
-      y -= 16;
+    drawText('Surcharges', margin, y, { font: fontBold, size: 10 });
+    y -= 14;
+    for (const s of quote.surcharges) {
+      drawText(`  ${s.label}`, margin + 10, y, { size: 9, color: medGray });
+      drawText(`$${Math.round(s.sales_amount).toLocaleString()}`, pageWidth - margin - 60, y, { size: 9 });
+      y -= 14;
     }
   }
 
-  // Total
+  // Labor total
+  checkPage(30);
+  drawLine(y);
+  y -= 16;
+  drawText('Labor Total', margin, y, { font: fontBold, size: 11 });
+  drawText(`$${Math.round(quote.labor_total).toLocaleString()}`, pageWidth - margin - 60, y, { font: fontBold, size: 11 });
+  y -= 20;
+
+  // Materials
+  if (quote.materials.length > 0) {
+    checkPage(40);
+    drawText('Materials', margin, y, { font: fontBold, size: 10 });
+    y -= 14;
+    for (const mat of quote.materials) {
+      drawText(`  ${mat.label} (${mat.gallons} gal)`, margin + 10, y, { size: 9, color: medGray });
+      drawText(`$${Math.round(mat.cost).toLocaleString()}`, pageWidth - margin - 60, y, { size: 9 });
+      y -= 14;
+    }
+    drawText('Materials Total', margin, y, { font: fontBold, size: 10 });
+    drawText(`$${Math.round(quote.materials_total).toLocaleString()}`, pageWidth - margin - 60, y, { font: fontBold, size: 10 });
+    y -= 20;
+  }
+
+  // Grand Total
   checkPage(40);
   drawLine(y);
   y -= 20;
-  drawText('TOTAL', margin, y, { font: fontBold, size: 14, color: accentColor });
-  drawText(`$${quote.total.toLocaleString()}`, pageWidth - margin - 80, y, { font: fontBold, size: 14, color: accentColor });
+  drawText('GRAND TOTAL', margin, y, { font: fontBold, size: 14, color: accentColor });
+  drawText(`$${Math.round(quote.grand_total).toLocaleString()}`, pageWidth - margin - 80, y, { font: fontBold, size: 14, color: accentColor });
+  y -= 16;
+
+  // Production estimate
+  if (quote.production.painting_hours > 0) {
+    y -= 10;
+    drawText(`Estimated: ${quote.production.painting_hours.toFixed(1)} hrs, ${quote.production.crew_size}-person crew, ~${quote.production.duration_days.toFixed(1)} days`, margin, y, { size: 9, color: medGray });
+  }
+
   y -= 30;
   drawLine(y);
-  y -= 24;
-
-  // Assumptions
-  checkPage(80);
-  drawText('Assumptions', margin, y, { font: fontBold, size: 11, color: darkGray });
   y -= 16;
-  for (const assumption of quote.assumptions) {
-    checkPage(30);
-    const lines = wrapText(assumption, font, 9, contentWidth - 15);
-    for (const line of lines) {
-      drawText(`• ${line}`, margin + 5, y, { size: 9, color: medGray });
-      y -= 13;
-    }
-    y -= 2;
-  }
-  y -= 10;
-
-  // Exclusions
-  checkPage(60);
-  drawText("What's not included", margin, y, { font: fontBold, size: 11, color: darkGray });
-  y -= 16;
-  for (const exclusion of quote.exclusions) {
-    checkPage(16);
-    drawText(`• ${exclusion}`, margin + 5, y, { size: 9, color: medGray });
-    y -= 13;
-  }
-  y -= 20;
 
   // Footer
-  checkPage(40);
-  drawLine(y);
-  y -= 16;
-  drawText('Final pricing is confirmed after a brief pre-project walkthrough or virtual review.', margin, y, { size: 9, font: fontBold, color: medGray });
-  y -= 14;
   const footerParts = [tenant.company_name, tenant.contact_phone, tenant.contact_email].filter(Boolean);
   drawText(footerParts.join(' | '), margin, y, { size: 8, color: lightGray });
 

@@ -6,7 +6,7 @@ import { getTenantById } from '$lib/server/tenant.js';
 import type { PageServerLoad } from './$types.js';
 
 export const load: PageServerLoad = async ({ locals }) => {
-  if (!locals.user || locals.user.role === 'homeowner') throw redirect(303, '/auth/login');
+  if (!locals.user) throw redirect(303, '/auth/login');
   if (!locals.user.tenant_id) throw redirect(303, '/auth/register');
 
   const tenantConfig = getTenantById(locals.user.tenant_id);
@@ -24,8 +24,9 @@ export const load: PageServerLoad = async ({ locals }) => {
   const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const thisMonthSubs = subs.filter(s => s.created_at.startsWith(thisMonth));
   const totalValue = thisMonthSubs.reduce((sum, s) => sum + (s.sales_price || 0), 0);
-  const approvedCount = thisMonthSubs.filter(s => s.estimator_approved).length;
-  const conversionRate = thisMonthSubs.length > 0 ? Math.round((approvedCount / thisMonthSubs.length) * 100) : 0;
+  const sentCount = thisMonthSubs.filter(s => s.estimate_status !== 'draft').length;
+  const acceptedCount = thisMonthSubs.filter(s => s.estimate_status === 'accepted').length;
+  const conversionRate = sentCount > 0 ? Math.round((acceptedCount / sentCount) * 100) : 0;
 
   return {
     submissions: subs.map(s => ({
@@ -35,8 +36,8 @@ export const load: PageServerLoad = async ({ locals }) => {
       email: s.email,
       address: s.address,
       sales_price: s.sales_price,
-      stage_key: s.stage_key,
-      estimator_approved: s.estimator_approved,
+      trade_type: s.trade_type,
+      estimate_status: s.estimate_status,
       created_at: s.created_at,
     })),
     analytics: {
@@ -48,9 +49,8 @@ export const load: PageServerLoad = async ({ locals }) => {
       slug: tenantConfig.slug,
       company_name: tenantConfig.company_name,
       primary_color: tenantConfig.primary_color,
+      enabled_trades: tenantConfig.enabled_trades,
       onboarding_completed: tenant?.onboarding_completed ?? false,
     },
-    stages: tenantConfig.stages,
-    baseUrl: process.env.BASE_URL || 'http://localhost:5173',
   };
 };

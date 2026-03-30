@@ -1,2 +1,2 @@
 // Re-export types for convenience
-export type { IntakeFormData, RoomEntry, QuoteResult, TenantConfig, CatalogConfig, Stage } from './types/index.js';
+export type { QuoteResult, TenantConfig, CatalogConfig, TradeType, InteriorScopeData, ExteriorScopeData, EpoxyScopeData, ClientInfo } from './types/index.js';

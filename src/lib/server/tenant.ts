@@ -3,19 +3,13 @@ import { tenants } from './schema.js';
 import { eq } from 'drizzle-orm';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import type { TenantConfig, CatalogConfig, Stage, ThresholdsConfig } from '$lib/types/index.js';
+import type { TenantConfig, CatalogConfig, TradeType } from '$lib/types/index.js';
 
 const defaultCatalog: CatalogConfig = JSON.parse(
   readFileSync(resolve('config/defaults/catalog.json'), 'utf-8')
 );
-const defaultStages: { stages: Stage[] } = JSON.parse(
-  readFileSync(resolve('config/defaults/stages.json'), 'utf-8')
-);
-const defaultThresholds: ThresholdsConfig = JSON.parse(
-  readFileSync(resolve('config/defaults/thresholds.json'), 'utf-8')
-);
 
-export { defaultCatalog, defaultStages, defaultThresholds };
+export { defaultCatalog };
 
 const tenantCache = new Map<string, { config: TenantConfig; cachedAt: number }>();
 const CACHE_TTL_MS = 60_000;
@@ -39,8 +33,10 @@ export function getTenantById(id: string): TenantConfig | null {
 
 function buildTenantConfig(row: typeof tenants.$inferSelect): TenantConfig {
   const catalog: CatalogConfig = row.catalog_json ? JSON.parse(row.catalog_json) : defaultCatalog;
-  const stages: Stage[] = row.stages_json ? JSON.parse(row.stages_json).stages : defaultStages.stages;
-  const thresholds: ThresholdsConfig = row.thresholds_json ? JSON.parse(row.thresholds_json) : defaultThresholds;
+  let enabledTrades: TradeType[] = ['interior'];
+  try {
+    enabledTrades = JSON.parse(row.enabled_trades);
+  } catch {}
 
   const config: TenantConfig = {
     id: row.id,
@@ -53,9 +49,12 @@ function buildTenantConfig(row: typeof tenants.$inferSelect): TenantConfig {
     contact_phone: row.contact_phone,
     website_url: row.website_url,
     service_areas: row.service_areas,
+    enabled_trades: enabledTrades,
+    labor_price_multiplier: row.labor_price_multiplier,
+    output_format: row.output_format as 'google_docs' | 'pdf',
+    google_refresh_token: row.google_refresh_token,
+    google_drive_folder_id: row.google_drive_folder_id,
     catalog,
-    stages,
-    thresholds,
   };
 
   tenantCache.set(row.slug, { config, cachedAt: Date.now() });

@@ -24,8 +24,5 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
   const user = db.select().from(users).where(eq(users.id, result.userId)).get();
   if (!user) throw redirect(303, '/auth/login');
 
-  if (user.role === 'contractor_admin' || user.role === 'contractor_staff') {
-    throw redirect(303, '/dashboard');
-  }
-  throw redirect(303, '/client');
+  throw redirect(303, '/dashboard');
 };

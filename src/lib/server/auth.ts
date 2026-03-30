@@ -12,7 +12,7 @@ export function findOrCreateUser(
   email: string,
   firstName: string,
   lastName: string,
-  role: Role = 'homeowner',
+  role: Role = 'contractor_admin',
   tenantId: string | null = null
 ) {
   const existing = db.select().from(users).where(eq(users.email, email.toLowerCase())).get();

@@ -20,7 +20,7 @@ export const handle: Handle = async ({ event, resolve }) => {
           email: user.email,
           first_name: user.first_name,
           last_name: user.last_name,
-          role: user.role as 'contractor_admin' | 'contractor_staff' | 'homeowner',
+          role: user.role as 'contractor_admin' | 'contractor_staff',
           tenant_id: user.tenant_id,
         };
 

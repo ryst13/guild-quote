@@ -3,7 +3,7 @@ import { getTenantById, defaultCatalog } from '$lib/server/tenant.js';
 import type { PageServerLoad } from './$types.js';
 
 export const load: PageServerLoad = async ({ locals }) => {
-  if (!locals.user || locals.user.role === 'homeowner') throw redirect(303, '/auth/login');
+  if (!locals.user) throw redirect(303, '/auth/login');
   if (!locals.user.tenant_id) throw redirect(303, '/auth/register');
 
   const tenant = getTenantById(locals.user.tenant_id);

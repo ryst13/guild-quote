@@ -6,7 +6,7 @@ import { getTenantById } from '$lib/server/tenant.js';
 import type { PageServerLoad } from './$types.js';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
-  if (!locals.user || locals.user.role === 'homeowner') throw redirect(303, '/auth/login');
+  if (!locals.user) throw redirect(303, '/auth/login');
   if (!locals.user.tenant_id) throw redirect(303, '/auth/register');
 
   const tenantConfig = getTenantById(locals.user.tenant_id);
@@ -24,10 +24,9 @@ export const load: PageServerLoad = async ({ locals, params }) => {
   return {
     submission: {
       ...sub,
-      rooms: sub.rooms_json ? JSON.parse(sub.rooms_json) : [],
+      scope: sub.scope_json ? JSON.parse(sub.scope_json) : {},
       quote: sub.quote_json ? JSON.parse(sub.quote_json) : null,
     },
-    stages: tenantConfig.stages,
     tenant: { slug: tenantConfig.slug, company_name: tenantConfig.company_name },
   };
 };
