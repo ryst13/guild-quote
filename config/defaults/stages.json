@@ -1,0 +1,13 @@
+{
+  "stages": [
+    { "id": 1, "key": "intake", "label": "Intake", "description": "Customer submitted a quote request.", "portal_client_label": "Quote Requested", "gate_fields": [] },
+    { "id": 2, "key": "quote_sent", "label": "Quote Sent", "description": "Quote generated and sent to homeowner.", "portal_client_label": "Quote Sent", "gate_fields": ["sales_price"] },
+    { "id": 3, "key": "under_review", "label": "Under Review", "description": "Contractor is reviewing the submission.", "portal_client_label": "Under Review", "gate_fields": ["sales_price"] },
+    { "id": 4, "key": "approved", "label": "Approved", "description": "Contractor approved the quote.", "portal_client_label": "Quote Approved", "gate_fields": ["sales_price", "estimator_approved"] },
+    { "id": 5, "key": "accepted", "label": "Accepted", "description": "Customer accepted the quote.", "portal_client_label": "Accepted", "gate_fields": ["sales_price", "estimator_approved", "client_accepted"] },
+    { "id": 6, "key": "scheduled", "label": "Scheduled", "description": "Project has been scheduled.", "portal_client_label": "Scheduled", "gate_fields": ["scheduled_start_date"] },
+    { "id": 7, "key": "in_progress", "label": "In Progress", "description": "Work is underway.", "portal_client_label": "In Progress", "gate_fields": ["scheduled_start_date"] },
+    { "id": 8, "key": "closeout", "label": "Closeout", "description": "Work complete, final review.", "portal_client_label": "Wrapping Up", "gate_fields": [] },
+    { "id": 9, "key": "closed", "label": "Closed", "description": "Project complete.", "portal_client_label": "Complete", "gate_fields": [] }
+  ]
+}

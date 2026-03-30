@@ -1,0 +1,7 @@
+{
+  "auto_approve_max": 5000,
+  "requires_walkthrough_min": 15000,
+  "progress_payment_min": 10000,
+  "max_rooms_per_quote": 16,
+  "deposit_percent": 0.33
+}
