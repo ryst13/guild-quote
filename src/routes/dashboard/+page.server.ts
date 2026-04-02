@@ -24,9 +24,32 @@ export const load: PageServerLoad = async ({ locals }) => {
   const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const thisMonthSubs = subs.filter(s => s.created_at.startsWith(thisMonth));
   const totalValue = thisMonthSubs.reduce((sum, s) => sum + (s.sales_price || 0), 0);
-  const sentCount = thisMonthSubs.filter(s => s.estimate_status !== 'draft').length;
-  const acceptedCount = thisMonthSubs.filter(s => s.estimate_status === 'accepted').length;
+  const sentCount = subs.filter(s => s.estimate_status !== 'draft').length;
+  const acceptedCount = subs.filter(s => s.estimate_status === 'accepted').length;
   const conversionRate = sentCount > 0 ? Math.round((acceptedCount / sentCount) * 100) : 0;
+
+  // Self-benchmarking (only meaningful with 10+ estimates)
+  let benchmarks = null;
+  if (subs.length >= 10) {
+    const withPrice = subs.filter(s => s.sales_price && s.sales_price > 0);
+    const avgEstimate = withPrice.length > 0 ? Math.round(withPrice.reduce((s, sub) => s + (sub.sales_price || 0), 0) / withPrice.length) : 0;
+
+    // Per-trade averages
+    const tradeAvgs: Record<string, { count: number; avg: number; winRate: number }> = {};
+    for (const trade of tenantConfig.enabled_trades) {
+      const tradeSubs = subs.filter(s => s.trade_type === trade);
+      const tradeWithPrice = tradeSubs.filter(s => s.sales_price && s.sales_price > 0);
+      const tradeSent = tradeSubs.filter(s => s.estimate_status !== 'draft');
+      const tradeAccepted = tradeSubs.filter(s => s.estimate_status === 'accepted');
+      tradeAvgs[trade] = {
+        count: tradeSubs.length,
+        avg: tradeWithPrice.length > 0 ? Math.round(tradeWithPrice.reduce((s, sub) => s + (sub.sales_price || 0), 0) / tradeWithPrice.length) : 0,
+        winRate: tradeSent.length > 0 ? Math.round((tradeAccepted.length / tradeSent.length) * 100) : 0,
+      };
+    }
+
+    benchmarks = { avgEstimate, tradeAvgs, totalEstimates: subs.length };
+  }
 
   return {
     submissions: subs.map(s => ({
@@ -45,6 +68,7 @@ export const load: PageServerLoad = async ({ locals }) => {
       totalValue,
       conversionRate,
     },
+    benchmarks,
     tenant: {
       slug: tenantConfig.slug,
       company_name: tenantConfig.company_name,

@@ -1,5 +1,6 @@
 import { redirect, error } from '@sveltejs/kit';
 import { google } from 'googleapis';
+import { env } from '$env/dynamic/private';
 import { db } from '$lib/server/db.js';
 import { users, tenants } from '$lib/server/schema.js';
 import { eq } from 'drizzle-orm';
@@ -12,9 +13,9 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
   const code = url.searchParams.get('code');
   if (!code) throw error(400, 'Missing authorization code');
 
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:5173/auth/google/callback';
+  const clientId = env.GOOGLE_CLIENT_ID;
+  const clientSecret = env.GOOGLE_CLIENT_SECRET;
+  const redirectUri = env.GOOGLE_REDIRECT_URI || 'http://localhost:5173/auth/google/callback';
 
   if (!clientId || !clientSecret) {
     throw error(500, 'Google OAuth not configured');

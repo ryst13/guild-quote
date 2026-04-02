@@ -2,6 +2,15 @@ import type { InteriorScopeData, ExteriorScopeData, EpoxyScopeData, QuoteResult,
 
 const HOURLY_RATE = 40;
 
+// Production rates: sqft a painter can cover per hour (2-coat basis)
+const PRODUCTION_RATES = {
+  walls: 150,      // 150 sqft/hr for wall painting (2 coats)
+  ceiling: 120,    // 120 sqft/hr for ceiling painting
+  primer: 200,     // 200 sqft/hr for priming
+  trim_per_item: 0.5, // 0.5 hr per trim/door/window item
+  repair_per_item: 0.75, // 0.75 hr per repair
+};
+
 // ─── WALL SQFT LOOKUP ───────────────────────────────────────────
 const WALL_SQFT: Record<string, Record<string, number>> = {
   "Kitchen":            { Small: 240, Medium: 416, Large: 512 },
@@ -127,7 +136,7 @@ export function calculateInteriorQuote(formData: InteriorScopeData, _catalog: Ca
       quantity: 1,
       sub_cost: wallSubCost,
       sales_price: wallSalesPrice,
-      allocated_time: wallSubCost / HOURLY_RATE / 3,
+      allocated_time: wallSqft / PRODUCTION_RATES.walls,
     });
     totalWallSqft += wallSqft;
 
@@ -140,7 +149,7 @@ export function calculateInteriorQuote(formData: InteriorScopeData, _catalog: Ca
         quantity: 1,
         sub_cost: ceilSubCost,
         sales_price: ceilSalesPrice,
-        allocated_time: ceilSubCost / HOURLY_RATE / 3,
+        allocated_time: ceilingSqft / PRODUCTION_RATES.ceiling,
       });
       totalCeilingSqft += ceilingSqft;
     }
@@ -155,7 +164,7 @@ export function calculateInteriorQuote(formData: InteriorScopeData, _catalog: Ca
         quantity: 1,
         sub_cost: closetSubCost,
         sales_price: closetSalesPrice,
-        allocated_time: closetSubCost / HOURLY_RATE / 3,
+        allocated_time: closetSqft / PRODUCTION_RATES.walls,
       });
       totalWallSqft += closetSqft;
     }
@@ -171,7 +180,7 @@ export function calculateInteriorQuote(formData: InteriorScopeData, _catalog: Ca
         quantity: 1,
         sub_cost: primerSubCost,
         sales_price: primerSalesPrice,
-        allocated_time: primerSubCost / HOURLY_RATE / 3,
+        allocated_time: primerSqft / PRODUCTION_RATES.primer,
       });
     }
 
@@ -183,12 +192,13 @@ export function calculateInteriorQuote(formData: InteriorScopeData, _catalog: Ca
 
       const lineSubCost = rate.sub_cost * qty;
       const lineSalesPrice = rate.sales_price * qty * (multiplier / 1.1); // rates already at 1.1x base
+      const timePerItem = itemName.startsWith('Repair') ? PRODUCTION_RATES.repair_per_item : PRODUCTION_RATES.trim_per_item;
       items.push({
         label: itemName,
         quantity: qty,
         sub_cost: lineSubCost,
         sales_price: lineSalesPrice,
-        allocated_time: (rate.sub_cost / HOURLY_RATE) * qty / 3,
+        allocated_time: timePerItem * qty,
       });
 
       // Track trim sqft for materials
@@ -304,10 +314,22 @@ export function calculateInteriorQuote(formData: InteriorScopeData, _catalog: Ca
   const benchmarkKey = roomCount <= 2 ? '1-2' : roomCount <= 4 ? '3-4' : '8+';
   const p50 = INTERIOR_BENCHMARKS.by_rooms[benchmarkKey]?.p50;
   if (p50) {
-    const pct = grandTotal < INTERIOR_BENCHMARKS.overall.p25 ? 'below 25th' :
-      grandTotal < INTERIOR_BENCHMARKS.overall.p50 ? '25th-50th' :
-      grandTotal < INTERIOR_BENCHMARKS.overall.p75 ? '50th-75th' : 'above 75th';
-    benchmarks = { percentile: pct, message: `Your estimate of $${Math.round(grandTotal).toLocaleString()} is at the ${pct} percentile for interior ${roomCount}-room jobs` };
+    let label: string;
+    let msg: string;
+    if (grandTotal < INTERIOR_BENCHMARKS.overall.p25) {
+      label = 'below-average';
+      msg = `At $${Math.round(grandTotal).toLocaleString()}, this is priced below most ${roomCount}-room interior jobs. Make sure your scope is complete.`;
+    } else if (grandTotal < INTERIOR_BENCHMARKS.overall.p50) {
+      label = 'competitive';
+      msg = `At $${Math.round(grandTotal).toLocaleString()}, this is competitively priced for a ${roomCount}-room interior job.`;
+    } else if (grandTotal < INTERIOR_BENCHMARKS.overall.p75) {
+      label = 'mid-range';
+      msg = `At $${Math.round(grandTotal).toLocaleString()}, this is in the typical range for a ${roomCount}-room interior job.`;
+    } else {
+      label = 'premium';
+      msg = `At $${Math.round(grandTotal).toLocaleString()}, this is a premium estimate for a ${roomCount}-room interior job. Justified if scope or conditions warrant it.`;
+    }
+    benchmarks = { percentile: label, message: msg };
   }
 
   // ─── COMPLETENESS WARNINGS ──────────────────────────────────
@@ -550,10 +572,23 @@ export function calculateExteriorQuote(formData: ExteriorScopeData, _catalog: Ca
 
   // Benchmarks
   const surfCount = formData.surfaces.length;
-  const bKey = surfCount <= 2 ? '1-2' : surfCount <= 4 ? '3-4' : '5+';
   const bOverall = EXTERIOR_BENCHMARKS.overall;
-  const pct = grandTotal < bOverall.p25 ? 'below 25th' : grandTotal < bOverall.p50 ? '25th-50th' : grandTotal < bOverall.p75 ? '50th-75th' : 'above 75th';
-  const benchmarks = { percentile: pct, message: `Your estimate of $${Math.round(grandTotal).toLocaleString()} is at the ${pct} percentile for exterior ${surfCount}-surface jobs` };
+  let bLabel: string;
+  let bMsg: string;
+  if (grandTotal < bOverall.p25) {
+    bLabel = 'below-average';
+    bMsg = `At $${Math.round(grandTotal).toLocaleString()}, this is priced below most ${surfCount}-surface exterior jobs. Make sure your scope is complete.`;
+  } else if (grandTotal < bOverall.p50) {
+    bLabel = 'competitive';
+    bMsg = `At $${Math.round(grandTotal).toLocaleString()}, this is competitively priced for a ${surfCount}-surface exterior job.`;
+  } else if (grandTotal < bOverall.p75) {
+    bLabel = 'mid-range';
+    bMsg = `At $${Math.round(grandTotal).toLocaleString()}, this is in the typical range for a ${surfCount}-surface exterior job.`;
+  } else {
+    bLabel = 'premium';
+    bMsg = `At $${Math.round(grandTotal).toLocaleString()}, this is a premium estimate for a ${surfCount}-surface exterior job. Justified if scope or conditions warrant it.`;
+  }
+  const benchmarks = { percentile: bLabel, message: bMsg };
 
   // Completeness
   const completenessWarnings: string[] = [];

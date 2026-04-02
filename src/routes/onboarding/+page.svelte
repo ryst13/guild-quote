@@ -6,7 +6,7 @@
   let step = $state(1);
   let saving = $state(false);
   let saved = $state(false);
-  const totalSteps = 5;
+  const totalSteps = 2;
 
   // Step 1: Trade Selection
   let trades = $state<Record<string, boolean>>({
@@ -82,7 +82,7 @@
   function nextStep() { step = Math.min(step + 1, totalSteps); }
   function prevStep() { step = Math.max(step - 1, 1); }
 
-  const stepLabels = ['Trades', 'Profile', 'Branding', 'Pricing', 'Google'];
+  const stepLabels = ['Trades', 'Google Connect'];
 </script>
 
 <svelte:head>
@@ -143,106 +143,20 @@
             </div>
           </label>
         </div>
+        <!-- Company Name (minimal — rest deferred to contextual prompts) -->
+        <div class="mt-6 pt-6 border-t border-gray-200">
+          <label for="company-name" class="block text-sm font-medium text-gray-700 mb-1">Company name</label>
+          <input id="company-name" type="text" bind:value={companyName} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 outline-none" />
+        </div>
+
         <div class="mt-6 flex justify-end">
-          <button onclick={() => { saveTrades(); nextStep(); }} disabled={saving || !hasTradeSelected} class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
+          <button onclick={() => { saveTrades(); saveProfile(); nextStep(); }} disabled={saving || !hasTradeSelected} class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
             {saving ? 'Saving...' : 'Continue'}
           </button>
         </div>
       </div>
 
     {:else if step === 2}
-      <!-- Company Profile -->
-      <div class="rounded-2xl bg-white p-8 shadow-sm border border-gray-200">
-        <h2 class="text-xl font-bold text-gray-900 mb-1">Company Profile</h2>
-        <p class="text-sm text-gray-500 mb-6">Tell us about your business.</p>
-        <div class="space-y-4">
-          <div>
-            <label for="company-name" class="block text-sm font-medium text-gray-700 mb-1">Company name</label>
-            <input id="company-name" type="text" bind:value={companyName} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none" />
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label for="contact-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input id="contact-email" type="email" bind:value={contactEmail} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none" />
-            </div>
-            <div>
-              <label for="contact-phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-              <input id="contact-phone" type="tel" bind:value={contactPhone} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none" />
-            </div>
-          </div>
-          <div>
-            <label for="website-url" class="block text-sm font-medium text-gray-700 mb-1">Website</label>
-            <input id="website-url" type="url" bind:value={websiteUrl} placeholder="https://yoursite.com" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none" />
-          </div>
-          <div>
-            <label for="service-areas" class="block text-sm font-medium text-gray-700 mb-1">Service areas</label>
-            <input id="service-areas" type="text" bind:value={serviceAreas} placeholder="e.g., Philadelphia metro area" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none" />
-          </div>
-        </div>
-        <div class="mt-6 flex justify-between">
-          <button onclick={prevStep} class="rounded-lg border border-gray-300 px-6 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Back</button>
-          <button onclick={() => { saveProfile(); nextStep(); }} disabled={saving} class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
-            {saving ? 'Saving...' : 'Save & Continue'}
-          </button>
-        </div>
-      </div>
-
-    {:else if step === 3}
-      <!-- Branding -->
-      <div class="rounded-2xl bg-white p-8 shadow-sm border border-gray-200">
-        <h2 class="text-xl font-bold text-gray-900 mb-1">Branding</h2>
-        <p class="text-sm text-gray-500 mb-6">Choose colors for your estimates.</p>
-        <div class="grid grid-cols-2 gap-6">
-          <div>
-            <label for="primary-color" class="block text-sm font-medium text-gray-700 mb-2">Primary color</label>
-            <div class="flex items-center gap-3">
-              <input id="primary-color" type="color" bind:value={primaryColor} class="h-10 w-14 rounded border border-gray-300 cursor-pointer" />
-              <input type="text" bind:value={primaryColor} class="w-28 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none" />
-            </div>
-          </div>
-          <div>
-            <label for="accent-color" class="block text-sm font-medium text-gray-700 mb-2">Accent color</label>
-            <div class="flex items-center gap-3">
-              <input id="accent-color" type="color" bind:value={accentColor} class="h-10 w-14 rounded border border-gray-300 cursor-pointer" />
-              <input type="text" bind:value={accentColor} class="w-28 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none" />
-            </div>
-          </div>
-        </div>
-        <div class="mt-6 rounded-xl border border-gray-200 p-6" style="background: linear-gradient(135deg, {primaryColor}11, {accentColor}11)">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="h-10 w-10 rounded-full" style="background: {primaryColor}"></div>
-            <span class="text-lg font-bold" style="color: {primaryColor}">{companyName}</span>
-          </div>
-          <div class="rounded-lg p-4" style="background: {primaryColor}; color: white">
-            <span class="text-sm font-semibold">Generate Estimate</span>
-          </div>
-        </div>
-        <div class="mt-6 flex justify-between">
-          <button onclick={prevStep} class="rounded-lg border border-gray-300 px-6 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Back</button>
-          <button onclick={() => { saveBranding(); nextStep(); }} disabled={saving} class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
-            {saving ? 'Saving...' : 'Save & Continue'}
-          </button>
-        </div>
-      </div>
-
-    {:else if step === 4}
-      <!-- Pricing Catalog -->
-      <div class="rounded-2xl bg-white p-8 shadow-sm border border-gray-200">
-        <h2 class="text-xl font-bold text-gray-900 mb-1">Pricing Catalog</h2>
-        <p class="text-sm text-gray-500 mb-4">Your catalog has been pre-loaded with industry-standard pricing. You can customize it now or anytime from your dashboard settings.</p>
-        <div class="rounded-lg bg-blue-50 p-4 text-sm text-blue-800">
-          Default pricing is active. Edit your catalog in Dashboard &rarr; Settings &rarr; Catalog.
-        </div>
-        <div class="mt-6 flex justify-between">
-          <button onclick={prevStep} class="rounded-lg border border-gray-300 px-6 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Back</button>
-          <div class="flex gap-3">
-            <a href="/dashboard/settings/catalog" class="rounded-lg border border-gray-300 px-6 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Edit Catalog</a>
-            <button onclick={nextStep} class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700">Continue</button>
-          </div>
-        </div>
-      </div>
-
-    {:else if step === 5}
       <!-- Connect Google Account -->
       <div class="rounded-2xl bg-white p-8 shadow-sm border border-gray-200">
         <h2 class="text-xl font-bold text-gray-900 mb-1">Connect Google Account</h2>

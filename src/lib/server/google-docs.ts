@@ -1,4 +1,5 @@
 import { google } from 'googleapis';
+import { env } from '$env/dynamic/private';
 import type { TenantConfig, QuoteResult, ClientInfo } from '$lib/types/index.js';
 
 export async function createEstimateDoc(
@@ -9,8 +10,8 @@ export async function createEstimateDoc(
 ): Promise<string | null> {
   if (!tenant.google_refresh_token) return null;
 
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const clientId = env.GOOGLE_CLIENT_ID;
+  const clientSecret = env.GOOGLE_CLIENT_SECRET;
   if (!clientId || !clientSecret) return null;
 
   const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);

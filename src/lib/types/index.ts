@@ -39,6 +39,7 @@ export interface ExteriorSurface {
   windows: Record<string, number>;
   trim: Record<string, number>;
   carpentry_repairs: Record<string, number>;
+  notes: string;
 }
 
 export interface ExteriorScopeData {
@@ -85,6 +86,7 @@ export interface ClientInfo {
   phone: string;
   address: string;
   notes: string;
+  source?: string;
 }
 
 // Quote result types

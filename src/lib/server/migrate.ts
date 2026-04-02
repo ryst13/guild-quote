@@ -75,8 +75,26 @@ const migrations = [
   )`
 ];
 
+const alterations = [
+  `ALTER TABLE tenants ADD COLUMN pricing_config TEXT`,
+  `ALTER TABLE submissions ADD COLUMN version INTEGER NOT NULL DEFAULT 1`,
+  `ALTER TABLE submissions ADD COLUMN previous_versions_json TEXT`,
+  `ALTER TABLE submissions ADD COLUMN close_price REAL`,
+  `ALTER TABLE submissions ADD COLUMN decline_reason TEXT`,
+  `ALTER TABLE submissions ADD COLUMN client_source TEXT`,
+  `ALTER TABLE submissions ADD COLUMN outcome_date TEXT`,
+  `ALTER TABLE tenants ADD COLUMN prompts_shown TEXT DEFAULT '{}'`,
+];
+
 export function runMigrations() {
   for (const sql of migrations) {
     sqlite.exec(sql);
+  }
+  for (const sql of alterations) {
+    try {
+      sqlite.exec(sql);
+    } catch {
+      // Column already exists, ignore
+    }
   }
 }

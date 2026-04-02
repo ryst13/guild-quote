@@ -11,6 +11,16 @@
   let generating = $state(false);
   let result = $state<{ quote: QuoteResult; google_doc_url: string | null; pdf_url: string | null; submission_id: string } | null>(null);
   let errorMsg = $state('');
+  let pricingPromptDismissed = $state(!data.prompts.show_pricing);
+  let brandingPromptDismissed = $state(!data.prompts.show_branding);
+
+  async function dismissPrompt(key: string) {
+    await fetch('/api/tenant/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompts_shown: JSON.stringify({ [key]: true }) }),
+    });
+  }
 
   const tradeLabels: Record<string, string> = {
     interior: 'Interior Painting',
@@ -76,10 +86,19 @@
             </p>
           {/if}
 
+          <!-- Contextual: Brand colors (first estimate result, default colors) -->
+          {#if !brandingPromptDismissed}
+            <div class="rounded-lg bg-yellow-50 border border-yellow-200 p-3 mb-4 text-sm">
+              <span class="text-yellow-800">Want your estimates to match your brand?</span>
+              <a href="/dashboard/settings/pricing" class="text-yellow-700 font-medium ml-1 hover:underline">Set your colors</a>
+              <button onclick={() => { brandingPromptDismissed = true; dismissPrompt('branding_customized'); }} class="text-xs text-yellow-500 ml-2 hover:text-yellow-700">Later</button>
+            </div>
+          {/if}
+
           <div class="flex justify-center gap-4">
             {#if result.google_doc_url}
               <a href={result.google_doc_url} target="_blank" class="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">
-                Open Google Doc
+                {data.tenant.output_format === 'google_sheets' ? 'Open Google Sheet' : 'Open Google Doc'}
               </a>
             {/if}
             {#if result.pdf_url}
@@ -160,6 +179,17 @@
         <button onclick={() => selectedTrade = null} class="text-sm text-gray-500 hover:text-gray-700">&larr; Change trade</button>
         <span class="text-sm font-medium text-gray-700">{tradeLabels[selectedTrade]}</span>
       </div>
+
+      <!-- Contextual: Review pricing defaults (first estimate only) -->
+      {#if !pricingPromptDismissed}
+        <div class="rounded-lg bg-blue-50 border border-blue-200 p-4 mb-4 flex items-center justify-between">
+          <div>
+            <span class="text-sm text-blue-800">Your estimates use default pricing.</span>
+            <a href="/dashboard/settings/pricing" class="text-sm text-blue-600 font-medium ml-1 hover:underline">Review your rates before generating?</a>
+          </div>
+          <button onclick={() => { pricingPromptDismissed = true; dismissPrompt('pricing_reviewed'); }} class="text-xs text-blue-500 hover:text-blue-700 ml-4">Dismiss</button>
+        </div>
+      {/if}
 
       <div class="rounded-2xl bg-white border border-gray-200 p-6">
         {#if selectedTrade === 'interior'}

@@ -21,6 +21,8 @@ export const tenants = sqliteTable('tenants', {
   google_drive_folder_id: text('google_drive_folder_id'),
   output_format: text('output_format').notNull().default('google_docs'),
   labor_price_multiplier: real('labor_price_multiplier').notNull().default(1.1),
+  pricing_config: text('pricing_config'),
+  prompts_shown: text('prompts_shown').notNull().default('{}'),
   created_at: text('created_at').notNull().$defaultFn(() => new Date().toISOString()),
   updated_at: text('updated_at').notNull().$defaultFn(() => new Date().toISOString()),
 });
@@ -73,6 +75,12 @@ export const submissions = sqliteTable('submissions', {
   estimate_pdf_url: text('estimate_pdf_url'),
   assigned_crew: text('assigned_crew'),
   scheduled_start_date: text('scheduled_start_date'),
+  version: integer('version').notNull().default(1),
+  previous_versions_json: text('previous_versions_json'),
+  close_price: real('close_price'),
+  decline_reason: text('decline_reason'),
+  client_source: text('client_source'),
+  outcome_date: text('outcome_date'),
   created_at: text('created_at').notNull().$defaultFn(() => new Date().toISOString()),
   updated_at: text('updated_at').notNull().$defaultFn(() => new Date().toISOString()),
 });

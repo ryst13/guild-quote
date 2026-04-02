@@ -16,6 +16,7 @@ export const GET: RequestHandler = async ({ params }) => {
     headers: {
       'Content-Type': 'application/pdf',
       'Content-Disposition': `inline; filename="estimate-${params.id.slice(0, 8)}.pdf"`,
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
     },
   });
 };

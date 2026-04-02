@@ -12,6 +12,7 @@
   let clientPhone = $state('');
   let clientAddress = $state('');
   let clientNotes = $state('');
+  let clientSource = $state('');
 
   // Step 2: Floors
   let floors = $state<EpoxyFloor[]>([createFloor()]);
@@ -45,7 +46,7 @@
 
   function handleSubmit() {
     const data: EpoxyScopeData = {
-      client: { name: clientName, email: clientEmail, phone: clientPhone, address: clientAddress, notes: clientNotes },
+      client: { name: clientName, email: clientEmail, phone: clientPhone, address: clientAddress, notes: clientNotes, source: clientSource },
       floors,
       project: { concrete_grinding: concreteGrinding, crack_repair: crackRepair, timeline, notes: projectNotes },
     };
@@ -84,9 +85,26 @@
         <label for="epoxy-addr" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
         <input id="epoxy-addr" type="text" bind:value={clientAddress} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
       </div>
-      <div>
-        <label for="epoxy-notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-        <textarea id="epoxy-notes" bind:value={clientNotes} rows="2" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"></textarea>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="epoxy-client-source" class="block text-sm font-medium text-gray-700 mb-1">How'd they find you? <span class="text-gray-400 font-normal">(optional)</span></label>
+          <select id="epoxy-client-source" bind:value={clientSource} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500">
+            <option value="">—</option>
+            <option value="google">Google Search</option>
+            <option value="referral">Referral</option>
+            <option value="repeat">Repeat Client</option>
+            <option value="social">Social Media</option>
+            <option value="yard_sign">Yard Sign / Job Site</option>
+            <option value="nextdoor">Nextdoor</option>
+            <option value="yelp">Yelp</option>
+            <option value="homeadvisor">HomeAdvisor / Angi</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label for="epoxy-notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+          <textarea id="epoxy-notes" bind:value={clientNotes} rows="1" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"></textarea>
+        </div>
       </div>
       <div class="flex justify-end">
         <button onclick={() => step = 2} class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700">Next: Floors</button>

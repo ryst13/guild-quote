@@ -14,6 +14,8 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
   const allowedFields = [
     'sales_price', 'estimator_notes', 'estimate_status',
     'assigned_crew', 'scheduled_start_date',
+    'first_name', 'last_name', 'email', 'phone', 'address',
+    'close_price', 'decline_reason', 'client_source', 'outcome_date', 'scope_json',
   ];
 
   for (const field of allowedFields) {

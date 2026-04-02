@@ -4,8 +4,10 @@ import { submissions, tenants } from '$lib/server/schema.js';
 import { eq } from 'drizzle-orm';
 import { getTenantById } from '$lib/server/tenant.js';
 import { calculateInteriorQuote, calculateExteriorQuote, calculateEpoxyQuote } from '$lib/server/pricing.js';
-import { generateEstimatePDF } from '$lib/server/pdf.js';
+import { generateEstimatePDF, generateEstimatePDFLegacy } from '$lib/server/pdf.js';
+import { assembleInteriorEstimate, assembleExteriorEstimate } from '$lib/server/estimate-templates.js';
 import { createEstimateDoc } from '$lib/server/google-docs.js';
+import { createEstimateSheet } from '$lib/server/google-sheets.js';
 import { v4 as uuidv4 } from 'uuid';
 import { writeFileSync, mkdirSync } from 'fs';
 import type { RequestHandler } from './$types.js';
@@ -59,6 +61,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     sales_price: quote.grand_total,
     trade_type,
     estimate_status: 'draft',
+    client_source: client.source || null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   }).run();
@@ -67,7 +70,41 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   let googleDocUrl: string | null = null;
   let pdfUrl: string | null = null;
 
-  if (tenant.output_format === 'google_docs' && tenant.google_refresh_token) {
+  const tenantInfo = {
+    company_name: tenant.company_name,
+    contact_phone: tenant.contact_phone,
+    contact_email: tenant.contact_email,
+    website_url: tenant.website_url,
+  };
+
+  if (tenant.google_refresh_token && (trade_type === 'interior' || trade_type === 'exterior')) {
+    // Use template engine for interior/exterior
+    const estimateDoc = trade_type === 'interior'
+      ? assembleInteriorEstimate(scope as InteriorScopeData, quote, tenantInfo, submissionId)
+      : assembleExteriorEstimate(scope as ExteriorScopeData, quote, tenantInfo, submissionId);
+
+    if (tenant.output_format === 'google_sheets') {
+      try {
+        googleDocUrl = await createEstimateSheet(tenant, estimateDoc);
+        if (googleDocUrl) {
+          db.update(submissions).set({ google_doc_url: googleDocUrl }).where(eq(submissions.id, submissionId)).run();
+        }
+      } catch (err) {
+        console.error('[google-sheets] Failed to create sheet:', err);
+      }
+    } else {
+      // Default: google_docs
+      try {
+        googleDocUrl = await createEstimateDoc(tenant, client, quote, submissionId);
+        if (googleDocUrl) {
+          db.update(submissions).set({ google_doc_url: googleDocUrl }).where(eq(submissions.id, submissionId)).run();
+        }
+      } catch (err) {
+        console.error('[google-docs] Failed to create doc:', err);
+      }
+    }
+  } else if (tenant.google_refresh_token) {
+    // Epoxy — use legacy Google Docs for now
     try {
       googleDocUrl = await createEstimateDoc(tenant, client, quote, submissionId);
       if (googleDocUrl) {
@@ -78,9 +115,21 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     }
   }
 
-  // Always generate PDF as backup
+  // Generate professional PDF using template engine
   try {
-    const pdfBuffer = await generateEstimatePDF(client, quote, submissionId, tenant);
+    let pdfBuffer: Buffer;
+
+    if (trade_type === 'interior') {
+      const estimateDoc = assembleInteriorEstimate(scope as InteriorScopeData, quote, tenantInfo, submissionId);
+      pdfBuffer = await generateEstimatePDF(estimateDoc, tenant);
+    } else if (trade_type === 'exterior') {
+      const estimateDoc = assembleExteriorEstimate(scope as ExteriorScopeData, quote, tenantInfo, submissionId);
+      pdfBuffer = await generateEstimatePDF(estimateDoc, tenant);
+    } else {
+      // Epoxy uses legacy format for now
+      pdfBuffer = await generateEstimatePDFLegacy(client, quote, submissionId, tenant);
+    }
+
     mkdirSync('./data/pdfs', { recursive: true });
     const pdfPath = `./data/pdfs/${submissionId}.pdf`;
     writeFileSync(pdfPath, pdfBuffer);

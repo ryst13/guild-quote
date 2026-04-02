@@ -12,6 +12,7 @@
   let clientPhone = $state('');
   let clientAddress = $state('');
   let clientNotes = $state('');
+  let clientSource = $state('');
 
   // Step 2: Surfaces
   let surfaces = $state<ExteriorSurface[]>([createSurface('Front')]);
@@ -33,7 +34,7 @@
   const CARPENTRY_ITEMS = ['Cedar Shingle (1/2 Sq)', 'Cedar Shingle (1 Sq)', 'Clapboard', 'Fascia Board (8ft)', 'Molding (8ft)', 'Window Sill', 'Window Frame', 'Window Flashing', 'Spindle', 'Newel Post', 'Handrail Assy', 'Deck Board (12ft)', 'Deck Board Premium'];
 
   function createSurface(name: string): ExteriorSurface {
-    return { id: uuidv4(), name, siding: {}, doors: {}, windows: {}, trim: {}, carpentry_repairs: {} };
+    return { id: uuidv4(), name, siding: {}, doors: {}, windows: {}, trim: {}, carpentry_repairs: {}, notes: '' };
   }
 
   function addSurface() {
@@ -56,7 +57,7 @@
 
   function handleSubmit() {
     const data: ExteriorScopeData = {
-      client: { name: clientName, email: clientEmail, phone: clientPhone, address: clientAddress, notes: clientNotes },
+      client: { name: clientName, email: clientEmail, phone: clientPhone, address: clientAddress, notes: clientNotes, source: clientSource },
       surfaces,
       project: { surface_grade: surfaceGrade, prep_level: prepLevel, color_scheme: colorScheme, staging, color_samples: colorSamples, notes: projectNotes },
     };
@@ -83,21 +84,38 @@
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label for="ext-client-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-          <input id="ext-client-email" type="email" bind:value={clientEmail} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
+          <label for="ext-client-email" class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-gray-400 font-normal">(optional)</span></label>
+          <input id="ext-client-email" type="email" bind:value={clientEmail} placeholder="Add before sending" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
         </div>
         <div>
-          <label for="ext-client-phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-          <input id="ext-client-phone" type="tel" bind:value={clientPhone} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
+          <label for="ext-client-phone" class="block text-sm font-medium text-gray-700 mb-1">Phone <span class="text-gray-400 font-normal">(optional)</span></label>
+          <input id="ext-client-phone" type="tel" bind:value={clientPhone} placeholder="Add before sending" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
         </div>
       </div>
       <div>
         <label for="ext-client-addr" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
         <input id="ext-client-addr" type="text" bind:value={clientAddress} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
       </div>
-      <div>
-        <label for="ext-client-notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-        <textarea id="ext-client-notes" bind:value={clientNotes} rows="2" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500"></textarea>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="ext-client-source" class="block text-sm font-medium text-gray-700 mb-1">How'd they find you? <span class="text-gray-400 font-normal">(optional)</span></label>
+          <select id="ext-client-source" bind:value={clientSource} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500">
+            <option value="">—</option>
+            <option value="google">Google Search</option>
+            <option value="referral">Referral</option>
+            <option value="repeat">Repeat Client</option>
+            <option value="social">Social Media</option>
+            <option value="yard_sign">Yard Sign / Job Site</option>
+            <option value="nextdoor">Nextdoor</option>
+            <option value="yelp">Yelp</option>
+            <option value="homeadvisor">HomeAdvisor / Angi</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label for="ext-client-notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+          <textarea id="ext-client-notes" bind:value={clientNotes} rows="1" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500"></textarea>
+        </div>
       </div>
       <div class="flex justify-end">
         <button onclick={() => step = 2} class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700">Next: Surfaces</button>
@@ -197,6 +215,12 @@
                 </div>
               {/each}
             </div>
+          </div>
+
+          <!-- Surface Notes -->
+          <div>
+            <label for="surface-notes-{si}" class="block text-xs font-medium text-gray-600 mb-1">Surface Notes</label>
+            <textarea id="surface-notes-{si}" bind:value={surf.notes} rows="2" placeholder="e.g., peeling paint on north face, wood rot near foundation" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs text-gray-900 outline-none focus:border-blue-500"></textarea>
           </div>
         </div>
       {/if}

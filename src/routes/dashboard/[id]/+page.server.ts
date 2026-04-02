@@ -26,7 +26,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
       ...sub,
       scope: sub.scope_json ? JSON.parse(sub.scope_json) : {},
       quote: sub.quote_json ? JSON.parse(sub.quote_json) : null,
+      previous_versions: sub.previous_versions_json ? JSON.parse(sub.previous_versions_json) : [],
     },
-    tenant: { slug: tenantConfig.slug, company_name: tenantConfig.company_name },
+    tenant: { slug: tenantConfig.slug, company_name: tenantConfig.company_name, output_format: tenantConfig.output_format || 'google_docs' },
   };
 };

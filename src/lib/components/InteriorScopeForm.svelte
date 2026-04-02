@@ -12,6 +12,7 @@
   let clientPhone = $state('');
   let clientAddress = $state('');
   let clientNotes = $state('');
+  let clientSource = $state('');
 
   // Step 2: Rooms
   let rooms = $state<InteriorRoom[]>([createRoom()]);
@@ -90,7 +91,7 @@
 
   function handleSubmit() {
     const data: InteriorScopeData = {
-      client: { name: clientName, email: clientEmail, phone: clientPhone, address: clientAddress, notes: clientNotes },
+      client: { name: clientName, email: clientEmail, phone: clientPhone, address: clientAddress, notes: clientNotes, source: clientSource },
       rooms,
       project: { surface_grade: surfaceGrade, prep_level: prepLevel, color_samples: colorSamples, transportation, notes: projectNotes },
     };
@@ -119,21 +120,38 @@
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label for="int-client-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-          <input id="int-client-email" type="email" bind:value={clientEmail} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
+          <label for="int-client-email" class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-gray-400 font-normal">(optional)</span></label>
+          <input id="int-client-email" type="email" bind:value={clientEmail} placeholder="Add before sending" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
         </div>
         <div>
-          <label for="int-client-phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-          <input id="int-client-phone" type="tel" bind:value={clientPhone} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
+          <label for="int-client-phone" class="block text-sm font-medium text-gray-700 mb-1">Phone <span class="text-gray-400 font-normal">(optional)</span></label>
+          <input id="int-client-phone" type="tel" bind:value={clientPhone} placeholder="Add before sending" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
         </div>
       </div>
       <div>
         <label for="int-client-address" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
         <input id="int-client-address" type="text" bind:value={clientAddress} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
       </div>
-      <div>
-        <label for="int-client-notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-        <textarea id="int-client-notes" bind:value={clientNotes} rows="2" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500"></textarea>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="int-client-source" class="block text-sm font-medium text-gray-700 mb-1">How'd they find you? <span class="text-gray-400 font-normal">(optional)</span></label>
+          <select id="int-client-source" bind:value={clientSource} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500">
+            <option value="">—</option>
+            <option value="google">Google Search</option>
+            <option value="referral">Referral</option>
+            <option value="repeat">Repeat Client</option>
+            <option value="social">Social Media</option>
+            <option value="yard_sign">Yard Sign / Job Site</option>
+            <option value="nextdoor">Nextdoor</option>
+            <option value="yelp">Yelp</option>
+            <option value="homeadvisor">HomeAdvisor / Angi</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label for="int-client-notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+          <textarea id="int-client-notes" bind:value={clientNotes} rows="1" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500"></textarea>
+        </div>
       </div>
       <div class="flex justify-end">
         <button onclick={() => step = 2} class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700">Next: Rooms</button>
@@ -234,6 +252,12 @@
                 </label>
               {/each}
             </div>
+          </div>
+
+          <!-- Room Notes -->
+          <div>
+            <label for="room-notes-{ri}" class="block text-xs font-medium text-gray-600 mb-1">Room Notes</label>
+            <textarea id="room-notes-{ri}" bind:value={room.notes} rows="2" placeholder="e.g., accent wall in Hale Navy, water damage on north wall" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs text-gray-900 outline-none focus:border-blue-500"></textarea>
           </div>
         </div>
       {/if}

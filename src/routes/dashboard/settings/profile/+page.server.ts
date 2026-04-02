@@ -9,20 +9,16 @@ export const load: PageServerLoad = async ({ locals }) => {
   const tenant = getTenantById(locals.user.tenant_id);
   if (!tenant) throw redirect(303, '/auth/register');
 
-  const promptsShown = tenant.prompts_shown ? JSON.parse(tenant.prompts_shown as string) : {};
-
   return {
     tenant: {
       company_name: tenant.company_name,
-      enabled_trades: tenant.enabled_trades,
+      contact_email: tenant.contact_email,
+      contact_phone: tenant.contact_phone,
+      website_url: tenant.website_url,
+      service_areas: tenant.service_areas,
       primary_color: tenant.primary_color,
-      output_format: tenant.output_format || 'google_docs',
-      has_default_colors: tenant.primary_color === '#2563eb',
-      has_contact_info: !!(tenant.contact_phone && tenant.contact_email),
-    },
-    prompts: {
-      show_pricing: !promptsShown.pricing_reviewed,
-      show_branding: !promptsShown.branding_customized && tenant.primary_color === '#2563eb',
+      accent_color: tenant.accent_color,
+      logo_url: tenant.logo_url,
     },
   };
 };

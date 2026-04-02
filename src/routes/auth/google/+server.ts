@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import { google } from 'googleapis';
+import { env } from '$env/dynamic/private';
 import type { RequestHandler } from './$types.js';
 
 const SCOPES = [
@@ -12,9 +13,9 @@ const SCOPES = [
 ];
 
 export const GET: RequestHandler = async () => {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:5173/auth/google/callback';
+  const clientId = env.GOOGLE_CLIENT_ID;
+  const clientSecret = env.GOOGLE_CLIENT_SECRET;
+  const redirectUri = env.GOOGLE_REDIRECT_URI || 'http://localhost:5173/auth/google/callback';
 
   if (!clientId || !clientSecret) {
     throw redirect(303, '/auth/login?error=google_not_configured');
