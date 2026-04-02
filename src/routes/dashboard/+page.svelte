@@ -27,6 +27,13 @@
     expired: 'bg-yellow-100 text-yellow-700',
   };
 
+  const filterActiveColors: Record<string, string> = {
+    draft: 'bg-gray-700 text-white',
+    sent: 'bg-blue-600 text-white',
+    accepted: 'bg-green-600 text-white',
+    declined: 'bg-red-600 text-white',
+  };
+
   const tradeLabels: Record<string, string> = {
     interior: 'Interior',
     exterior: 'Exterior',
@@ -170,7 +177,7 @@
             </button>
             {#each ['draft', 'sent', 'accepted', 'declined'] as status}
               <button onclick={() => statusFilter = status}
-                class="px-3 py-1 text-xs font-medium rounded-full {statusFilter === status ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
+                class="px-3 py-1 text-xs font-medium rounded-full {statusFilter === status ? filterActiveColors[status] : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
                 {status.charAt(0).toUpperCase() + status.slice(1)}
               </button>
             {/each}

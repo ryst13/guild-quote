@@ -10,7 +10,7 @@
     `Hi ${sub.first_name},\n\nPlease find your ${data.tradeLabel.toLowerCase()} estimate attached. This is based on the scope we discussed during our walkthrough.\n\nThe estimated total is $${Math.round(sub.grand_total).toLocaleString()}.\n\nIf you have any questions, please don't hesitate to reply to this email${data.tenant.contact_phone ? ` or call us at ${data.tenant.contact_phone}` : ''}.\n\nBest regards,\n${data.tenant.company_name}`
   );
   let attachPdf = $state(true);
-  let includeDocLink = $state(!!sub.google_doc_url);
+  let includeDocLink = $state(false);
   let sending = $state(false);
   let sent = $state(false);
   let sendError = $state('');

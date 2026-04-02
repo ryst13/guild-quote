@@ -10,6 +10,7 @@ import type { EstimateDocument } from './estimate-templates.js';
 export async function createEstimateSheet(
   tenant: TenantConfig,
   doc: EstimateDocument,
+  projectFolderId?: string | null,
 ): Promise<string | null> {
   if (!tenant.google_refresh_token) return null;
 
@@ -23,8 +24,8 @@ export async function createEstimateSheet(
   const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
   const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
-  // Ensure GuildQuote/Estimates folder exists
-  let folderId = tenant.google_drive_folder_id;
+  // Determine target folder: project folder (new structure) > legacy Estimates folder > create legacy
+  let folderId = projectFolderId || tenant.google_drive_folder_id;
   if (!folderId) {
     const gqFolder = await drive.files.create({
       requestBody: { name: 'GuildQuote', mimeType: 'application/vnd.google-apps.folder' },
@@ -149,17 +150,17 @@ export async function createEstimateSheet(
   let isAlternate = false;
   for (const row of doc.recap_table.rows) {
     addRow(
-      [row.area, '', `$${Math.round(row.price).toLocaleString()}`, row.walls, row.ceilings, row.doors, row.windows, row.trim, row.repairs],
+      [row.area, '', `$${row.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, row.walls, row.ceilings, row.doors, row.windows, row.trim, row.repairs],
       isAlternate ? { grayBg: true } : undefined
     );
     isAlternate = !isAlternate;
   }
   addBlank();
 
-  addRow(['', '', '', '', '', '', '', 'Materials', `$${Math.round(doc.recap_table.materials_total).toLocaleString()}`], { bold: true });
+  addRow(['', '', '', '', '', '', '', 'Materials', `$${doc.recap_table.materials_total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`], { bold: true });
   addBlank();
 
-  const totalRow = addRow(['', '', '', '', '', '', '', 'TOTAL', `$${Math.round(doc.recap_table.grand_total).toLocaleString()}`], { bold: true, accent: true });
+  const totalRow = addRow(['', '', '', '', '', '', '', 'TOTAL', `$${doc.recap_table.grand_total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`], { bold: true, accent: true });
   addBlank();
 
   // Production
@@ -185,7 +186,7 @@ export async function createEstimateSheet(
   addRow(['Completion', 'Due at 100% project completion', '', '', '', `$${doc.payment_terms.completion_amount.toLocaleString()}`, `${Math.round(doc.payment_terms.completion_pct * 100)}%`], { bold: true });
   addBlank();
 
-  addRow(['', '', '', '', '', `Total: $${Math.round(doc.payment_terms.total).toLocaleString()}`], { bold: true, accent: true });
+  addRow(['', '', '', '', '', `Total: $${doc.payment_terms.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`], { bold: true, accent: true });
   addBlank();
   addBlank();
 

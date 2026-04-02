@@ -1,8 +1,9 @@
 import { redirect, error } from '@sveltejs/kit';
 import { db } from '$lib/server/db.js';
 import { submissions } from '$lib/server/schema.js';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, count } from 'drizzle-orm';
 import { getTenantById } from '$lib/server/tenant.js';
+import { getAccessState } from '$lib/server/features.js';
 import type { PageServerLoad } from './$types.js';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -21,6 +22,13 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
   if (!sub) throw error(404, 'Submission not found');
 
+  const access = getAccessState(tenantConfig);
+
+  // Count total estimates for this tenant (for ML teaser gating)
+  const [{ total }] = db.select({ total: count() }).from(submissions)
+    .where(eq(submissions.tenant_id, locals.user.tenant_id))
+    .all();
+
   return {
     submission: {
       ...sub,
@@ -29,5 +37,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
       previous_versions: sub.previous_versions_json ? JSON.parse(sub.previous_versions_json) : [],
     },
     tenant: { slug: tenantConfig.slug, company_name: tenantConfig.company_name, output_format: tenantConfig.output_format || 'google_docs' },
+    plan: access.plan,
+    isPro: access.plan === 'gq_pro' || access.isTrialing,
+    estimateCount: total,
   };
 };

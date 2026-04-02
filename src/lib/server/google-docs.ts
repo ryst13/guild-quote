@@ -7,6 +7,7 @@ export async function createEstimateDoc(
   client: ClientInfo,
   quote: QuoteResult,
   submissionId: string,
+  projectFolderId?: string | null,
 ): Promise<string | null> {
   if (!tenant.google_refresh_token) return null;
 
@@ -20,10 +21,9 @@ export async function createEstimateDoc(
   const drive = google.drive({ version: 'v3', auth: oauth2Client });
   const docs = google.docs({ version: 'v1', auth: oauth2Client });
 
-  // Ensure folder exists
-  let folderId = tenant.google_drive_folder_id;
+  // Determine target folder: project folder (new structure) > legacy Estimates folder > create legacy
+  let folderId = projectFolderId || tenant.google_drive_folder_id;
   if (!folderId) {
-    // Create GuildQuote/Estimates folder
     const gqFolder = await drive.files.create({
       requestBody: { name: 'GuildQuote', mimeType: 'application/vnd.google-apps.folder' },
       fields: 'id',
@@ -92,9 +92,9 @@ export async function createEstimateDoc(
   for (const section of quote.sections) {
     insertText(section.label, true, 12);
     for (const item of section.items) {
-      insertText(`  ${item.label}  x${item.quantity}  $${Math.round(item.sales_price).toLocaleString()}`);
+      insertText(`  ${item.label}  x${item.quantity}  $${item.sales_price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
     }
-    insertText(`  Section Total: $${Math.round(section.sales_price).toLocaleString()}`, true);
+    insertText(`  Section Total: $${section.sales_price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, true);
     insertText('');
   }
 
@@ -102,32 +102,38 @@ export async function createEstimateDoc(
   if (quote.surcharges.length > 0) {
     insertText('Surcharges', true, 12);
     for (const s of quote.surcharges) {
-      insertText(`  ${s.label}: $${Math.round(s.sales_amount).toLocaleString()}`);
+      insertText(`  ${s.label}: $${s.sales_amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
     }
     insertText('');
   }
 
   // Labor total
-  insertText(`Labor Total: $${Math.round(quote.labor_total).toLocaleString()}`, true, 13);
+  insertText(`Labor Total: $${quote.labor_total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, true, 13);
   insertText('');
 
   // Materials
   if (quote.materials.length > 0) {
     insertText('Materials', true, 12);
     for (const m of quote.materials) {
-      insertText(`  ${m.label}${m.gallons ? ` (${m.gallons} gal)` : ''}: $${Math.round(m.cost).toLocaleString()}`);
+      insertText(`  ${m.label}${m.gallons ? ` (${m.gallons} gal)` : ''}: $${m.cost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
     }
-    insertText(`Materials Total: $${Math.round(quote.materials_total).toLocaleString()}`, true);
+    insertText(`Materials Total: $${quote.materials_total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, true);
     insertText('');
   }
 
   // Grand total
-  insertText(`GRAND TOTAL: $${Math.round(quote.grand_total).toLocaleString()}`, true, 16);
+  insertText(`GRAND TOTAL: $${quote.grand_total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, true, 16);
   insertText('');
 
-  // Production
+  // Production (show ranges ±20%)
   if (quote.production.painting_hours > 0) {
-    insertText(`Estimated: ${quote.production.painting_hours.toFixed(1)} hours, ${quote.production.crew_size}-person crew, ~${quote.production.duration_days.toFixed(1)} days`);
+    const hrs = quote.production.painting_hours;
+    const days = quote.production.duration_days;
+    const hrsLow = Math.max(1, Math.round(hrs * 0.80));
+    const hrsHigh = Math.max(hrsLow + 1, Math.round(hrs * 1.20));
+    const dLow = Math.max(0.5, Math.round(days * 0.80 * 2) / 2);
+    const dHigh = Math.max(dLow + 0.5, Math.round(days * 1.20 * 2) / 2);
+    insertText(`Estimated: ${hrsLow}-${hrsHigh} hours, ${quote.production.crew_size}-person crew, ${dLow}-${dHigh} days`);
     insertText('');
   }
 

@@ -81,8 +81,14 @@
           <div class="text-3xl font-bold text-green-600 mb-4">${Math.round(result.quote.grand_total).toLocaleString()}</div>
 
           {#if result.quote.production.painting_hours > 0}
+            {@const hrs = result.quote.production.painting_hours}
+            {@const days = result.quote.production.duration_days}
+            {@const hrsLow = Math.max(1, Math.round(hrs * 0.80))}
+            {@const hrsHigh = Math.max(hrsLow + 1, Math.round(hrs * 1.20))}
+            {@const dLow = Math.max(0.5, Math.round(days * 0.80 * 2) / 2)}
+            {@const dHigh = Math.max(dLow + 0.5, Math.round(days * 1.20 * 2) / 2)}
             <p class="text-sm text-gray-500 mb-6">
-              {result.quote.production.painting_hours.toFixed(1)} hrs | {result.quote.production.crew_size}-person crew | ~{result.quote.production.duration_days.toFixed(1)} days
+              {hrsLow}-{hrsHigh} hrs | {result.quote.production.crew_size}-person crew | {dLow}-{dHigh} days
             </p>
           {/if}
 

@@ -1,4 +1,6 @@
 import type { InteriorScopeData, ExteriorScopeData, EpoxyScopeData, QuoteResult, SectionResult, LineItem, CatalogConfig } from '$lib/types/index.js';
+import priceBenchmarks from '$lib/data/price-benchmarks.json';
+import scopeCheckerRules from '$lib/data/scope-checker-rules.json';
 
 const HOURLY_RATE = 40;
 
@@ -95,10 +97,10 @@ const INTERIOR_PAINT = {
   ceiling: { product: "Ben Moore Muresco",         coverage: 400, price_per_gallon: 40.78 },
 };
 
-// ─── BENCHMARKS ─────────────────────────────────────────────────
+// ─── BENCHMARKS (from ML price_benchmarks.pkl → JSON) ──────────
 const INTERIOR_BENCHMARKS = {
-  overall: { p25: 3546, p50: 6907, p75: 14970 },
-  by_rooms: { "1-2": { p50: 5668 }, "3-4": { p50: 3813 }, "8+": { p50: 13794 } } as Record<string, { p50: number }>,
+  overall: priceBenchmarks.interior,
+  by_rooms: priceBenchmarks.interior_by_rooms as Record<string, { p25: number; p50: number; p75: number; mean: number; n: number }>,
 };
 
 // ─── WALL PAINT RATE ────────────────────────────────────────────
@@ -308,41 +310,57 @@ export function calculateInteriorQuote(formData: InteriorScopeData, _catalog: Ca
   const overheads = grossProfit * 0.12;
   const netProfit = grossProfit - tax - overheads;
 
-  // ─── BENCHMARKS ─────────────────────────────────────────────
-  let benchmarks: { percentile: string; message: string } | undefined;
+  // ─── BENCHMARKS (ML-driven from 255 interior projects) ──────
+  let benchmarks: { percentile: string; message: string; win_rate?: string } | undefined;
   const roomCount = formData.rooms.length;
-  const benchmarkKey = roomCount <= 2 ? '1-2' : roomCount <= 4 ? '3-4' : '8+';
-  const p50 = INTERIOR_BENCHMARKS.by_rooms[benchmarkKey]?.p50;
-  if (p50) {
+  const benchmarkKey = roomCount <= 2 ? '1-2' : roomCount <= 4 ? '3-4' : roomCount <= 7 ? '5-7' : '8+';
+  const roomBench = INTERIOR_BENCHMARKS.by_rooms[benchmarkKey];
+  const overall = INTERIOR_BENCHMARKS.overall;
+  if (overall) {
     let label: string;
     let msg: string;
-    if (grandTotal < INTERIOR_BENCHMARKS.overall.p25) {
+    if (grandTotal < overall.p25) {
       label = 'below-average';
       msg = `At $${Math.round(grandTotal).toLocaleString()}, this is priced below most ${roomCount}-room interior jobs. Make sure your scope is complete.`;
-    } else if (grandTotal < INTERIOR_BENCHMARKS.overall.p50) {
+    } else if (grandTotal < overall.p50) {
       label = 'competitive';
       msg = `At $${Math.round(grandTotal).toLocaleString()}, this is competitively priced for a ${roomCount}-room interior job.`;
-    } else if (grandTotal < INTERIOR_BENCHMARKS.overall.p75) {
+    } else if (grandTotal < overall.p75) {
       label = 'mid-range';
       msg = `At $${Math.round(grandTotal).toLocaleString()}, this is in the typical range for a ${roomCount}-room interior job.`;
     } else {
       label = 'premium';
       msg = `At $${Math.round(grandTotal).toLocaleString()}, this is a premium estimate for a ${roomCount}-room interior job. Justified if scope or conditions warrant it.`;
     }
-    benchmarks = { percentile: label, message: msg };
+    // Add room-count median context if available
+    if (roomBench) {
+      msg += ` Median for ${benchmarkKey} room jobs: $${Math.round(roomBench.p50).toLocaleString()}.`;
+    }
+    // Add win rate context
+    const winKey = grandTotal < 3000 ? 'lt3K' : grandTotal < 7000 ? '3-7K' : grandTotal < 15000 ? '7-15K' : '15Kplus';
+    const wr = priceBenchmarks.win_rates[winKey];
+    const winRateNote = wr ? `Jobs in this price range close at ~${Math.round(wr.win_rate)}%.` : undefined;
+    benchmarks = { percentile: label, message: msg, win_rate: winRateNote };
   }
 
-  // ─── COMPLETENESS WARNINGS ──────────────────────────────────
+  // ─── COMPLETENESS WARNINGS (ML-driven from scope_checker_rules) ──
   const completenessWarnings: string[] = [];
-  const totalItems = formData.rooms.reduce((s, r) => s + Object.values(r.items).reduce((a, b) => a + b, 0), 0);
   const hasTrim = formData.rooms.some(r => Object.entries(r.items).some(([k, v]) => k.startsWith('Trim') && v > 0));
   const hasDoors = formData.rooms.some(r => Object.entries(r.items).some(([k, v]) => k.startsWith('Door') && v > 0));
+  const hasWindows = formData.rooms.some(r => Object.entries(r.items).some(([k, v]) => k.startsWith('Window') && v > 0));
+  const hasCeiling = formData.rooms.some(r => r.ceiling_included);
 
-  if (roomCount >= 3 && !hasTrim) {
-    completenessWarnings.push('Most 3+ room jobs include baseboard trim. Did you check for trim work?');
-  }
-  if (roomCount >= 2 && !hasDoors) {
-    completenessWarnings.push('Did you check for door painting?');
+  for (const rule of scopeCheckerRules.interior.item_frequencies) {
+    if (rule.frequency < 15) continue; // Only warn for items present in 15%+ of jobs
+    if (rule.col === 'has_trim' && !hasTrim && roomCount >= 2) {
+      completenessWarnings.push(`${Math.round(rule.frequency)}% of interior jobs include trim work. Did you check for baseboard or crown trim?`);
+    } else if (rule.col === 'total_doors' && !hasDoors && roomCount >= 2) {
+      completenessWarnings.push(`${Math.round(rule.frequency)}% of interior jobs include door painting${rule.avg_when_present ? ` (avg ${Math.round(rule.avg_when_present)} doors)` : ''}. Did you check?`);
+    } else if (rule.col === 'total_windows' && !hasWindows && roomCount >= 3) {
+      completenessWarnings.push(`${Math.round(rule.frequency)}% of interior jobs include window painting. Did you check for window trim?`);
+    } else if (rule.col === 'has_ceiling' && !hasCeiling && roomCount >= 3) {
+      completenessWarnings.push(`${Math.round(rule.frequency)}% of interior jobs include ceiling painting. Did you check?`);
+    }
   }
 
   return {
@@ -453,8 +471,8 @@ const EXTERIOR_PAINT = {
 };
 
 const EXTERIOR_BENCHMARKS = {
-  overall: { p25: 3994, p50: 11797, p75: 24447 },
-  by_surfaces: { "1-2": { p50: 3030 }, "3-4": { p50: 17964 }, "5+": { p50: 24447 } } as Record<string, { p50: number }>,
+  overall: priceBenchmarks.exterior,
+  by_surfaces: priceBenchmarks.exterior_by_surfaces as Record<string, { p25: number; p50: number; p75: number; mean: number; n: number }>,
 };
 
 export function calculateExteriorQuote(formData: ExteriorScopeData, _catalog: CatalogConfig, multiplier: number = 1.1): QuoteResult {
@@ -570,9 +588,11 @@ export function calculateExteriorQuote(formData: ExteriorScopeData, _catalog: Ca
   const overheads = grossProfit * 0.12;
   const netProfit = grossProfit - tax - overheads;
 
-  // Benchmarks
+  // Benchmarks (ML-driven from 133 exterior projects)
   const surfCount = formData.surfaces.length;
   const bOverall = EXTERIOR_BENCHMARKS.overall;
+  const surfKey = surfCount <= 2 ? '1-2' : surfCount <= 4 ? '3-4' : '5+';
+  const surfBench = EXTERIOR_BENCHMARKS.by_surfaces[surfKey];
   let bLabel: string;
   let bMsg: string;
   if (grandTotal < bOverall.p25) {
@@ -588,15 +608,30 @@ export function calculateExteriorQuote(formData: ExteriorScopeData, _catalog: Ca
     bLabel = 'premium';
     bMsg = `At $${Math.round(grandTotal).toLocaleString()}, this is a premium estimate for a ${surfCount}-surface exterior job. Justified if scope or conditions warrant it.`;
   }
-  const benchmarks = { percentile: bLabel, message: bMsg };
+  if (surfBench) {
+    bMsg += ` Median for ${surfKey} surface jobs: $${Math.round(surfBench.p50).toLocaleString()}.`;
+  }
+  const winKey = grandTotal < 3000 ? 'lt3K' : grandTotal < 7000 ? '3-7K' : grandTotal < 15000 ? '7-15K' : '15Kplus';
+  const wr = priceBenchmarks.win_rates[winKey];
+  const benchmarks = { percentile: bLabel, message: bMsg, win_rate: wr ? `Jobs in this price range close at ~${Math.round(wr.win_rate)}%.` : undefined };
 
-  // Completeness
+  // Completeness (ML-driven from scope_checker_rules)
   const completenessWarnings: string[] = [];
   const hasSiding = formData.surfaces.some(s => Object.values(s.siding).some(v => v > 0));
   const hasTrim = formData.surfaces.some(s => Object.values(s.trim).some(v => v > 0));
   const hasRepairs = formData.surfaces.some(s => Object.values(s.carpentry_repairs).some(v => v > 0));
-  if (hasSiding && !hasTrim) completenessWarnings.push('52% of exterior jobs include trim work. Did you check for trim?');
-  if (surfCount >= 3 && !hasRepairs) completenessWarnings.push('27% of multi-surface jobs need repairs. Did you check for carpentry?');
+
+  for (const rule of scopeCheckerRules.exterior.item_frequencies) {
+    if (rule.frequency < 20) continue; // Only warn for items present in 20%+ of jobs
+    if (rule.col === 'total_ext_trim' && hasSiding && !hasTrim) {
+      completenessWarnings.push(`${Math.round(rule.frequency)}% of exterior jobs include trim work. Did you check for trim?`);
+    } else if ((rule.col === 'total_repairs' || rule.col === 'has_exterior_repairs') && surfCount >= 2 && !hasRepairs) {
+      completenessWarnings.push(`${Math.round(rule.frequency)}% of multi-surface jobs need repairs. Did you check for carpentry?`);
+      break; // Don't double-warn for repairs + has_exterior_repairs
+    } else if (rule.col === 'total_siding_area' && !hasSiding && surfCount >= 2) {
+      completenessWarnings.push(`${Math.round(rule.frequency)}% of exterior jobs include siding. Did you check?`);
+    }
+  }
 
   return {
     trade_type: 'exterior', sections, labor_subtotal: totalSalesPrice, surcharges,

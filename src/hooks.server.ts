@@ -2,6 +2,8 @@ import { runMigrations } from '$lib/server/migrate.js';
 import { db } from '$lib/server/db.js';
 import { sessions, users, tenants } from '$lib/server/schema.js';
 import { eq } from 'drizzle-orm';
+import { getTenantById } from '$lib/server/tenant.js';
+import { getAccessState } from '$lib/server/features.js';
 import type { Handle } from '@sveltejs/kit';
 
 runMigrations();
@@ -22,11 +24,13 @@ export const handle: Handle = async ({ event, resolve }) => {
           last_name: user.last_name,
           role: user.role as 'contractor_admin' | 'contractor_staff',
           tenant_id: user.tenant_id,
+          is_platform_admin: user.is_platform_admin ?? false,
         };
 
         if (user.tenant_id) {
-          const tenant = db.select().from(tenants).where(eq(tenants.id, user.tenant_id)).get();
+          const tenant = getTenantById(user.tenant_id);
           if (tenant) {
+            const access = getAccessState(tenant);
             event.locals.tenant = {
               id: tenant.id,
               slug: tenant.slug,
@@ -34,7 +38,12 @@ export const handle: Handle = async ({ event, resolve }) => {
               primary_color: tenant.primary_color,
               accent_color: tenant.accent_color,
               logo_url: tenant.logo_url,
+              plan: tenant.plan,
+              payment_status: tenant.payment_status,
+              lifetime_access: tenant.lifetime_access,
+              referral_code: tenant.referral_code,
             };
+            event.locals.access = access;
           }
         }
       }

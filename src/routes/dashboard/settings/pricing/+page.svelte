@@ -4,6 +4,7 @@
   let { data }: { data: PageData } = $props();
   let config = $state(structuredClone(data.config));
   let outputFormat = $state(data.outputFormat);
+  let showLosp = $state(data.showLosp);
   let saving = $state(false);
   let saved = $state(false);
   let activeTab = $state<'surcharges' | 'materials' | 'payment'>('surcharges');
@@ -12,11 +13,11 @@
 
   async function saveConfig() {
     saving = true;
-    // Save output format separately via tenant update
+    // Save output format + LOSP toggle via tenant update
     await fetch('/api/tenant/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ output_format: outputFormat }),
+      body: JSON.stringify({ output_format: outputFormat, show_losp: showLosp }),
     });
     const res = await fetch('/api/tenant/update-pricing', {
       method: 'POST',
@@ -92,6 +93,25 @@
           >
             <div class="font-semibold text-gray-900 text-sm">PDF Only</div>
             <div class="text-xs text-gray-500 mt-1">No Google integration needed. PDF generated and attached to emails.</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- LOSP Toggle -->
+      <div class="rounded-xl bg-white border border-gray-200 p-6 mb-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="font-semibold text-gray-900">Surface Preparation Options</h2>
+            <p class="text-sm text-gray-500 mt-1">Show Level of Surface Preparation (LOSP) tier options on estimates. When enabled, estimates include prep tier options with pricing.</p>
+          </div>
+          <button
+            onclick={() => showLosp = !showLosp}
+            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out {showLosp ? 'bg-blue-600' : 'bg-gray-200'}"
+            role="switch"
+            aria-checked={showLosp}
+            aria-label="Toggle surface preparation options"
+          >
+            <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {showLosp ? 'translate-x-5' : 'translate-x-0'}"></span>
           </button>
         </div>
       </div>

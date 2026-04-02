@@ -10,12 +10,12 @@
   let showDeleteConfirm = $state(false);
   let showAcceptModal = $state(false);
   let showDeclineModal = $state(false);
-  let closePrice = $state(sub.sales_price?.toString() || '');
+  let closePrice = $state(sub.sales_price?.toFixed(2) || '');
   let declineReason = $state('');
 
   const DECLINE_REASONS = ['Price too high', 'Went with competitor', 'Project cancelled', 'Timing / scheduling', 'Scope changed', 'No response', 'Other'];
 
-  let adjustedPrice = $state(sub.sales_price?.toString() || '');
+  let adjustedPrice = $state(sub.sales_price?.toFixed(2) || '');
   let notes = $state(sub.estimator_notes || '');
   let originalPrice = sub.quote?.grand_total || sub.sales_price || 0;
   let priceChanged = $derived(parseFloat(adjustedPrice) !== originalPrice && adjustedPrice !== '');
@@ -27,6 +27,85 @@
 
   let googleLinkLabel = $derived(data.tenant.output_format === 'google_sheets' ? 'Open Sheet' : 'Open Doc');
   let showLineItems = $state(true);
+  let snapshotLang = $state('en');
+  let generatingSnapshot = $state(false);
+  let snapshotUrl = $state(sub.snapshot_pdf_url || '');
+  let snapshotDocUrl = $state(sub.snapshot_doc_url || '');
+  let editingPricing = $state(false);
+  let savingPricing = $state(false);
+  let showVersionHistory = $state(false);
+  let deleteConfirmText = $state('');
+  let justMarkedWon = $state(false);
+  let snapshotPanel: HTMLDivElement | undefined = $state();
+
+  function recalcTotals() {
+    if (!sub.quote) return;
+    let laborSubtotal = 0;
+    for (const section of sub.quote.sections) {
+      section.sales_price = section.items.reduce((s: number, i: any) => s + i.sales_price, 0);
+      section.sub_cost = section.items.reduce((s: number, i: any) => s + i.sub_cost, 0);
+      laborSubtotal += section.sales_price;
+    }
+    sub.quote.labor_subtotal = laborSubtotal;
+    const surchargeTotal = sub.quote.surcharges.reduce((s: number, x: any) => s + x.sales_amount, 0);
+    sub.quote.labor_total = laborSubtotal + surchargeTotal;
+    sub.quote.materials_total = sub.quote.materials.reduce((s: number, m: any) => s + m.cost, 0);
+    sub.quote.grand_total = sub.quote.labor_total + sub.quote.materials_total;
+  }
+
+  async function savePricingEdits() {
+    if (!sub.quote) return;
+    savingPricing = true;
+    // Save updated quote_json
+    await fetch(`/api/submissions/${sub.id}/update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ quote_json: JSON.stringify(sub.quote), sales_price: sub.quote.grand_total }),
+    });
+    // Regenerate PDF/Doc with new prices
+    const res = await fetch(`/api/submissions/${sub.id}/regenerate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adjusted_price: null }),
+    });
+    if (res.ok) {
+      const result = await res.json();
+      if (result.pdf_url) sub.estimate_pdf_url = result.pdf_url;
+      if (result.google_doc_url) sub.google_doc_url = result.google_doc_url;
+    }
+    sub.sales_price = sub.quote.grand_total;
+    adjustedPrice = sub.quote.grand_total.toFixed(2);
+    originalPrice = sub.quote.grand_total;
+    editingPricing = false;
+    savingPricing = false;
+    saved = true;
+    setTimeout(() => { saved = false; }, 2000);
+  }
+
+  const SNAPSHOT_LANGS = [
+    { code: 'en', label: 'English' },
+    { code: 'es', label: 'Español' },
+    { code: 'pt', label: 'Português' },
+    { code: 'ro', label: 'Română' },
+    { code: 'zh-yue', label: '粵語' },
+  ];
+
+  async function generateSnapshot() {
+    generatingSnapshot = true;
+    const res = await fetch(`/api/submissions/${sub.id}/snapshot`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lang: snapshotLang }),
+    });
+    const result = await res.json();
+    if (result.pdf_url) {
+      snapshotUrl = result.pdf_url;
+    }
+    if (result.snapshot_doc_url) {
+      snapshotDocUrl = result.snapshot_doc_url;
+    }
+    generatingSnapshot = false;
+  }
 
   const statusColors: Record<string, string> = {
     draft: 'bg-gray-100 text-gray-700',
@@ -118,9 +197,13 @@
       }),
     });
     sub.estimate_status = 'accepted';
+    sub.close_price = parseFloat(closePrice) || sub.sales_price;
     showAcceptModal = false;
+    justMarkedWon = true;
     saved = true;
     setTimeout(() => { saved = false; }, 2000);
+    // Scroll to snapshot panel after a tick
+    setTimeout(() => { snapshotPanel?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 300);
   }
 
   async function markDeclined() {
@@ -189,6 +272,10 @@
 
   function sendToClient() {
     window.location.href = `/dashboard/${sub.id}/send`;
+  }
+
+  function fmt(n: number) {
+    return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   function formatDate(dateStr: string) {
@@ -269,23 +356,43 @@
           <div class="rounded-xl bg-white border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-3">
               <h2 class="font-semibold text-gray-900">Quote Breakdown</h2>
-              <label class="flex items-center gap-2 text-xs text-gray-500">
-                <input type="checkbox" bind:checked={showLineItems} class="rounded border-gray-300" />
-                Show line items
-              </label>
+              <div class="flex items-center gap-3">
+                <label class="flex items-center gap-2 text-xs text-gray-500">
+                  <input type="checkbox" bind:checked={showLineItems} class="rounded border-gray-300" />
+                  Line items
+                </label>
+                {#if editingPricing}
+                  <button onclick={savePricingEdits} disabled={savingPricing} class="px-3 py-1 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">
+                    {savingPricing ? 'Saving...' : 'Save & Regenerate'}
+                  </button>
+                  <button onclick={() => { editingPricing = false; window.location.reload(); }} class="px-3 py-1 text-xs rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50">Cancel</button>
+                {:else}
+                  <button onclick={() => { editingPricing = true; showLineItems = true; }} class="px-3 py-1 text-xs font-medium rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50">Edit Pricing</button>
+                {/if}
+              </div>
             </div>
             <div class="space-y-3">
-              {#each sub.quote.sections || [] as section}
+              {#each sub.quote.sections || [] as section, si}
                 <div class="py-2 border-b border-gray-100">
                   <div class="flex justify-between font-medium text-gray-900">
                     <span>{section.label}</span>
-                    <span>${Math.round(section.sales_price).toLocaleString()}</span>
+                    <span>${fmt(section.sales_price)}</span>
                   </div>
                   {#if showLineItems}
-                    {#each section.items || [] as item}
-                      <div class="flex justify-between text-xs text-gray-500 ml-3">
+                    {#each section.items || [] as item, ii}
+                      <div class="flex justify-between text-xs text-gray-500 ml-3 {editingPricing ? 'py-1' : ''}">
                         <span>{item.label} {item.quantity > 1 ? `x${item.quantity}` : ''}</span>
-                        <span>${Math.round(item.sales_price).toLocaleString()}</span>
+                        {#if editingPricing}
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={Math.round(item.sales_price * 100) / 100}
+                            oninput={(e) => { sub.quote.sections[si].items[ii].sales_price = parseFloat(e.currentTarget.value) || 0; recalcTotals(); }}
+                            class="w-20 text-right rounded border border-gray-300 px-2 py-0.5 text-xs focus:border-blue-500 outline-none"
+                          />
+                        {:else}
+                          <span>${fmt(item.sales_price)}</span>
+                        {/if}
                       </div>
                     {/each}
                   {/if}
@@ -295,10 +402,20 @@
               {#if sub.quote.surcharges?.length > 0}
                 <div class="pt-2 border-t border-gray-200">
                   <div class="text-sm font-medium text-gray-700 mb-1">Surcharges</div>
-                  {#each sub.quote.surcharges as s}
-                    <div class="flex justify-between text-xs text-gray-500">
+                  {#each sub.quote.surcharges as s, si}
+                    <div class="flex justify-between text-xs text-gray-500 {editingPricing ? 'py-1' : ''}">
                       <span>{s.label}</span>
-                      <span>${Math.round(s.sales_amount).toLocaleString()}</span>
+                      {#if editingPricing}
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={Math.round(s.sales_amount * 100) / 100}
+                          oninput={(e) => { sub.quote.surcharges[si].sales_amount = parseFloat(e.currentTarget.value) || 0; recalcTotals(); }}
+                          class="w-20 text-right rounded border border-gray-300 px-2 py-0.5 text-xs focus:border-blue-500 outline-none"
+                        />
+                      {:else}
+                        <span>${fmt(s.sales_amount)}</span>
+                      {/if}
                     </div>
                   {/each}
                 </div>
@@ -306,16 +423,26 @@
 
               <div class="flex justify-between pt-2 border-t border-gray-200 font-medium">
                 <span>Labor Total</span>
-                <span>${Math.round(sub.quote.labor_total || 0).toLocaleString()}</span>
+                <span>${fmt(sub.quote.labor_total || 0)}</span>
               </div>
 
               {#if sub.quote.materials?.length > 0}
                 <div class="pt-2">
                   <div class="text-sm font-medium text-gray-700 mb-1">Materials</div>
-                  {#each sub.quote.materials as m}
-                    <div class="flex justify-between text-xs text-gray-500">
+                  {#each sub.quote.materials as m, mi}
+                    <div class="flex justify-between text-xs text-gray-500 {editingPricing ? 'py-1' : ''}">
                       <span>{m.label}{m.gallons ? ` (${m.gallons} gal)` : ''}</span>
-                      <span>${Math.round(m.cost).toLocaleString()}</span>
+                      {#if editingPricing}
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={Math.round(m.cost * 100) / 100}
+                          oninput={(e) => { sub.quote.materials[mi].cost = parseFloat(e.currentTarget.value) || 0; recalcTotals(); }}
+                          class="w-20 text-right rounded border border-gray-300 px-2 py-0.5 text-xs focus:border-blue-500 outline-none"
+                        />
+                      {:else}
+                        <span>${fmt(m.cost)}</span>
+                      {/if}
                     </div>
                   {/each}
                 </div>
@@ -323,7 +450,7 @@
 
               <div class="flex justify-between pt-2 text-lg font-bold text-green-700 border-t border-gray-200">
                 <span>Grand Total</span>
-                <span>${Math.round(sub.quote.grand_total || 0).toLocaleString()}</span>
+                <span>${fmt(sub.quote.grand_total || 0)}</span>
               </div>
             </div>
           </div>
@@ -345,6 +472,59 @@
               </div>
             </div>
           {/if}
+
+          <!-- Notes -->
+          <div class="rounded-xl bg-white border border-gray-200 p-6">
+            <h2 class="font-semibold text-gray-900 mb-3">Notes</h2>
+            <textarea bind:value={notes} rows={4} placeholder="Internal notes about this estimate..." class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 mb-2"></textarea>
+            <button onclick={saveNotes} disabled={saving} class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+              {saving ? 'Saving...' : 'Save Notes'}
+            </button>
+          </div>
+
+          <!-- Estimate Insights (ML teaser) -->
+          <div class="rounded-xl bg-white border border-gray-200 p-6 relative overflow-hidden">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="font-semibold text-gray-900">Estimate Insights</h2>
+              {#if !data.isPro}
+                <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Pro</span>
+              {/if}
+            </div>
+            {#if data.isPro && data.estimateCount >= 10}
+              <p class="text-xs text-gray-500 mb-3">Based on your {data.estimateCount} estimates:</p>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Your avg {sub.trade_type} estimate</span>
+                  <span class="text-gray-400 italic">Coming soon</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Win rate ({sub.trade_type})</span>
+                  <span class="text-gray-400 italic">Coming soon</span>
+                </div>
+              </div>
+            {:else if data.isPro}
+              <p class="text-xs text-gray-500">We're building your benchmark. Insights appear after 10 estimates ({data.estimateCount} so far).</p>
+            {:else}
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Estimated range for this project</span>
+                  <span class="blur-sm select-none text-gray-700 font-medium">$14,200 – $15,800</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Win probability</span>
+                  <span class="blur-sm select-none text-gray-700 font-medium">78%</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Suggested crew &amp; duration</span>
+                  <span class="blur-sm select-none text-gray-700 font-medium">3-person, 4.5 days</span>
+                </div>
+              </div>
+              <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent"></div>
+              <div class="mt-4 relative z-10">
+                <a href="/upgrade" class="block w-full rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 text-center">See Full Insights</a>
+              </div>
+            {/if}
+          </div>
         {/if}
       </div>
 
@@ -372,12 +552,9 @@
             <div class="text-center py-2">
               <div class="text-sm font-semibold text-green-700">Won</div>
               {#if sub.close_price && sub.close_price !== sub.sales_price}
-                <div class="text-xs text-gray-500 mt-1">Closed at ${Math.round(sub.close_price).toLocaleString()}</div>
+                <div class="text-xs text-gray-500 mt-1">Closed at ${fmt(sub.close_price)}</div>
               {/if}
             </div>
-            <button onclick={sendToClient} class="w-full rounded-lg border border-gray-300 px-4 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
-              Resend Estimate
-            </button>
           {:else if sub.estimate_status === 'declined'}
             <div class="text-center py-2">
               <div class="text-sm font-semibold text-red-600">Lost</div>
@@ -394,10 +571,11 @@
 
         <!-- Price Adjustment -->
         <div class="rounded-xl bg-white border border-gray-200 p-5">
-          <h3 class="text-sm font-semibold text-gray-900 mb-3">Price Adjustment</h3>
+          <h3 class="text-sm font-semibold text-gray-900 mb-1">Price Adjustment</h3>
+          <p class="text-xs text-gray-400 mb-3">Change the total and regenerate — all line items adjust proportionally.</p>
           <div class="space-y-3">
             <div>
-              <label for="detail-price" class="block text-xs text-gray-500 mb-1">Final Price ($)</label>
+              <label for="detail-price" class="block text-xs text-gray-500 mb-1">Set Total Price ($)</label>
               <input id="detail-price" type="number" bind:value={adjustedPrice} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
             </div>
             {#if priceChanged}
@@ -407,15 +585,15 @@
               <div class="rounded-lg bg-gray-50 p-3 text-xs space-y-1">
                 <div class="flex justify-between text-gray-500">
                   <span>Calculated total</span>
-                  <span>${Math.round(originalPrice).toLocaleString()}</span>
+                  <span>${fmt(originalPrice)}</span>
                 </div>
                 <div class="flex justify-between font-medium {diff > 0 ? 'text-green-700' : 'text-red-700'}">
                   <span>{diff > 0 ? 'Markup' : 'Discount'}</span>
-                  <span>{diff > 0 ? '+' : ''}{pct}% ({diff > 0 ? '+' : ''}${Math.round(diff).toLocaleString()})</span>
+                  <span>{diff > 0 ? '+' : ''}{pct}% ({diff > 0 ? '+' : ''}${fmt(diff)})</span>
                 </div>
                 <div class="flex justify-between font-bold text-gray-900 border-t border-gray-200 pt-1">
                   <span>Final price</span>
-                  <span>${Math.round(adj).toLocaleString()}</span>
+                  <span>${fmt(adj)}</span>
                 </div>
               </div>
               <p class="text-xs text-gray-400">The adjustment appears as a {diff > 0 ? 'markup' : 'discount'} line on the estimate. Line item prices stay the same.</p>
@@ -438,11 +616,19 @@
               <a href={sub.google_doc_url} target="_blank" class="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50">
                 {googleLinkLabel}
               </a>
+            {:else}
+              <button onclick={regenerateEstimate} disabled={regenerating} class="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-3 py-2 text-xs font-medium text-gray-400 hover:text-gray-600 hover:border-gray-400 disabled:opacity-50">
+                {regenerating ? 'Generating...' : 'Generate Doc'}
+              </button>
             {/if}
             {#if sub.estimate_pdf_url}
               <a href={sub.estimate_pdf_url} target="_blank" class="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50">
                 Download PDF
               </a>
+            {:else}
+              <button onclick={regenerateEstimate} disabled={regenerating} class="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-3 py-2 text-xs font-medium text-gray-400 hover:text-gray-600 hover:border-gray-400 disabled:opacity-50">
+                {regenerating ? 'Generating...' : 'Generate PDF'}
+              </button>
             {/if}
             <button onclick={duplicateEstimate} class="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50">
               Duplicate
@@ -453,51 +639,92 @@
           </div>
         </div>
 
-        <!-- Version History -->
+        <!-- Project Snapshot -->
+        <div bind:this={snapshotPanel} class="rounded-xl bg-white border p-5 transition-all duration-500 {sub.estimate_status === 'accepted' && justMarkedWon ? 'border-green-400 ring-2 ring-green-200' : 'border-gray-200'}">
+          <h3 class="text-sm font-semibold text-gray-900 mb-1">Project Snapshot</h3>
+          {#if sub.estimate_status === 'accepted' && !snapshotUrl}
+            <p class="text-xs text-green-700 font-medium mb-3">Next step: Generate a Project Snapshot to share with your crew via text, WhatsApp, or print.</p>
+          {:else}
+            <p class="text-xs text-gray-500 mb-3">Crew-facing document with scope, materials, and hours. No pricing.</p>
+          {/if}
+          <div class="flex gap-2 mb-3">
+            <select bind:value={snapshotLang} class="flex-1 rounded-lg border border-gray-300 px-2 py-1.5 text-xs">
+              {#each SNAPSHOT_LANGS as lang}
+                <option value={lang.code}>{lang.label}</option>
+              {/each}
+            </select>
+            <button onclick={generateSnapshot} disabled={generatingSnapshot} class="rounded-lg {sub.estimate_status === 'accepted' && !snapshotUrl ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-900 hover:bg-gray-800'} px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">
+              {generatingSnapshot ? 'Generating...' : 'Generate'}
+            </button>
+          </div>
+          {#if snapshotUrl || snapshotDocUrl}
+            <div class="grid grid-cols-2 gap-2">
+              {#if snapshotUrl}
+                <a href={snapshotUrl} target="_blank" class="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50">
+                  Download PDF
+                </a>
+              {/if}
+              {#if snapshotDocUrl}
+                <a href={snapshotDocUrl} target="_blank" class="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50">
+                  Open Sheet
+                </a>
+              {/if}
+            </div>
+          {/if}
+        </div>
+
+        <!-- Version History (collapsible) -->
         {#if sub.previous_versions && sub.previous_versions.length > 0}
           <div class="rounded-xl bg-white border border-gray-200 p-5">
-            <h3 class="text-sm font-semibold text-gray-900 mb-3">Version History</h3>
-            <div class="space-y-2">
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div onclick={() => showVersionHistory = !showVersionHistory} class="flex items-center justify-between w-full cursor-pointer">
+              <h3 class="text-sm font-semibold text-gray-900">Version History</h3>
+              <svg class="w-4 h-4 text-gray-400 transition-transform {showVersionHistory ? 'rotate-180' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+            </div>
+            <div class="mt-3 space-y-2">
               <div class="flex justify-between text-xs">
                 <span class="font-medium text-blue-600">v{sub.version || 1} (current)</span>
-                <span class="text-gray-500">${Math.round(sub.sales_price || 0).toLocaleString()}</span>
+                <span class="text-gray-500">${fmt(sub.sales_price || 0)}</span>
               </div>
-              {#each [...sub.previous_versions].reverse() as pv}
-                <div class="flex justify-between text-xs text-gray-500">
-                  <span>v{pv.version}</span>
-                  <span>${Math.round(pv.sales_price || 0).toLocaleString()}</span>
-                </div>
-              {/each}
+              {#if showVersionHistory}
+                {#each [...sub.previous_versions].reverse() as pv}
+                  <div class="flex justify-between text-xs text-gray-500">
+                    <span>v{pv.version}</span>
+                    <span>${fmt(pv.sales_price || 0)}</span>
+                  </div>
+                {/each}
+              {/if}
             </div>
           </div>
         {/if}
 
-        <!-- Notes -->
-        <div class="rounded-xl bg-white border border-gray-200 p-5">
-          <h3 class="text-sm font-semibold text-gray-900 mb-3">Notes</h3>
-          <textarea bind:value={notes} rows={4} placeholder="Internal notes about this estimate..." class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 mb-2"></textarea>
-          <button onclick={saveNotes} disabled={saving} class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
-            {saving ? 'Saving...' : 'Save Notes'}
-          </button>
-        </div>
-
-        <!-- Pro Tease: Follow-Up Automation -->
-        <div class="rounded-xl border border-dashed border-gray-200 p-5 opacity-75">
+        <!-- Scheduled Start (Pro teaser / functional for Pro) -->
+        <div class="rounded-xl border {data.isPro ? 'border-gray-200 bg-white' : 'border-dashed border-gray-200 opacity-75'} p-5">
           <div class="flex items-center justify-between mb-2">
-            <h3 class="text-sm font-semibold text-gray-500">Follow-Up Automation</h3>
-            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Pro</span>
+            <h3 class="text-sm font-semibold {data.isPro ? 'text-gray-900' : 'text-gray-500'}">Scheduled Start</h3>
+            {#if !data.isPro}
+              <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Pro</span>
+            {/if}
           </div>
-          <p class="text-xs text-gray-400 mb-3">Automatic check-in at 2 days, follow-up at 5 days, final nudge at 14 days. Contractors who follow up close more.</p>
-          <a href="/upgrade" class="block w-full rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 text-center">Learn about GQ Pro</a>
-        </div>
-
-        <!-- Pro Tease: Job Tracker -->
-        <div class="rounded-xl border border-dashed border-gray-200 p-5 opacity-75">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-sm font-semibold text-gray-500">Job Tracker</h3>
-            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Pro</span>
-          </div>
-          <p class="text-xs text-gray-400">Track this job from accepted to completed. Scheduling, payments, crew assignment.</p>
+          {#if data.isPro}
+            <p class="text-xs text-gray-500 mb-3">Set a start date and assign a crew for this project.</p>
+            <div class="space-y-2">
+              <input type="date" value={sub.scheduled_start_date || ''} onchange={async (e) => {
+                const val = e.currentTarget.value;
+                await fetch(`/api/submissions/${sub.id}/update`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scheduled_start_date: val }) });
+                sub.scheduled_start_date = val;
+              }} class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-xs outline-none focus:border-blue-500" />
+              <input type="text" value={sub.assigned_crew || ''} placeholder="Crew name or size" onchange={async (e) => {
+                const val = e.currentTarget.value;
+                await fetch(`/api/submissions/${sub.id}/update`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ assigned_crew: val }) });
+                sub.assigned_crew = val;
+              }} class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-xs outline-none focus:border-blue-500" />
+            </div>
+          {:else}
+            <p class="text-xs text-gray-400 mb-3">Set a start date, assign crew, and sync to your calendar.</p>
+            <a href="/upgrade" class="block w-full rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 text-center">Learn about GQ Pro</a>
+          {/if}
         </div>
       </div>
     </div>
@@ -505,15 +732,19 @@
 
   <!-- Delete Confirmation Modal -->
   {#if showDeleteConfirm}
-    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onclick={() => showDeleteConfirm = false}>
+    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onclick={() => { showDeleteConfirm = false; deleteConfirmText = ''; }}>
       <div class="bg-white rounded-xl p-6 max-w-sm mx-4 shadow-xl" onclick={(e) => e.stopPropagation()}>
         <h3 class="font-semibold text-gray-900 mb-2">Delete Estimate?</h3>
-        <p class="text-sm text-gray-500 mb-4">This will permanently delete estimate {sub.id.slice(0, 8).toUpperCase()} for {sub.first_name} {sub.last_name}. This cannot be undone.</p>
+        <p class="text-sm text-gray-500 mb-3">This will permanently delete estimate {sub.id.slice(0, 8).toUpperCase()} for {sub.first_name} {sub.last_name}. This cannot be undone.</p>
+        <div class="mb-4">
+          <label for="delete-confirm" class="block text-xs font-medium text-gray-700 mb-1">Type <span class="font-bold text-red-600">DELETE</span> to confirm</label>
+          <input id="delete-confirm" type="text" bind:value={deleteConfirmText} placeholder="DELETE" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-red-500" autocomplete="off" />
+        </div>
         <div class="flex gap-3">
-          <button onclick={() => showDeleteConfirm = false} class="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+          <button onclick={() => { showDeleteConfirm = false; deleteConfirmText = ''; }} class="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
             Cancel
           </button>
-          <button onclick={deleteEstimate} disabled={deleting} class="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50">
+          <button onclick={deleteEstimate} disabled={deleting || deleteConfirmText !== 'DELETE'} class="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
             {deleting ? 'Deleting...' : 'Delete'}
           </button>
         </div>

@@ -87,8 +87,14 @@
           <p class="text-sm text-gray-400 mb-4">{tradeLabels[result.quote.trade_type]}</p>
 
           {#if result.quote.production.painting_hours > 0}
+            {@const hrs = result.quote.production.painting_hours}
+            {@const days = result.quote.production.duration_days}
+            {@const hrsLow = Math.max(1, Math.round(hrs * 0.80))}
+            {@const hrsHigh = Math.max(hrsLow + 1, Math.round(hrs * 1.20))}
+            {@const dLow = Math.max(0.5, Math.round(days * 0.80 * 2) / 2)}
+            {@const dHigh = Math.max(dLow + 0.5, Math.round(days * 1.20 * 2) / 2)}
             <p class="text-sm text-gray-500 mb-6">
-              {result.quote.production.painting_hours.toFixed(1)} hrs &middot; {result.quote.production.crew_size}-person crew &middot; ~{result.quote.production.duration_days.toFixed(1)} days
+              {hrsLow}-{hrsHigh} hrs &middot; {result.quote.production.crew_size}-person crew &middot; {dLow}-{dHigh} days
             </p>
           {/if}
 
@@ -228,11 +234,11 @@
 
       <div class="rounded-2xl bg-white border border-gray-200 p-6">
         {#if selectedTrade === 'interior'}
-          <InteriorScopeForm onSubmit={(scope) => handleGenerate('interior', scope)} />
+          <InteriorScopeForm demo onSubmit={(scope) => handleGenerate('interior', scope)} />
         {:else if selectedTrade === 'exterior'}
-          <ExteriorScopeForm onSubmit={(scope) => handleGenerate('exterior', scope)} />
+          <ExteriorScopeForm demo onSubmit={(scope) => handleGenerate('exterior', scope)} />
         {:else if selectedTrade === 'epoxy'}
-          <EpoxyScopeForm onSubmit={(scope) => handleGenerate('epoxy', scope)} />
+          <EpoxyScopeForm demo onSubmit={(scope) => handleGenerate('epoxy', scope)} />
         {/if}
       </div>
     {/if}

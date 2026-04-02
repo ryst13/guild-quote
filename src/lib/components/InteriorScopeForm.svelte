@@ -2,20 +2,20 @@
   import type { InteriorScopeData, InteriorRoom } from '$lib/types/index.js';
   import { v4 as uuidv4 } from 'uuid';
 
-  let { onSubmit }: { onSubmit: (data: InteriorScopeData) => void } = $props();
+  let { onSubmit, demo = false }: { onSubmit: (data: InteriorScopeData) => void; demo?: boolean } = $props();
 
   let step = $state(1);
 
   // Step 1: Client Info
-  let clientName = $state('');
-  let clientEmail = $state('');
-  let clientPhone = $state('');
-  let clientAddress = $state('');
+  let clientName = $state(demo ? 'Sarah Mitchell' : '');
+  let clientEmail = $state(demo ? 'sarah@example.com' : '');
+  let clientPhone = $state(demo ? '(512) 555-0147' : '');
+  let clientAddress = $state(demo ? '42 Maple Ave, Austin TX 78701' : '');
   let clientNotes = $state('');
   let clientSource = $state('');
 
   // Step 2: Rooms
-  let rooms = $state<InteriorRoom[]>([createRoom()]);
+  let rooms = $state<InteriorRoom[]>(demo ? createDemoRooms() : [createRoom()]);
 
   // Step 3: Project Details
   let surfaceGrade = $state<'A' | 'B' | 'C' | 'D'>('B');
@@ -57,6 +57,33 @@
       specialty: [],
       notes: '',
     };
+  }
+
+  function createDemoRooms(): InteriorRoom[] {
+    return [
+      {
+        id: uuidv4(),
+        room_type: 'Master Bedroom',
+        room_size: 'Large',
+        ceiling_included: true,
+        closet: 'medium',
+        primer_required: false,
+        items: { 'Window - Standard Frame': 2, 'Door - Frame Standard': 1, 'Trim - Baseboard/Crown': 1 },
+        specialty: [],
+        notes: '',
+      },
+      {
+        id: uuidv4(),
+        room_type: 'Full Bathroom',
+        room_size: 'Small',
+        ceiling_included: true,
+        closet: 'not_included',
+        primer_required: true,
+        items: { 'Window - Small Frame': 1, 'Door - Frame Standard': 1, 'Trim - Baseboard/Crown': 1 },
+        specialty: [],
+        notes: '',
+      },
+    ];
   }
 
   function addRoom() {
@@ -114,6 +141,11 @@
   {#if step === 1}
     <!-- Client Info -->
     <div class="space-y-4">
+      {#if demo}
+        <div class="rounded-lg bg-blue-50 border border-blue-100 px-4 py-2.5 text-sm text-blue-700">
+          Pre-filled with sample data — edit or skip ahead.
+        </div>
+      {/if}
       <div>
         <label for="int-client-name" class="block text-sm font-medium text-gray-700 mb-1">Client Name</label>
         <input id="int-client-name" type="text" bind:value={clientName} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
@@ -132,27 +164,29 @@
         <label for="int-client-address" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
         <input id="int-client-address" type="text" bind:value={clientAddress} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
       </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label for="int-client-source" class="block text-sm font-medium text-gray-700 mb-1">How'd they find you? <span class="text-gray-400 font-normal">(optional)</span></label>
-          <select id="int-client-source" bind:value={clientSource} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500">
-            <option value="">—</option>
-            <option value="google">Google Search</option>
-            <option value="referral">Referral</option>
-            <option value="repeat">Repeat Client</option>
-            <option value="social">Social Media</option>
-            <option value="yard_sign">Yard Sign / Job Site</option>
-            <option value="nextdoor">Nextdoor</option>
-            <option value="yelp">Yelp</option>
-            <option value="homeadvisor">HomeAdvisor / Angi</option>
-            <option value="other">Other</option>
-          </select>
+      {#if !demo}
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="int-client-source" class="block text-sm font-medium text-gray-700 mb-1">How'd they find you? <span class="text-gray-400 font-normal">(optional)</span></label>
+            <select id="int-client-source" bind:value={clientSource} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500">
+              <option value="">—</option>
+              <option value="google">Google Search</option>
+              <option value="referral">Referral</option>
+              <option value="repeat">Repeat Client</option>
+              <option value="social">Social Media</option>
+              <option value="yard_sign">Yard Sign / Job Site</option>
+              <option value="nextdoor">Nextdoor</option>
+              <option value="yelp">Yelp</option>
+              <option value="homeadvisor">HomeAdvisor / Angi</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="int-client-notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <textarea id="int-client-notes" bind:value={clientNotes} rows="1" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500"></textarea>
+          </div>
         </div>
-        <div>
-          <label for="int-client-notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-          <textarea id="int-client-notes" bind:value={clientNotes} rows="1" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500"></textarea>
-        </div>
-      </div>
+      {/if}
       <div class="flex justify-end">
         <button onclick={() => step = 2} class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700">Next: Rooms</button>
       </div>
@@ -170,7 +204,7 @@
           </button>
         {/each}
         {#if rooms.length < 16}
-          <button onclick={addRoom} class="px-3 py-1.5 text-xs font-medium rounded-lg bg-green-50 text-green-700 hover:bg-green-100">+ Add Room</button>
+          <button onclick={addRoom} class="w-full sm:w-auto px-5 py-3 text-sm font-semibold rounded-xl bg-green-600 text-white hover:bg-green-700 active:bg-green-800 shadow-sm">+ Add Room</button>
         {/if}
       </div>
 

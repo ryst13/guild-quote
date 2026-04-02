@@ -247,7 +247,7 @@ export async function generateEstimatePDF(
   for (const row of doc.recap_table.rows) {
     checkPage(16);
     page.drawText(row.area, { x: cols[0].x, y, font: fontBold, size: 8.5, color: darkGray });
-    page.drawText(`$${Math.round(row.price).toLocaleString()}`, { x: cols[1].x, y, font, size: 8.5, color: darkGray });
+    page.drawText(`$${row.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, { x: cols[1].x, y, font, size: 8.5, color: darkGray });
     page.drawText(row.walls, { x: cols[2].x, y, font, size: 7.5, color: medGray });
     page.drawText(row.ceilings, { x: cols[3].x, y, font, size: 7.5, color: medGray });
     page.drawText(row.doors, { x: cols[4].x, y, font, size: 7.5, color: medGray });
@@ -264,13 +264,13 @@ export async function generateEstimatePDF(
 
   const totalsX = cols[1].x;
   page.drawText('Materials', { x: cols[0].x, y, font, size: 9, color: medGray });
-  page.drawText(`$${Math.round(doc.recap_table.materials_total).toLocaleString()}`, { x: totalsX, y, font, size: 9, color: darkGray });
+  page.drawText(`$${doc.recap_table.materials_total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, { x: totalsX, y, font, size: 9, color: darkGray });
   y -= 16;
 
   drawLine(y + 4);
   y -= 6;
   page.drawText('TOTAL', { x: cols[0].x, y, font: fontBold, size: 13, color: accentColor });
-  page.drawText(`$${Math.round(doc.recap_table.grand_total).toLocaleString()}`, { x: totalsX, y, font: fontBold, size: 13, color: accentColor });
+  page.drawText(`$${doc.recap_table.grand_total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, { x: totalsX, y, font: fontBold, size: 13, color: accentColor });
   y -= 24;
 
   // Production estimate (ranges)
@@ -293,21 +293,21 @@ export async function generateEstimatePDF(
 
   page.drawText('Deposit', { x: payCol1, y, font: fontBold, size: 10, color: darkGray });
   page.drawText('Due at signing of contract', { x: payCol2, y, font, size: 9, color: medGray });
-  page.drawText(`$${doc.payment_terms.deposit_amount.toLocaleString()}`, { x: payCol3, y, font: fontBold, size: 10, color: darkGray });
+  page.drawText(`$${doc.payment_terms.deposit_amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, { x: payCol3, y, font: fontBold, size: 10, color: darkGray });
   page.drawText(`${Math.round(doc.payment_terms.deposit_pct * 100)}%`, { x: payCol4, y, font, size: 9, color: medGray });
   y -= 18;
 
   if (doc.payment_terms.progress_pct && doc.payment_terms.progress_amount) {
     page.drawText('Progress', { x: payCol1, y, font: fontBold, size: 10, color: darkGray });
     page.drawText('Due at 50% completion', { x: payCol2, y, font, size: 9, color: medGray });
-    page.drawText(`$${doc.payment_terms.progress_amount.toLocaleString()}`, { x: payCol3, y, font: fontBold, size: 10, color: darkGray });
+    page.drawText(`$${doc.payment_terms.progress_amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, { x: payCol3, y, font: fontBold, size: 10, color: darkGray });
     page.drawText(`${Math.round(doc.payment_terms.progress_pct * 100)}%`, { x: payCol4, y, font, size: 9, color: medGray });
     y -= 18;
   }
 
   page.drawText('Completion', { x: payCol1, y, font: fontBold, size: 10, color: darkGray });
   page.drawText('Due at 100% project completion', { x: payCol2, y, font, size: 9, color: medGray });
-  page.drawText(`$${doc.payment_terms.completion_amount.toLocaleString()}`, { x: payCol3, y, font: fontBold, size: 10, color: darkGray });
+  page.drawText(`$${doc.payment_terms.completion_amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, { x: payCol3, y, font: fontBold, size: 10, color: darkGray });
   page.drawText(`${Math.round(doc.payment_terms.completion_pct * 100)}%`, { x: payCol4, y, font, size: 9, color: medGray });
   y -= 24;
 
@@ -315,7 +315,7 @@ export async function generateEstimatePDF(
   drawLine(y + 8);
   y -= 4;
   page.drawText('Total Investment:', { x: payCol1, y, font: fontBold, size: 11, color: darkGray });
-  page.drawText(`$${Math.round(doc.payment_terms.total).toLocaleString()}`, { x: payCol3, y, font: fontBold, size: 11, color: accentColor });
+  page.drawText(`$${doc.payment_terms.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, { x: payCol3, y, font: fontBold, size: 11, color: accentColor });
   y -= 28;
 
   // ─── SECTION 7: SIGNATURE BLOCK ───────────────────────────────

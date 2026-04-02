@@ -2,20 +2,20 @@
   import type { ExteriorScopeData, ExteriorSurface } from '$lib/types/index.js';
   import { v4 as uuidv4 } from 'uuid';
 
-  let { onSubmit }: { onSubmit: (data: ExteriorScopeData) => void } = $props();
+  let { onSubmit, demo = false }: { onSubmit: (data: ExteriorScopeData) => void; demo?: boolean } = $props();
 
   let step = $state(1);
 
   // Step 1: Client Info
-  let clientName = $state('');
-  let clientEmail = $state('');
-  let clientPhone = $state('');
-  let clientAddress = $state('');
+  let clientName = $state(demo ? 'Sarah Mitchell' : '');
+  let clientEmail = $state(demo ? 'sarah@example.com' : '');
+  let clientPhone = $state(demo ? '(512) 555-0147' : '');
+  let clientAddress = $state(demo ? '42 Maple Ave, Austin TX 78701' : '');
   let clientNotes = $state('');
   let clientSource = $state('');
 
   // Step 2: Surfaces
-  let surfaces = $state<ExteriorSurface[]>([createSurface('Front')]);
+  let surfaces = $state<ExteriorSurface[]>(demo ? createDemoSurfaces() : [createSurface('Front')]);
 
   // Step 3: Project Details
   let surfaceGrade = $state<'A' | 'B' | 'C' | 'D'>('B');
@@ -35,6 +35,31 @@
 
   function createSurface(name: string): ExteriorSurface {
     return { id: uuidv4(), name, siding: {}, doors: {}, windows: {}, trim: {}, carpentry_repairs: {}, notes: '' };
+  }
+
+  function createDemoSurfaces(): ExteriorSurface[] {
+    return [
+      {
+        id: uuidv4(),
+        name: 'Front',
+        siding: { 'Clapboard': 3 },
+        doors: { 'Standard Frame': 1 },
+        windows: { 'Standard': 4 },
+        trim: { 'Fascia (10ft)': 3, 'Soffit (10ft)': 2 },
+        carpentry_repairs: {},
+        notes: '',
+      },
+      {
+        id: uuidv4(),
+        name: 'Rear',
+        siding: { 'Clapboard': 2 },
+        doors: { 'Standard Frame': 1, 'w/Glass': 1 },
+        windows: { 'Standard': 3 },
+        trim: { 'Fascia (10ft)': 2 },
+        carpentry_repairs: { 'Clapboard': 2 },
+        notes: '',
+      },
+    ];
   }
 
   function addSurface() {
@@ -78,6 +103,11 @@
 
   {#if step === 1}
     <div class="space-y-4">
+      {#if demo}
+        <div class="rounded-lg bg-blue-50 border border-blue-100 px-4 py-2.5 text-sm text-blue-700">
+          Pre-filled with sample data — edit or skip ahead.
+        </div>
+      {/if}
       <div>
         <label for="ext-client-name" class="block text-sm font-medium text-gray-700 mb-1">Client Name</label>
         <input id="ext-client-name" type="text" bind:value={clientName} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
@@ -96,27 +126,29 @@
         <label for="ext-client-addr" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
         <input id="ext-client-addr" type="text" bind:value={clientAddress} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
       </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label for="ext-client-source" class="block text-sm font-medium text-gray-700 mb-1">How'd they find you? <span class="text-gray-400 font-normal">(optional)</span></label>
-          <select id="ext-client-source" bind:value={clientSource} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500">
-            <option value="">—</option>
-            <option value="google">Google Search</option>
-            <option value="referral">Referral</option>
-            <option value="repeat">Repeat Client</option>
-            <option value="social">Social Media</option>
-            <option value="yard_sign">Yard Sign / Job Site</option>
-            <option value="nextdoor">Nextdoor</option>
-            <option value="yelp">Yelp</option>
-            <option value="homeadvisor">HomeAdvisor / Angi</option>
-            <option value="other">Other</option>
-          </select>
+      {#if !demo}
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="ext-client-source" class="block text-sm font-medium text-gray-700 mb-1">How'd they find you? <span class="text-gray-400 font-normal">(optional)</span></label>
+            <select id="ext-client-source" bind:value={clientSource} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500">
+              <option value="">—</option>
+              <option value="google">Google Search</option>
+              <option value="referral">Referral</option>
+              <option value="repeat">Repeat Client</option>
+              <option value="social">Social Media</option>
+              <option value="yard_sign">Yard Sign / Job Site</option>
+              <option value="nextdoor">Nextdoor</option>
+              <option value="yelp">Yelp</option>
+              <option value="homeadvisor">HomeAdvisor / Angi</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="ext-client-notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <textarea id="ext-client-notes" bind:value={clientNotes} rows="1" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500"></textarea>
+          </div>
         </div>
-        <div>
-          <label for="ext-client-notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-          <textarea id="ext-client-notes" bind:value={clientNotes} rows="1" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500"></textarea>
-        </div>
-      </div>
+      {/if}
       <div class="flex justify-end">
         <button onclick={() => step = 2} class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700">Next: Surfaces</button>
       </div>
@@ -132,7 +164,7 @@
           </button>
         {/each}
         {#if surfaces.length < 8}
-          <button onclick={addSurface} class="px-3 py-1.5 text-xs font-medium rounded-lg bg-green-50 text-green-700 hover:bg-green-100">+ Add Surface</button>
+          <button onclick={addSurface} class="w-full sm:w-auto px-5 py-3 text-sm font-semibold rounded-xl bg-green-600 text-white hover:bg-green-700 active:bg-green-800 shadow-sm">+ Add Surface</button>
         {/if}
       </div>
 

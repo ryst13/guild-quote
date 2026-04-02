@@ -2,20 +2,20 @@
   import type { EpoxyScopeData, EpoxyFloor } from '$lib/types/index.js';
   import { v4 as uuidv4 } from 'uuid';
 
-  let { onSubmit }: { onSubmit: (data: EpoxyScopeData) => void } = $props();
+  let { onSubmit, demo = false }: { onSubmit: (data: EpoxyScopeData) => void; demo?: boolean } = $props();
 
   let step = $state(1);
 
   // Step 1: Client Info
-  let clientName = $state('');
-  let clientEmail = $state('');
-  let clientPhone = $state('');
-  let clientAddress = $state('');
+  let clientName = $state(demo ? 'Sarah Mitchell' : '');
+  let clientEmail = $state(demo ? 'sarah@example.com' : '');
+  let clientPhone = $state(demo ? '(512) 555-0147' : '');
+  let clientAddress = $state(demo ? '42 Maple Ave, Austin TX 78701' : '');
   let clientNotes = $state('');
   let clientSource = $state('');
 
   // Step 2: Floors
-  let floors = $state<EpoxyFloor[]>([createFloor()]);
+  let floors = $state<EpoxyFloor[]>(demo ? createDemoFloors() : [createFloor()]);
 
   // Step 3: Project Details
   let concreteGrinding = $state(false);
@@ -39,6 +39,21 @@
       cove_base: false,
       cove_base_linear_feet: 0,
     };
+  }
+
+  function createDemoFloors(): EpoxyFloor[] {
+    return [{
+      id: uuidv4(),
+      area_type: 'Garage (2-car)',
+      sqft: 480,
+      coating_type: 'Premium Epoxy',
+      floor_condition: 'Fair',
+      existing_coating_removal: false,
+      moisture_issues: false,
+      color_flake: 'standard',
+      cove_base: false,
+      cove_base_linear_feet: 0,
+    }];
   }
 
   function addFloor() { floors = [...floors, createFloor()]; }
@@ -67,45 +82,52 @@
 
   {#if step === 1}
     <div class="space-y-4">
+      {#if demo}
+        <div class="rounded-lg bg-blue-50 border border-blue-100 px-4 py-2.5 text-sm text-blue-700">
+          Pre-filled with sample data — edit or skip ahead.
+        </div>
+      {/if}
       <div>
         <label for="epoxy-name" class="block text-sm font-medium text-gray-700 mb-1">Client Name</label>
         <input id="epoxy-name" type="text" bind:value={clientName} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label for="epoxy-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-          <input id="epoxy-email" type="email" bind:value={clientEmail} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
+          <label for="epoxy-email" class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-gray-400 font-normal">(optional)</span></label>
+          <input id="epoxy-email" type="email" bind:value={clientEmail} placeholder="Add before sending" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
         </div>
         <div>
-          <label for="epoxy-phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-          <input id="epoxy-phone" type="tel" bind:value={clientPhone} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
+          <label for="epoxy-phone" class="block text-sm font-medium text-gray-700 mb-1">Phone <span class="text-gray-400 font-normal">(optional)</span></label>
+          <input id="epoxy-phone" type="tel" bind:value={clientPhone} placeholder="Add before sending" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
         </div>
       </div>
       <div>
         <label for="epoxy-addr" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
         <input id="epoxy-addr" type="text" bind:value={clientAddress} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
       </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label for="epoxy-client-source" class="block text-sm font-medium text-gray-700 mb-1">How'd they find you? <span class="text-gray-400 font-normal">(optional)</span></label>
-          <select id="epoxy-client-source" bind:value={clientSource} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500">
-            <option value="">—</option>
-            <option value="google">Google Search</option>
-            <option value="referral">Referral</option>
-            <option value="repeat">Repeat Client</option>
-            <option value="social">Social Media</option>
-            <option value="yard_sign">Yard Sign / Job Site</option>
-            <option value="nextdoor">Nextdoor</option>
-            <option value="yelp">Yelp</option>
-            <option value="homeadvisor">HomeAdvisor / Angi</option>
-            <option value="other">Other</option>
-          </select>
+      {#if !demo}
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="epoxy-client-source" class="block text-sm font-medium text-gray-700 mb-1">How'd they find you? <span class="text-gray-400 font-normal">(optional)</span></label>
+            <select id="epoxy-client-source" bind:value={clientSource} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500">
+              <option value="">—</option>
+              <option value="google">Google Search</option>
+              <option value="referral">Referral</option>
+              <option value="repeat">Repeat Client</option>
+              <option value="social">Social Media</option>
+              <option value="yard_sign">Yard Sign / Job Site</option>
+              <option value="nextdoor">Nextdoor</option>
+              <option value="yelp">Yelp</option>
+              <option value="homeadvisor">HomeAdvisor / Angi</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="epoxy-notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <textarea id="epoxy-notes" bind:value={clientNotes} rows="1" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"></textarea>
+          </div>
         </div>
-        <div>
-          <label for="epoxy-notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-          <textarea id="epoxy-notes" bind:value={clientNotes} rows="1" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"></textarea>
-        </div>
-      </div>
+      {/if}
       <div class="flex justify-end">
         <button onclick={() => step = 2} class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700">Next: Floors</button>
       </div>

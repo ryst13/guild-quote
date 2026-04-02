@@ -133,9 +133,13 @@ export interface QuoteResult {
   benchmarks?: {
     percentile: string;
     message: string;
+    win_rate?: string;
   };
   completeness_warnings: string[];
 }
+
+export type PaymentStatus = 'none' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired';
+export type PlanTier = 'trial' | 'gq' | 'gq_pro';
 
 export interface TenantConfig {
   id: string;
@@ -153,7 +157,20 @@ export interface TenantConfig {
   output_format: 'google_docs' | 'pdf';
   google_refresh_token: string | null;
   google_drive_folder_id: string | null;
+  google_drive_root_folder_id: string | null;
+  google_drive_active_folder_id: string | null;
+  google_drive_inactive_folder_id: string | null;
   catalog: CatalogConfig;
+  show_losp: boolean;
+  // Billing
+  stripe_customer_id: string | null;
+  payment_status: PaymentStatus;
+  plan: PlanTier;
+  lifetime_access: boolean;
+  trial_ends_at: string | null;
+  // Referral
+  referral_code: string | null;
+  referral_credits: number;
 }
 
 export interface CatalogConfig {

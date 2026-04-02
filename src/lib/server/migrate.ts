@@ -84,6 +84,30 @@ const alterations = [
   `ALTER TABLE submissions ADD COLUMN client_source TEXT`,
   `ALTER TABLE submissions ADD COLUMN outcome_date TEXT`,
   `ALTER TABLE tenants ADD COLUMN prompts_shown TEXT DEFAULT '{}'`,
+  // Phase D: LOSP toggle
+  `ALTER TABLE tenants ADD COLUMN show_losp INTEGER NOT NULL DEFAULT 1`,
+  // Phase E: Billing
+  `ALTER TABLE tenants ADD COLUMN stripe_customer_id TEXT`,
+  `ALTER TABLE tenants ADD COLUMN stripe_subscription_id TEXT`,
+  `ALTER TABLE tenants ADD COLUMN trial_started_at TEXT`,
+  `ALTER TABLE tenants ADD COLUMN trial_ends_at TEXT`,
+  `ALTER TABLE tenants ADD COLUMN payment_status TEXT NOT NULL DEFAULT 'none'`,
+  `ALTER TABLE tenants ADD COLUMN plan TEXT NOT NULL DEFAULT 'trial'`,
+  `ALTER TABLE tenants ADD COLUMN lifetime_access INTEGER NOT NULL DEFAULT 0`,
+  // Phase F: Referral
+  `ALTER TABLE tenants ADD COLUMN referral_code TEXT`,
+  `ALTER TABLE tenants ADD COLUMN referred_by TEXT`,
+  `ALTER TABLE tenants ADD COLUMN referral_credits INTEGER NOT NULL DEFAULT 0`,
+  // Phase G: Admin
+  `ALTER TABLE users ADD COLUMN is_platform_admin INTEGER NOT NULL DEFAULT 0`,
+  // Phase H: Snapshot
+  `ALTER TABLE submissions ADD COLUMN snapshot_pdf_url TEXT`,
+  `ALTER TABLE submissions ADD COLUMN snapshot_doc_url TEXT`,
+  // Phase I: Google Drive folder restructuring
+  `ALTER TABLE tenants ADD COLUMN google_drive_root_folder_id TEXT`,
+  `ALTER TABLE tenants ADD COLUMN google_drive_active_folder_id TEXT`,
+  `ALTER TABLE tenants ADD COLUMN google_drive_inactive_folder_id TEXT`,
+  `ALTER TABLE submissions ADD COLUMN google_drive_project_folder_id TEXT`,
 ];
 
 export function runMigrations() {

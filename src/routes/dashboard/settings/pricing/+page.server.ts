@@ -57,5 +57,6 @@ export const load: PageServerLoad = async ({ locals }) => {
     defaults,
     enabledTrades: tenant.enabled_trades,
     outputFormat: tenant.output_format || 'google_docs',
+    showLosp: tenant.show_losp ?? true,
   };
 };

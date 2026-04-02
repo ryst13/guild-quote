@@ -54,7 +54,18 @@ function buildTenantConfig(row: typeof tenants.$inferSelect): TenantConfig {
     output_format: row.output_format as 'google_docs' | 'pdf',
     google_refresh_token: row.google_refresh_token,
     google_drive_folder_id: row.google_drive_folder_id,
+    google_drive_root_folder_id: row.google_drive_root_folder_id,
+    google_drive_active_folder_id: row.google_drive_active_folder_id,
+    google_drive_inactive_folder_id: row.google_drive_inactive_folder_id,
     catalog,
+    show_losp: row.show_losp ?? true,
+    stripe_customer_id: row.stripe_customer_id,
+    payment_status: (row.payment_status as TenantConfig['payment_status']) || 'none',
+    plan: (row.plan as TenantConfig['plan']) || 'trial',
+    lifetime_access: row.lifetime_access ?? false,
+    trial_ends_at: row.trial_ends_at,
+    referral_code: row.referral_code,
+    referral_credits: row.referral_credits ?? 0,
   };
 
   tenantCache.set(row.slug, { config, cachedAt: Date.now() });
