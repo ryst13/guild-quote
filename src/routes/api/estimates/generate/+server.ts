@@ -4,6 +4,7 @@ import { submissions, tenants } from '$lib/server/schema.js';
 import { eq } from 'drizzle-orm';
 import { getTenantById } from '$lib/server/tenant.js';
 import { calculateInteriorQuote, calculateExteriorQuote, calculateEpoxyQuote } from '$lib/server/pricing.js';
+import { calculateInteriorBottomUp, calculateExteriorBottomUp, calculateEpoxyBottomUp } from '$lib/server/pricing-v2.js';
 import { generateEstimatePDF, generateEstimatePDFLegacy } from '$lib/server/pdf.js';
 import { assembleInteriorEstimate, assembleExteriorEstimate } from '$lib/server/estimate-templates.js';
 import { createEstimateDoc } from '$lib/server/google-docs.js';
@@ -25,21 +26,43 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
   if (!trade_type || !scope) throw error(400, 'Missing trade_type or scope');
 
-  // Calculate quote
+  // Calculate quote — run both engines, use tenant's preferred mode
   let quote;
+  let quoteV2;
   const multiplier = tenant.labor_price_multiplier;
+  const useBottomUp = tenant.pricing_mode === 'bottom_up';
+
   switch (trade_type) {
-    case 'interior':
-      quote = calculateInteriorQuote(scope as InteriorScopeData, tenant.catalog, multiplier);
+    case 'interior': {
+      const topDown = calculateInteriorQuote(scope as InteriorScopeData, tenant.catalog, multiplier);
+      const bottomUp = calculateInteriorBottomUp(scope as InteriorScopeData, tenant.catalog, tenant);
+      quote = useBottomUp ? bottomUp : topDown;
+      quoteV2 = useBottomUp ? topDown : bottomUp;
       break;
-    case 'exterior':
-      quote = calculateExteriorQuote(scope as ExteriorScopeData, tenant.catalog, multiplier);
+    }
+    case 'exterior': {
+      const topDown = calculateExteriorQuote(scope as ExteriorScopeData, tenant.catalog, multiplier);
+      const bottomUp = calculateExteriorBottomUp(scope as ExteriorScopeData, tenant.catalog, tenant);
+      quote = useBottomUp ? bottomUp : topDown;
+      quoteV2 = useBottomUp ? topDown : bottomUp;
       break;
-    case 'epoxy':
-      quote = calculateEpoxyQuote(scope as EpoxyScopeData, tenant.catalog, multiplier);
+    }
+    case 'epoxy': {
+      const topDown = calculateEpoxyQuote(scope as EpoxyScopeData, tenant.catalog, multiplier);
+      const bottomUp = calculateEpoxyBottomUp(scope as EpoxyScopeData, tenant.catalog, tenant);
+      quote = useBottomUp ? bottomUp : topDown;
+      quoteV2 = useBottomUp ? topDown : bottomUp;
       break;
+    }
     default:
       throw error(400, 'Invalid trade type');
+  }
+
+  // Log delta between engines for validation
+  if (quoteV2) {
+    const delta = Math.round(quote.grand_total - quoteV2.grand_total);
+    const pctDelta = ((quote.grand_total - quoteV2.grand_total) / quoteV2.grand_total * 100).toFixed(1);
+    console.log(`[pricing-v2] ${trade_type} | primary=$${Math.round(quote.grand_total)} alt=$${Math.round(quoteV2.grand_total)} delta=$${delta} (${pctDelta}%)`);
   }
 
   const client = scope.client;

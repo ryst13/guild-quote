@@ -162,6 +162,14 @@ export interface TenantConfig {
   google_drive_inactive_folder_id: string | null;
   catalog: CatalogConfig;
   show_losp: boolean;
+  // Bottom-up pricing
+  crew_hourly_wage: number | null;
+  default_crew_size: number;
+  target_gross_margin: number | null;
+  pricing_mode: 'top_down' | 'bottom_up';
+  metro_area: string | null;
+  sub_mode_enabled: boolean;
+  sub_margin: number | null;
   // Billing
   stripe_customer_id: string | null;
   payment_status: PaymentStatus;

@@ -27,6 +27,14 @@ export const tenants = sqliteTable('tenants', {
   pricing_config: text('pricing_config'),
   prompts_shown: text('prompts_shown').notNull().default('{}'),
   show_losp: integer('show_losp', { mode: 'boolean' }).notNull().default(true),
+  // Bottom-up pricing
+  crew_hourly_wage: real('crew_hourly_wage'),
+  default_crew_size: integer('default_crew_size').notNull().default(2),
+  target_gross_margin: real('target_gross_margin'),
+  pricing_mode: text('pricing_mode').notNull().default('top_down'),
+  metro_area: text('metro_area'),
+  sub_mode_enabled: integer('sub_mode_enabled', { mode: 'boolean' }).notNull().default(false),
+  sub_margin: real('sub_margin'),
   // Billing
   stripe_customer_id: text('stripe_customer_id'),
   stripe_subscription_id: text('stripe_subscription_id'),

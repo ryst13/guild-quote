@@ -6,6 +6,8 @@
   let saving = $state(false);
   let saved = $state(false);
   let regenerating = $state(false);
+  let regeneratingDoc = $state(false);
+  let docRegenError = $state('');
   let deleting = $state(false);
   let showDeleteConfirm = $state(false);
   let showAcceptModal = $state(false);
@@ -167,6 +169,37 @@
       console.error('[regenerate] Failed:', await res.text());
     }
     regenerating = false;
+  }
+
+  async function regenerateDocuments() {
+    regeneratingDoc = true;
+    docRegenError = '';
+    try {
+      const res = await fetch(`/api/submissions/${sub.id}/regenerate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adjusted_price: null }),
+      });
+      if (res.ok) {
+        const result = await res.json();
+        if (result.pdf_url) sub.estimate_pdf_url = result.pdf_url;
+        if (result.google_doc_url) sub.google_doc_url = result.google_doc_url;
+        // Check if the expected outputs were actually generated
+        const pdfStillMissing = !sub.estimate_pdf_url;
+        const docStillMissing = data.tenant.output_format && !sub.google_doc_url;
+        if (pdfStillMissing || docStillMissing) {
+          docRegenError = 'Some documents could not be generated. Check your Google connection or try again.';
+        } else {
+          saved = true;
+          setTimeout(() => { saved = false; }, 2000);
+        }
+      } else {
+        docRegenError = 'Regeneration failed. Please try again.';
+      }
+    } catch {
+      docRegenError = 'Network error. Please check your connection and try again.';
+    }
+    regeneratingDoc = false;
   }
 
   async function duplicateEstimate() {
@@ -452,6 +485,31 @@
                 <span>Grand Total</span>
                 <span>${fmt(sub.quote.grand_total || 0)}</span>
               </div>
+
+              <!-- Sub Estimate View -->
+              {#if data.tenant.sub_mode_enabled}
+                {@const subMarginMult = 1 + (data.tenant.sub_margin ?? 0.10)}
+                {@const subLaborTotal = sub.quote.sections.reduce((s, sec) => s + sec.sub_cost, 0) * subMarginMult}
+                {@const subSurcharges = sub.quote.surcharges.reduce((s, x) => s + x.sub_amount, 0) * subMarginMult}
+                {@const subGrandTotal = subLaborTotal + subSurcharges + (sub.quote.materials_total || 0)}
+                <div class="mt-4 pt-4 border-t-2 border-dashed border-blue-200">
+                  <div class="flex items-center gap-2 mb-3">
+                    <span class="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">Sub Estimate</span>
+                    <span class="text-xs text-gray-400">Your price when bidding to a GC ({Math.round((data.tenant.sub_margin ?? 0.10) * 100)}% margin)</span>
+                  </div>
+                  {#each sub.quote.sections || [] as section}
+                    <div class="flex justify-between text-sm text-gray-600 mb-1">
+                      <span>{section.label}</span>
+                      <span>${fmt(section.sub_cost * subMarginMult)}</span>
+                    </div>
+                  {/each}
+                  <div class="flex justify-between pt-2 text-base font-bold text-blue-700 border-t border-blue-200 mt-2">
+                    <span>Sub Total</span>
+                    <span>${fmt(subGrandTotal)}</span>
+                  </div>
+                  <p class="text-xs text-gray-400 mt-2">This is what you'd bid to a general contractor for this scope. Materials at cost, labor at your sub rate.</p>
+                </div>
+              {/if}
             </div>
           </div>
 
@@ -611,14 +669,50 @@
         <!-- Quick Actions -->
         <div class="rounded-xl bg-white border border-gray-200 p-5">
           <h3 class="text-sm font-semibold text-gray-900 mb-3">Quick Actions</h3>
+
+          <!-- Document generation warning -->
+          {#if !sub.estimate_pdf_url || (data.tenant.output_format && !sub.google_doc_url)}
+            <div class="mb-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3">
+              <div class="flex items-start gap-2">
+                <svg class="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs font-medium text-yellow-800">Document generation failed or hasn't completed.</p>
+                  <p class="text-xs text-yellow-700 mt-0.5">
+                    Missing: {[!sub.estimate_pdf_url ? 'PDF' : '', (data.tenant.output_format && !sub.google_doc_url) ? (data.tenant.output_format === 'google_sheets' ? 'Google Sheet' : 'Google Doc') : ''].filter(Boolean).join(', ')}
+                  </p>
+                  {#if docRegenError}
+                    <p class="text-xs text-red-600 mt-1">{docRegenError}</p>
+                  {/if}
+                </div>
+              </div>
+              <button
+                onclick={regenerateDocuments}
+                disabled={regeneratingDoc}
+                class="mt-2 w-full rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-1.5"
+              >
+                {#if regeneratingDoc}
+                  <svg class="animate-spin h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Regenerating...
+                {:else}
+                  Regenerate Documents
+                {/if}
+              </button>
+            </div>
+          {/if}
+
           <div class="grid grid-cols-2 gap-2">
             {#if sub.google_doc_url}
               <a href={sub.google_doc_url} target="_blank" class="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50">
                 {googleLinkLabel}
               </a>
             {:else}
-              <button onclick={regenerateEstimate} disabled={regenerating} class="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-3 py-2 text-xs font-medium text-gray-400 hover:text-gray-600 hover:border-gray-400 disabled:opacity-50">
-                {regenerating ? 'Generating...' : 'Generate Doc'}
+              <button onclick={regenerateDocuments} disabled={regeneratingDoc} class="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-yellow-300 bg-yellow-50 px-3 py-2 text-xs font-medium text-yellow-700 hover:bg-yellow-100 disabled:opacity-50">
+                {regeneratingDoc ? 'Generating...' : 'Generate Doc'}
               </button>
             {/if}
             {#if sub.estimate_pdf_url}
@@ -626,8 +720,8 @@
                 Download PDF
               </a>
             {:else}
-              <button onclick={regenerateEstimate} disabled={regenerating} class="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-3 py-2 text-xs font-medium text-gray-400 hover:text-gray-600 hover:border-gray-400 disabled:opacity-50">
-                {regenerating ? 'Generating...' : 'Generate PDF'}
+              <button onclick={regenerateDocuments} disabled={regeneratingDoc} class="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-yellow-300 bg-yellow-50 px-3 py-2 text-xs font-medium text-yellow-700 hover:bg-yellow-100 disabled:opacity-50">
+                {regeneratingDoc ? 'Generating...' : 'Generate PDF'}
               </button>
             {/if}
             <button onclick={duplicateEstimate} class="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50">

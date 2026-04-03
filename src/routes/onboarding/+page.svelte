@@ -6,7 +6,7 @@
   let step = $state(1);
   let saving = $state(false);
   let saved = $state(false);
-  const totalSteps = 2;
+  const totalSteps = 3;
 
   // Step 1: Trade Selection
   let trades = $state<Record<string, boolean>>({
@@ -16,16 +16,118 @@
   });
   let hasTradeSelected = $derived(Object.values(trades).some(v => v));
 
-  // Step 2: Company Profile
+  // Step 1 also: Company Name
   let companyName = $state(data.tenant.company_name);
   let contactEmail = $state(data.tenant.contact_email);
   let contactPhone = $state(data.tenant.contact_phone);
   let websiteUrl = $state(data.tenant.website_url);
   let serviceAreas = $state(data.tenant.service_areas);
 
-  // Step 3: Branding
-  let primaryColor = $state(data.tenant.primary_color);
-  let accentColor = $state(data.tenant.accent_color);
+  // Step 2: Quick Calibrate
+  let calibrateMode = $state<'prices' | 'costs'>('costs');
+
+  // "I know my costs" inputs
+  let crewWage = $state<number | null>(null);
+  let grossMargin = $state<number | null>(40);
+  let metroArea = $state('');
+
+  const metros = [
+    { value: '', label: 'Select your metro...' },
+    { value: 'boston', label: 'Boston' },
+    { value: 'new_york', label: 'New York' },
+    { value: 'los_angeles', label: 'Los Angeles' },
+    { value: 'houston', label: 'Houston' },
+    { value: 'dallas', label: 'Dallas-Fort Worth' },
+    { value: 'chicago', label: 'Chicago' },
+    { value: 'atlanta', label: 'Atlanta' },
+    { value: 'phoenix', label: 'Phoenix' },
+    { value: 'miami', label: 'Miami' },
+    { value: 'denver', label: 'Denver' },
+    { value: 'seattle', label: 'Seattle' },
+    { value: 'san_francisco', label: 'San Francisco' },
+    { value: 'philadelphia', label: 'Philadelphia' },
+    { value: 'washington_dc', label: 'Washington DC' },
+    { value: 'minneapolis', label: 'Minneapolis' },
+    { value: 'national', label: 'Other / National Average' },
+  ];
+
+  const metroWages: Record<string, number> = {
+    boston: 28.50, new_york: 30.20, los_angeles: 24.60, houston: 19.80,
+    dallas: 19.50, chicago: 27.40, atlanta: 20.80, phoenix: 21.20,
+    miami: 20.40, denver: 23.80, seattle: 28.00, san_francisco: 31.50,
+    philadelphia: 27.00, washington_dc: 26.50, minneapolis: 25.80, national: 22.40,
+  };
+
+  let prevMetro = '';
+  $effect(() => {
+    if (metroArea && metroArea !== prevMetro) {
+      prevMetro = metroArea;
+      if (metroWages[metroArea] && !crewWage) {
+        crewWage = metroWages[metroArea];
+      }
+    }
+  });
+
+  // "I know my prices" inputs
+  let anchorBedroom = $state<number | null>(null);
+  let anchorBedroomCeiling = $state<number | null>(null);
+  let anchorDoor = $state<number | null>(null);
+  let anchorWindow = $state<number | null>(null);
+  let anchorTrim = $state<number | null>(null);
+
+  // Derived preview for costs mode
+  let billingRate = $derived(crewWage && grossMargin ? crewWage / (1 - grossMargin / 100) : null);
+  let previewBedroom = $derived(billingRate ? Math.round((384 / 150) * billingRate) : null);
+
+  let calibrateSaved = $state(false);
+
+  async function saveCalibration() {
+    saving = true;
+    if (calibrateMode === 'costs' && crewWage && grossMargin) {
+      // Save via costs mode
+      await fetch('/api/tenant/calibrate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'costs',
+          crew_hourly_wage: crewWage,
+          target_gross_margin: grossMargin / 100,
+        }),
+      });
+      // Also save metro
+      await fetch('/api/tenant/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ metro_area: metroArea || null }),
+      });
+      calibrateSaved = true;
+    } else if (calibrateMode === 'prices' && anchorBedroom) {
+      // Save via anchor prices mode
+      await fetch('/api/tenant/calibrate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          medium_bedroom_walls_only: anchorBedroom || 115,
+          medium_bedroom_walls_ceiling: anchorBedroomCeiling || 158,
+          per_door_rate: anchorDoor || 62,
+          per_window_rate: anchorWindow || 83,
+          per_trim_lf_rate: anchorTrim || 62,
+          exterior_siding_per_side: 800,
+          exterior_door_rate: 120,
+          exterior_window_rate: 90,
+          exterior_trim_rate: 80,
+          epoxy_per_sqft: 6,
+          labor_multiplier: 1.1,
+          cc_fee_pct: 3.2,
+          deposit_pct: 30,
+          transportation_fee: 50,
+          trash_fee: 50,
+        }),
+      });
+      calibrateSaved = true;
+    }
+    saving = false;
+  }
 
   async function saveTrades() {
     saving = true;
@@ -58,18 +160,6 @@
     setTimeout(() => { saved = false; }, 2000);
   }
 
-  async function saveBranding() {
-    saving = true;
-    await fetch('/api/tenant/update', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ primary_color: primaryColor, accent_color: accentColor }),
-    });
-    saving = false;
-    saved = true;
-    setTimeout(() => { saved = false; }, 2000);
-  }
-
   async function finishOnboarding() {
     await fetch('/api/tenant/update', {
       method: 'POST',
@@ -82,7 +172,7 @@
   function nextStep() { step = Math.min(step + 1, totalSteps); }
   function prevStep() { step = Math.max(step - 1, 1); }
 
-  const stepLabels = ['Trades', 'Google Connect'];
+  const stepLabels = ['Trades', 'Pricing', 'Google Connect'];
 </script>
 
 <svelte:head>
@@ -157,6 +247,151 @@
       </div>
 
     {:else if step === 2}
+      <!-- Quick Calibrate -->
+      <div class="rounded-2xl bg-white p-8 shadow-sm border border-gray-200">
+        <h2 class="text-xl font-bold text-gray-900 mb-1">Set Your Pricing</h2>
+        <p class="text-sm text-gray-500 mb-6">Tell us how you price jobs. You can fine-tune everything later in Settings.</p>
+
+        <!-- Mode Toggle -->
+        <div class="flex gap-2 mb-6">
+          <button
+            onclick={() => calibrateMode = 'costs'}
+            class="flex-1 rounded-xl border p-4 text-left {calibrateMode === 'costs' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}"
+          >
+            <div class="font-semibold text-gray-900 text-sm">I know my costs</div>
+            <div class="text-xs text-gray-500 mt-1">Enter your crew wage and target margin. We calculate your prices.</div>
+          </button>
+          <button
+            onclick={() => calibrateMode = 'prices'}
+            class="flex-1 rounded-xl border p-4 text-left {calibrateMode === 'prices' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}"
+          >
+            <div class="font-semibold text-gray-900 text-sm">I know my prices</div>
+            <div class="text-xs text-gray-500 mt-1">Enter what you charge for common items. We derive your rates.</div>
+          </button>
+        </div>
+
+        {#if calibrateMode === 'costs'}
+          <div class="space-y-5">
+            <!-- Metro -->
+            <div>
+              <label for="metro" class="block text-sm font-medium text-gray-700 mb-1">Where do you work?</label>
+              <select id="metro" bind:value={metroArea} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none">
+                {#each metros as m}
+                  <option value={m.value}>{m.label}</option>
+                {/each}
+              </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <!-- Wage -->
+              <div>
+                <label for="wage" class="block text-sm font-medium text-gray-700 mb-1">Crew hourly wage</label>
+                <p class="text-xs text-gray-500 mb-2">What you pay each painter per hour.</p>
+                <div class="relative">
+                  <span class="absolute left-3 top-2.5 text-sm text-gray-400">$</span>
+                  <input id="wage" type="number" step="0.50" min="10" max="60" bind:value={crewWage}
+                    placeholder={metroArea ? String(metroWages[metroArea] ?? '22') : '22'}
+                    class="w-full rounded-lg border border-gray-300 pl-7 pr-3 py-2 text-sm outline-none" />
+                </div>
+              </div>
+
+              <!-- Margin -->
+              <div>
+                <label for="margin" class="block text-sm font-medium text-gray-700 mb-1">Target gross margin</label>
+                <p class="text-xs text-gray-500 mb-2">% of every dollar you keep.</p>
+                <div class="relative">
+                  <input id="margin" type="number" step="1" min="10" max="70" bind:value={grossMargin}
+                    placeholder="40"
+                    class="w-full rounded-lg border border-gray-300 px-3 pr-7 py-2 text-sm outline-none" />
+                  <span class="absolute right-3 top-2.5 text-sm text-gray-400">%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Preview -->
+            {#if billingRate}
+              <div class="rounded-lg bg-gray-50 p-4">
+                <p class="text-xs font-medium text-gray-500 mb-2">At these settings, your prices would be roughly:</p>
+                <div class="grid grid-cols-3 gap-3 text-sm">
+                  <div>
+                    <div class="text-xs text-gray-400">Med. bedroom walls</div>
+                    <div class="font-semibold text-gray-900">${previewBedroom}</div>
+                  </div>
+                  <div>
+                    <div class="text-xs text-gray-400">Billing rate</div>
+                    <div class="font-semibold text-gray-900">${billingRate.toFixed(0)}/hr</div>
+                  </div>
+                  <div>
+                    <div class="text-xs text-gray-400">You keep per $1,000</div>
+                    <div class="font-semibold text-gray-900">${grossMargin ? grossMargin * 10 : 0}</div>
+                  </div>
+                </div>
+              </div>
+            {/if}
+          </div>
+        {:else}
+          <!-- Anchor prices mode -->
+          <div class="space-y-4">
+            <p class="text-sm text-gray-500">What do you typically charge for these items? Leave blank for our defaults.</p>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label for="anchor-bedroom" class="block text-xs font-medium text-gray-700 mb-1">Medium bedroom — walls only</label>
+                <div class="relative">
+                  <span class="absolute left-3 top-2.5 text-sm text-gray-400">$</span>
+                  <input id="anchor-bedroom" type="number" bind:value={anchorBedroom} placeholder="115"
+                    class="w-full rounded-lg border border-gray-300 pl-7 pr-3 py-2 text-sm outline-none" />
+                </div>
+              </div>
+              <div>
+                <label for="anchor-bedroom-ceil" class="block text-xs font-medium text-gray-700 mb-1">Medium bedroom — walls + ceiling</label>
+                <div class="relative">
+                  <span class="absolute left-3 top-2.5 text-sm text-gray-400">$</span>
+                  <input id="anchor-bedroom-ceil" type="number" bind:value={anchorBedroomCeiling} placeholder="158"
+                    class="w-full rounded-lg border border-gray-300 pl-7 pr-3 py-2 text-sm outline-none" />
+                </div>
+              </div>
+              <div>
+                <label for="anchor-door" class="block text-xs font-medium text-gray-700 mb-1">Per door (standard frame)</label>
+                <div class="relative">
+                  <span class="absolute left-3 top-2.5 text-sm text-gray-400">$</span>
+                  <input id="anchor-door" type="number" bind:value={anchorDoor} placeholder="62"
+                    class="w-full rounded-lg border border-gray-300 pl-7 pr-3 py-2 text-sm outline-none" />
+                </div>
+              </div>
+              <div>
+                <label for="anchor-window" class="block text-xs font-medium text-gray-700 mb-1">Per window (standard)</label>
+                <div class="relative">
+                  <span class="absolute left-3 top-2.5 text-sm text-gray-400">$</span>
+                  <input id="anchor-window" type="number" bind:value={anchorWindow} placeholder="83"
+                    class="w-full rounded-lg border border-gray-300 pl-7 pr-3 py-2 text-sm outline-none" />
+                </div>
+              </div>
+              <div>
+                <label for="anchor-trim" class="block text-xs font-medium text-gray-700 mb-1">Per trim section (baseboard/crown)</label>
+                <div class="relative">
+                  <span class="absolute left-3 top-2.5 text-sm text-gray-400">$</span>
+                  <input id="anchor-trim" type="number" bind:value={anchorTrim} placeholder="62"
+                    class="w-full rounded-lg border border-gray-300 pl-7 pr-3 py-2 text-sm outline-none" />
+                </div>
+              </div>
+            </div>
+          </div>
+        {/if}
+
+        <div class="mt-6 flex justify-between">
+          <button onclick={prevStep} class="rounded-lg border border-gray-300 px-6 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Back</button>
+          <div class="flex gap-3">
+            <button onclick={nextStep} class="rounded-lg border border-gray-300 px-6 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Skip</button>
+            <button onclick={() => { saveCalibration(); nextStep(); }} disabled={saving}
+              class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
+              {saving ? 'Saving...' : 'Continue'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+    {:else if step === 3}
       <!-- Connect Google Account -->
       <div class="rounded-2xl bg-white p-8 shadow-sm border border-gray-200">
         <h2 class="text-xl font-bold text-gray-900 mb-1">Connect Google Account</h2>

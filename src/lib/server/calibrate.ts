@@ -103,6 +103,100 @@ export function calibrateFromAnchors(answers: CalibrationAnswers): CalibratedRat
   };
 }
 
+// ─── REVERSE CALIBRATION: Costs → Prices ────────────────────────
+// Given wage + margin, calculate what anchor prices should be.
+
+export interface CostInputs {
+  crew_hourly_wage: number;     // $/hr per painter
+  target_gross_margin: number;  // 0.00-1.00 (e.g., 0.40 = 40%)
+}
+
+export interface ImpliedPrices {
+  medium_bedroom_walls_only: number;
+  medium_bedroom_walls_ceiling: number;
+  per_door_rate: number;
+  per_window_rate: number;
+  per_trim_lf_rate: number;
+  exterior_siding_per_side: number;
+  exterior_door_rate: number;
+  exterior_window_rate: number;
+  exterior_trim_rate: number;
+  epoxy_per_sqft: number;
+  effective_billing_rate: number;  // $/hr billed to customer
+}
+
+// Production rates (from pricing-v2.ts)
+const PROD = {
+  walls: 150,     // sqft/hr
+  ceiling: 120,   // sqft/hr
+  door_frame: 0.30,   // hr/item
+  window_std: 0.45,   // hr/item
+  trim_baseboard: 0.50, // hr/item
+  ext_siding_sqft_per_side: 200,
+  ext_siding_rate: 180,  // sqft/hr (clapboard)
+  ext_door: 0.75,    // hr/item
+  ext_window: 0.50,  // hr/item
+  ext_trim: 0.45,    // hr/item
+  epoxy_coating: 150, // sqft/hr
+};
+
+// Complexity factors (from pricing-v2.ts, baked-in for GQ tier)
+const CF = {
+  walls: 1.00,
+  ceiling: 0.666,
+  door_frame: 2.78,
+  window_std: 3.71,
+  trim_baseboard: 2.50,
+  ext_siding: 9.99,  // clapboard
+  ext_door: 2.22,
+  ext_window: 3.33,
+  ext_trim: 3.70,
+  epoxy: 15.14,      // standard epoxy
+};
+
+export function calibrateFromCosts(inputs: CostInputs): ImpliedPrices {
+  const { crew_hourly_wage: wage, target_gross_margin: margin } = inputs;
+  const billing = wage / (1 - margin);
+
+  // Medium Bedroom walls: 384 sqft / 150 sqft/hr = 2.56 hrs × billing × cf
+  const wallHours = MEDIUM_BEDROOM_WALL_SQFT / PROD.walls;
+  const bedroomWalls = wallHours * billing * CF.walls;
+
+  // Ceiling: 384 × 0.45 = 173 sqft / 120 sqft/hr
+  const ceilingSqft = MEDIUM_BEDROOM_WALL_SQFT * MEDIUM_BEDROOM_CEILING_RATIO;
+  const ceilingHours = ceilingSqft / PROD.ceiling;
+  const bedroomWallsCeiling = bedroomWalls + (ceilingHours * billing * CF.ceiling);
+
+  // Items: hours × billing × complexity_factor
+  const doorRate = PROD.door_frame * billing * CF.door_frame;
+  const windowRate = PROD.window_std * billing * CF.window_std;
+  const trimRate = PROD.trim_baseboard * billing * CF.trim_baseboard;
+
+  // Exterior
+  const sidingHours = PROD.ext_siding_sqft_per_side / PROD.ext_siding_rate;
+  const sidingPerSide = sidingHours * billing * CF.ext_siding;
+  const extDoorRate = PROD.ext_door * billing * CF.ext_door;
+  const extWindowRate = PROD.ext_window * billing * CF.ext_window;
+  const extTrimRate = PROD.ext_trim * billing * CF.ext_trim;
+
+  // Epoxy: per sqft = (1/prodRate) × billing × cf
+  const epoxyPerSqft = (1 / PROD.epoxy_coating) * billing * CF.epoxy;
+
+  return {
+    medium_bedroom_walls_only: Math.round(bedroomWalls * 100) / 100,
+    medium_bedroom_walls_ceiling: Math.round(bedroomWallsCeiling * 100) / 100,
+    per_door_rate: Math.round(doorRate * 100) / 100,
+    per_window_rate: Math.round(windowRate * 100) / 100,
+    per_trim_lf_rate: Math.round(trimRate * 100) / 100,
+    exterior_siding_per_side: Math.round(sidingPerSide),
+    exterior_door_rate: Math.round(extDoorRate * 100) / 100,
+    exterior_window_rate: Math.round(extWindowRate * 100) / 100,
+    exterior_trim_rate: Math.round(extTrimRate * 100) / 100,
+    epoxy_per_sqft: Math.round(epoxyPerSqft * 100) / 100,
+    effective_billing_rate: Math.round(billing * 100) / 100,
+  };
+}
+
 /** Default anchor prices derived from RP's actual pricing data */
 export const DEFAULT_ANCHORS: CalibrationAnswers = {
   medium_bedroom_walls_only: 115,    // Based on Medium Bedroom @ $0.30/sqft × 384 sqft

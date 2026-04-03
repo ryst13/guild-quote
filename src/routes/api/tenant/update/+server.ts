@@ -19,6 +19,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     'service_areas', 'primary_color', 'accent_color', 'logo_url',
     'catalog_json', 'stages_json', 'thresholds_json', 'onboarding_completed',
     'enabled_trades', 'output_format', 'labor_price_multiplier', 'show_losp',
+    'crew_hourly_wage', 'default_crew_size', 'target_gross_margin', 'pricing_mode', 'metro_area',
+    'sub_mode_enabled', 'sub_margin',
   ];
 
   for (const field of allowedFields) {

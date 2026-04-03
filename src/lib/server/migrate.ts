@@ -103,6 +103,14 @@ const alterations = [
   // Phase H: Snapshot
   `ALTER TABLE submissions ADD COLUMN snapshot_pdf_url TEXT`,
   `ALTER TABLE submissions ADD COLUMN snapshot_doc_url TEXT`,
+  // Bottom-up pricing engine
+  `ALTER TABLE tenants ADD COLUMN crew_hourly_wage REAL`,
+  `ALTER TABLE tenants ADD COLUMN default_crew_size INTEGER NOT NULL DEFAULT 2`,
+  `ALTER TABLE tenants ADD COLUMN target_gross_margin REAL`,
+  `ALTER TABLE tenants ADD COLUMN pricing_mode TEXT NOT NULL DEFAULT 'top_down'`,
+  `ALTER TABLE tenants ADD COLUMN metro_area TEXT`,
+  `ALTER TABLE tenants ADD COLUMN sub_mode_enabled INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE tenants ADD COLUMN sub_margin REAL`,
   // Phase I: Google Drive folder restructuring
   `ALTER TABLE tenants ADD COLUMN google_drive_root_folder_id TEXT`,
   `ALTER TABLE tenants ADD COLUMN google_drive_active_folder_id TEXT`,

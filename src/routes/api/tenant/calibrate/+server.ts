@@ -3,15 +3,39 @@ import { db } from '$lib/server/db.js';
 import { tenants } from '$lib/server/schema.js';
 import { eq } from 'drizzle-orm';
 import { invalidateTenantCache } from '$lib/server/tenant.js';
-import { calibrateFromAnchors, type CalibrationAnswers } from '$lib/server/calibrate.js';
+import { calibrateFromAnchors, calibrateFromCosts, type CalibrationAnswers, type CostInputs } from '$lib/server/calibrate.js';
 import type { RequestHandler } from './$types.js';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   if (!locals.user) throw error(401, 'Unauthorized');
   if (!locals.user.tenant_id) throw error(400, 'No tenant');
 
-  const body = await request.json() as CalibrationAnswers;
-  const rates = calibrateFromAnchors(body);
+  const body = await request.json();
+
+  // Support both modes: "I know my prices" (anchors) or "I know my costs" (wage+margin)
+  const mode = body.mode as string | undefined;
+
+  if (mode === 'costs') {
+    // Reverse calibration: wage + margin → implied prices + update tenant settings
+    const costInputs = body as CostInputs & { mode: string };
+    const implied = calibrateFromCosts(costInputs);
+
+    // Update tenant with bottom-up settings
+    db.update(tenants).set({
+      crew_hourly_wage: costInputs.crew_hourly_wage,
+      target_gross_margin: costInputs.target_gross_margin,
+      pricing_mode: 'bottom_up',
+      updated_at: new Date().toISOString(),
+    }).where(eq(tenants.id, locals.user.tenant_id)).run();
+
+    const tenant = db.select().from(tenants).where(eq(tenants.id, locals.user.tenant_id)).get();
+    if (tenant) invalidateTenantCache(tenant.slug);
+
+    return json({ success: true, implied, mode: 'costs' });
+  }
+
+  // Default: anchor-based calibration (existing behavior)
+  const rates = calibrateFromAnchors(body as CalibrationAnswers);
 
   // Store the calibrated rates as pricing_config and update labor_multiplier
   const pricingConfig = {

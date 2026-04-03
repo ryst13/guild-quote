@@ -58,5 +58,12 @@ export const load: PageServerLoad = async ({ locals }) => {
     enabledTrades: tenant.enabled_trades,
     outputFormat: tenant.output_format || 'google_docs',
     showLosp: tenant.show_losp ?? true,
+    crewHourlyWage: tenant.crew_hourly_wage,
+    defaultCrewSize: tenant.default_crew_size ?? 2,
+    targetGrossMargin: tenant.target_gross_margin,
+    pricingMode: tenant.pricing_mode ?? 'top_down',
+    metroArea: tenant.metro_area,
+    subModeEnabled: tenant.sub_mode_enabled ?? false,
+    subMargin: tenant.sub_margin,
   };
 };
