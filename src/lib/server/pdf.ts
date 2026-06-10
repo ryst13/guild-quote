@@ -141,7 +141,7 @@ export async function generateEstimatePDF(
   // Grade legend
   for (const g of doc.surface_grade.all_grades) {
     checkPage(14);
-    const indicator = g.selected ? '  \u261B ' : '    ';
+    const indicator = g.selected ? '  \u00BB ' : '    ';
     const labelText = `${indicator}${g.grade}  ${g.label}`;
     page.drawText(labelText, {
       x: margin + 10, y,
@@ -167,7 +167,7 @@ export async function generateEstimatePDF(
       for (let li = 0; li < bulletLines.length; li++) {
         checkPage(12);
         if (li === 0) {
-          page.drawText('\u25C9', { x: margin + 8, y: y + 1, font, size: 7, color: accentColor });
+          page.drawText('\u2022', { x: margin + 8, y: y + 1, font, size: 7, color: accentColor });
         }
         page.drawText(bulletLines[li], { x: margin + 22, y, font, size: 8.5, color: bulletColor });
         y -= 11;
@@ -208,7 +208,7 @@ export async function generateEstimatePDF(
 
   for (const level of doc.prep_level.all_levels) {
     checkPage(14);
-    const indicator = level.selected ? '  \u261B ' : '    ';
+    const indicator = level.selected ? '  \u00BB ' : '    ';
     const adjText = level.adjustment === 'Included' ? '' : `  (${level.adjustment})`;
     page.drawText(`${indicator}${level.label}${adjText}`, {
       x: margin + 10, y,
