@@ -23,8 +23,13 @@
   requests redirect to login. Emails attach PDFs (no links) so nothing client-facing
   broke. Critic also found the same class on the WRITE side (snapshot lang →
   writeFileSync) — closed in-iteration with an allowlist. **DONE iter 6.**
-- [ ] P0-7 Snapshot language mismatch: API supports en/es/fr, UI offers EN/ES/PT/RO/YUE (MOD-031, OUT-012). Make them agree (PT matters for the user base; UI labels stay English).
-- [ ] P0-8 Allow changing enabled trades after onboarding (SET-051) — currently impossible without DB access.
+- [x] P0-7 Snapshot language mismatch — **AUDIT CLAIM STALE** (verified iter 7 via git
+  history: en/es/pt/ro/zh-yue from first commit; "fr" never existed). Residual value
+  shipped: language list single-sourced in `lib/languages.ts` (page duplicate removed);
+  landing page copy corrected to all five languages. **CLOSED iter 7.**
+- [x] P0-8 Enabled trades editable on Settings > Profile: three checkboxes, last-trade
+  lock (client) + non-empty-subset validation (server), plain copy promising
+  reversibility; old estimates stay viewable/regenerable. **DONE iter 7.**
 
 ### P1 — Marcos usability
 - [ ] P1-1 Plain-language pass: every label, helper text, empty state, and error across scope forms, dashboard, settings. 6th-grade English, concrete examples, no trade-software jargon.
@@ -131,6 +136,17 @@ in-iteration. Note: P0-7's premise may be stale — the snapshot API's SUPPORTED
 already matches the UI's five (en/es/pt/ro/zh-yue); verify next iteration. LOW logged:
 tenant-less platform admin is locked out of PDFs (no such user exists today).
 
+### Iteration 7 — P0-7 (stale, closed) + P0-8 trades editing — Critic: ACCEPT
+**P0-7:** Critic independently confirmed staleness via `git log -S "'fr'"` (never in the
+code). Lesson recorded: audit-register rows are claims, not facts — verify before
+building. **P0-8:** trades card on Profile; round-trip uses onboarding's exact wire
+format; Critic verified view/regenerate/duplicate of disabled-trade estimates keep
+working and the zero-trades race is closed by Svelte's synchronous flush. Its MEDIUM
+(no server-side validation on /api/tenant/update) was fixed in-iteration with a
+non-empty-subset guard; copy/landing-page/hygiene LOWs swept.
+**Open decision logged (D-8):** duplicating a disabled-trade estimate still creates a
+draft of that trade — coherent with reversibility, but flag for a conscious choice.
+
 ## Discovered items
 
 - [ ] D-1 (from iter 2 Critic, MEDIUM): Materials/Surcharges inputs need inline
@@ -155,3 +171,6 @@ tenant-less platform admin is locked out of PDFs (no such user exists today).
   terms (PaintScout/Jobber convention) on top of the per-room bullets; rephrase
   Window/Room Cleaning as "separate services available on request". Exterior recap
   filter keys on the literal section label — tag sections structurally instead.
+- [ ] D-8 (from iter 7, decision): duplicating a disabled-trade estimate creates a new
+  draft of that trade. Keep (reversibility-coherent) or gate? Decide during P1-4
+  dashboard quick-actions work.

@@ -19,6 +19,7 @@ export const load: PageServerLoad = async ({ locals }) => {
       primary_color: tenant.primary_color,
       accent_color: tenant.accent_color,
       logo_url: tenant.logo_url,
+      enabled_trades: tenant.enabled_trades,
     },
   };
 };

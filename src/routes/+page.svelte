@@ -133,7 +133,7 @@
           <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> PDF, Google Docs, or Google Sheets output</li>
           <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> Send from your Gmail</li>
           <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> Editable Docs — tweak before you send</li>
-          <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> Multilingual crew snapshots (EN/ES/PT)</li>
+          <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> Multilingual crew snapshots (EN / ES / PT / RO / Cantonese)</li>
         </ul>
       </div>
     </div>

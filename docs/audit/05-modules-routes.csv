@@ -29,7 +29,7 @@ MOD-027,/api/submissions/[id]/send,API,Email estimate (Gmail API or SMTP),Contra
 MOD-028,/api/submissions/[id]/delete,API,Delete submission + PDF,Contractor + owner,,,,
 MOD-029,/api/submissions/[id]/duplicate,API,Clone estimate as draft,Contractor + owner,,,,
 MOD-030,/api/submissions/[id]/regenerate,API,Regenerate with adjusted price,Contractor + owner,Saves previous version; proportional line rescale,,,
-MOD-031,/api/submissions/[id]/snapshot,API,Condensed multilingual snapshot PDF/Sheet,Contractor + owner,Langs: en/es/fr in API; UI offers EN/ES/PT/RO/YUE — reconcile,,,
+MOD-031,/api/submissions/[id]/snapshot,API,Condensed multilingual snapshot PDF/Sheet,Contractor + owner,Langs: en/es/fr in API; UI offers EN/ES/PT/RO/YUE — reconcile,AUDIT CLAIM STALE (verified iter 7),KEEP,Original audit claimed API langs en/es/fr — wrong (git history confirms en/es/pt/ro/zh-yue from first commit). Language list now single-sourced in lib/languages.ts; lang input allowlisted (iter 6)
 MOD-032,/api/submissions/[id]/notify,API,Basic reminder email,Contractor + owner,,,,
 MOD-033,/api/estimate-pdf/[id],API GET,Serve PDF from disk,Public GET,Unauthenticated if ID known — security review,SECURED (ralph iter 6),CHANGE,"Done: 401 unauthenticated (HTML hits redirect to login), 404 for other tenants (no existence leak), traversal-proof filename regex (fuzz-verified by critic); snapshot lang write-traversal also closed"
 MOD-034,/api/upload-logo + /api/logo/[filename],API,Logo upload / serve,Contractor / Public,2MB cap; 24h cache,,,

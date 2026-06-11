@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { SUPPORTED_LANGUAGES as SNAPSHOT_LANGS } from '$lib/languages.js';
   import type { PageData } from './$types.js';
 
   let { data }: { data: PageData } = $props();
@@ -84,13 +85,6 @@
     setTimeout(() => { saved = false; }, 2000);
   }
 
-  const SNAPSHOT_LANGS = [
-    { code: 'en', label: 'English' },
-    { code: 'es', label: 'Español' },
-    { code: 'pt', label: 'Português' },
-    { code: 'ro', label: 'Română' },
-    { code: 'zh-yue', label: '粵語' },
-  ];
 
   async function generateSnapshot() {
     generatingSnapshot = true;

@@ -15,6 +15,14 @@
   let logoUrl = $state(data.tenant.logo_url || '');
   let uploading = $state(false);
 
+  // Trades this company offers — drives which estimate types are available
+  let trades = $state({
+    interior: data.tenant.enabled_trades.includes('interior'),
+    exterior: data.tenant.enabled_trades.includes('exterior'),
+    epoxy: data.tenant.enabled_trades.includes('epoxy'),
+  });
+  const tradeCount = $derived(Number(trades.interior) + Number(trades.exterior) + Number(trades.epoxy));
+
   async function save() {
     saving = true;
     await fetch('/api/tenant/update', {
@@ -29,6 +37,9 @@
         primary_color: primaryColor,
         accent_color: accentColor,
         logo_url: logoUrl,
+        enabled_trades: JSON.stringify(
+          (['interior', 'exterior', 'epoxy'] as const).filter((t) => trades[t]),
+        ),
       }),
     });
     saving = false;
@@ -173,6 +184,42 @@
         </div>
         <div class="mt-2 text-sm font-bold" style="color: {primaryColor}">TOTAL: $7,089</div>
       </div>
+    </div>
+
+    <!-- Trades -->
+    <div class="mt-6 rounded-xl bg-white border border-gray-200 p-6">
+      <h2 class="font-semibold text-gray-900 mb-1">What work do you offer?</h2>
+      <p class="text-sm text-gray-500 mb-4">
+        This controls which estimate types you can create. Turning one off hides it
+        from New Estimate and the dashboard filters — your old estimates stay under
+        "All", nothing is deleted, and you can turn it back on anytime.
+      </p>
+      <div class="space-y-3">
+        <label class="flex items-start gap-3 rounded-lg border border-gray-200 p-3 cursor-pointer hover:bg-gray-50">
+          <input type="checkbox" bind:checked={trades.interior} disabled={trades.interior && tradeCount === 1} class="mt-0.5 rounded border-gray-300" />
+          <span>
+            <span class="block text-sm font-medium text-gray-900">Interior Painting</span>
+            <span class="block text-xs text-gray-500">Rooms, trim, doors, windows, ceilings</span>
+          </span>
+        </label>
+        <label class="flex items-start gap-3 rounded-lg border border-gray-200 p-3 cursor-pointer hover:bg-gray-50">
+          <input type="checkbox" bind:checked={trades.exterior} disabled={trades.exterior && tradeCount === 1} class="mt-0.5 rounded border-gray-300" />
+          <span>
+            <span class="block text-sm font-medium text-gray-900">Exterior Painting</span>
+            <span class="block text-xs text-gray-500">Siding, trim, doors, windows, carpentry repairs</span>
+          </span>
+        </label>
+        <label class="flex items-start gap-3 rounded-lg border border-gray-200 p-3 cursor-pointer hover:bg-gray-50">
+          <input type="checkbox" bind:checked={trades.epoxy} disabled={trades.epoxy && tradeCount === 1} class="mt-0.5 rounded border-gray-300" />
+          <span>
+            <span class="block text-sm font-medium text-gray-900">Epoxy &amp; Garage Coatings</span>
+            <span class="block text-xs text-gray-500">Garage floors, basements, patios</span>
+          </span>
+        </label>
+      </div>
+      {#if tradeCount === 1}
+        <p class="text-xs text-gray-400 mt-3">At least one trade stays on — that's why the last checked box is locked.</p>
+      {/if}
     </div>
   </div>
 </div>

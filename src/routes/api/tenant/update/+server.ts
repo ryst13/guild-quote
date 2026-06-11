@@ -24,6 +24,20 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     'economy_of_scale_enabled', 'mobilization_hours', 'setup_hours_per_area',
   ];
 
+  // enabled_trades drives core navigation — reject junk before it lands
+  if ('enabled_trades' in body) {
+    let trades: unknown;
+    try {
+      trades = JSON.parse(body.enabled_trades);
+    } catch {
+      throw error(400, 'enabled_trades must be a JSON array');
+    }
+    const valid = ['interior', 'exterior', 'epoxy'];
+    if (!Array.isArray(trades) || trades.length === 0 || !trades.every((t) => valid.includes(t))) {
+      throw error(400, 'enabled_trades must include at least one of: interior, exterior, epoxy');
+    }
+  }
+
   for (const field of allowedFields) {
     if (field in body) {
       updates[field] = body[field];
