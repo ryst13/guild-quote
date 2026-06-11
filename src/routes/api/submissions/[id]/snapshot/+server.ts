@@ -9,7 +9,7 @@ import { createSnapshotSheet } from '$lib/server/snapshot-sheets.js';
 import { writeFileSync, mkdirSync } from 'fs';
 import type { RequestHandler } from './$types.js';
 import type { InteriorScopeData, ExteriorScopeData, EpoxyScopeData } from '$lib/types/index.js';
-import type { SupportedLanguage } from '$lib/server/i18n.js';
+import { SUPPORTED_LANGUAGES, type SupportedLanguage } from '$lib/server/i18n.js';
 
 export const POST: RequestHandler = async ({ request, locals, params }) => {
   if (!locals.user) throw error(401, 'Unauthorized');
@@ -24,7 +24,12 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
   if (!sub) throw error(404, 'Submission not found');
 
   const body = await request.json();
-  const lang = (body.lang as SupportedLanguage) || 'en';
+  // Validate against the allowlist — lang lands in a filesystem path; a raw
+  // cast would allow a path-traversal WRITE via backslashes on Windows.
+  const requested = String(body.lang ?? 'en');
+  const lang: SupportedLanguage = SUPPORTED_LANGUAGES.some((l) => l.code === requested)
+    ? (requested as SupportedLanguage)
+    : 'en';
 
   const scope = sub.scope_json ? JSON.parse(sub.scope_json) : null;
   const quote = sub.quote_json ? JSON.parse(sub.quote_json) : null;

@@ -17,7 +17,12 @@
   walkthrough data). Estimate + snapshot now carry explicit "quoted separately" lines;
   form copy states no price effect; totals locked by test. **DONE iter 5.** Bonus: fixed
   recap-table index shift under economy of scale (interior + exterior, both tested).
-- [ ] P0-6 Secure `/api/estimate-pdf/[id]` — currently serves any PDF to anyone with the ID (MOD-033). Signed URLs or session auth; emailed links must still work for clients.
+- [x] P0-6 Secure `/api/estimate-pdf/[id]` — session auth + tenant ownership (admin
+  override), strict UUID filename validation via unit-tested pure module (also closed a
+  Windows path-traversal READ the audit missed), 404-not-403 for other tenants, HTML
+  requests redirect to login. Emails attach PDFs (no links) so nothing client-facing
+  broke. Critic also found the same class on the WRITE side (snapshot lang →
+  writeFileSync) — closed in-iteration with an allowlist. **DONE iter 6.**
 - [ ] P0-7 Snapshot language mismatch: API supports en/es/fr, UI offers EN/ES/PT/RO/YUE (MOD-031, OUT-012). Make them agree (PT matters for the user base; UI labels stay English).
 - [ ] P0-8 Allow changing enabled trades after onboarding (SET-051) — currently impossible without DB access.
 
@@ -114,6 +119,17 @@ validated rates, don't invent them). Logged D-5 (Google Docs output is structura
 the 8-section estimate), D-6 (epoxy collected-but-silent inputs), D-7 (job-level
 Exclusions block + structural section tagging). Snapshot fix + exterior recap test were
 applied in-iteration at its prompting.
+
+### Iteration 6 — P0-6 PDF endpoint security — Critic: ACCEPT
+**Builder:** auth + ownership + traversal-proof filename parsing (pure `pdf-access.ts`,
+unit-tested incl. backslash/encoding attacks). **Critic:** fuzzed the regex with 500k
+mutated suffixes (zero traversal matches), verified hooks populate locals.user on /api
+routes, swept all consumers for breakage (none — emails attach, dashboard links are
+same-origin authenticated), confirmed all submission IDs are UUIDv4. Found the WRITE-side
+twin (unvalidated snapshot `lang` into writeFileSync) → allowlist fix applied
+in-iteration. Note: P0-7's premise may be stale — the snapshot API's SUPPORTED_LANGUAGES
+already matches the UI's five (en/es/pt/ro/zh-yue); verify next iteration. LOW logged:
+tenant-less platform admin is locked out of PDFs (no such user exists today).
 
 ## Discovered items
 

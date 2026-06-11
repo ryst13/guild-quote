@@ -7,7 +7,7 @@ OUT-005,Estimate doc,5. Project Recap Table,quote.sections,Per-room/surface row 
 OUT-006,Estimate doc,6. Payment Terms,quote.grand_total,30% deposit; >$10k adds 30% progress + 40% completion; else 70% completion,WIRED (ralph iter 3),CHANGE,Honor pricing_config.payment_terms,Done: tenant deposit/threshold honored; fixed 30% progress slice documented in settings preview
 OUT-007,Estimate doc,7. Production,quote.production,Hours and days shown as +/-20% ranges + crew size,,,,
 OUT-008,Estimate doc,8. Signature Block,—,Client + contractor signature lines,,,,
-OUT-009,Output format,Full PDF,pdf.ts generateEstimatePDF,8 sections; stored ./data/pdfs/{id}.pdf,Served unauthenticated at /api/estimate-pdf/[id],,,
+OUT-009,Output format,Full PDF,pdf.ts generateEstimatePDF,8 sections; stored ./data/pdfs/{id}.pdf,SECURED (ralph iter 6),CHANGE,Owner-only PDF serving,Done: see MOD-033
 OUT-010,Output format,Google Doc,google-docs.ts,Same content; shared editable doc; URL on submission,Requires Google OAuth token,,,
 OUT-011,Output format,Google Sheet,google-sheets.ts,Tabular line items,Default output_format is google_docs; Sheets marked Recommended in UI — reconcile,,,
 OUT-012,Output format,Snapshot PDF/Sheet,snapshot-pdf.ts / snapshot-sheets.ts,Condensed multilingual version,API langs en/es/fr vs UI EN/ES/PT/RO/YUE mismatch,,,
