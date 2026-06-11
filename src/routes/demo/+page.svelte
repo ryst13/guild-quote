@@ -36,10 +36,10 @@
       if (res.ok) {
         result = data;
       } else {
-        errorMsg = data.error || 'Failed to generate estimate';
+        errorMsg = data.error || 'The estimate did not go through. Check your scope and try again.';
       }
     } catch {
-      errorMsg = 'Network error';
+      errorMsg = 'No connection. Check your internet and try again.';
     } finally {
       generating = false;
     }
@@ -341,7 +341,7 @@
 
         {#if result.quote.completeness_warnings && result.quote.completeness_warnings.length > 0}
           <div class="rounded-lg bg-yellow-50 border border-yellow-200 p-4">
-            <h3 class="text-sm font-semibold text-yellow-800 mb-2">Scope Completeness Check</h3>
+            <h3 class="text-sm font-semibold text-yellow-800 mb-2">Did you miss anything?</h3>
             {#each result.quote.completeness_warnings as warning}
               <p class="text-sm text-yellow-700">- {warning}</p>
             {/each}

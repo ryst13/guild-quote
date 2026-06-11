@@ -41,10 +41,10 @@
       if (res.ok) {
         result = data;
       } else {
-        errorMsg = data.error || 'Failed to generate estimate';
+        errorMsg = data.error || 'The estimate did not go through. Check your scope and try again.';
       }
     } catch {
-      errorMsg = 'Network error';
+      errorMsg = 'No connection. Check your internet and try again.';
     } finally {
       generating = false;
     }
@@ -69,7 +69,7 @@
     {#if generating}
       <div class="text-center py-12">
         <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-r-transparent"></div>
-        <p class="mt-4 text-sm text-gray-500">Generating estimate...</p>
+        <p class="mt-4 text-sm text-gray-500">Building your estimate. This takes a few seconds.</p>
       </div>
 
     {:else if result}
@@ -77,7 +77,7 @@
       <div class="space-y-6">
         <div class="rounded-2xl bg-white border border-gray-200 p-8 text-center">
           <div class="text-4xl mb-4">&#10003;</div>
-          <h2 class="text-xl font-bold text-gray-900 mb-2">Estimate Generated</h2>
+          <h2 class="text-xl font-bold text-gray-900 mb-2">Your Estimate Is Ready</h2>
           <div class="text-3xl font-bold text-green-600 mb-4">${Math.round(result.quote.grand_total).toLocaleString()}</div>
 
           {#if result.quote.production.painting_hours > 0}
@@ -120,7 +120,7 @@
 
         {#if result.quote.completeness_warnings.length > 0}
           <div class="rounded-lg bg-yellow-50 border border-yellow-200 p-4">
-            <h3 class="text-sm font-semibold text-yellow-800 mb-2">Scope Completeness Check</h3>
+            <h3 class="text-sm font-semibold text-yellow-800 mb-2">Did you miss anything?</h3>
             {#each result.quote.completeness_warnings as warning}
               <p class="text-sm text-yellow-700">- {warning}</p>
             {/each}
@@ -135,7 +135,7 @@
 
         <!-- Profitability (internal) -->
         <div class="rounded-xl bg-white border border-gray-200 p-6">
-          <h3 class="font-semibold text-gray-900 mb-3">Profitability (Internal)</h3>
+          <h3 class="font-semibold text-gray-900 mb-3">Your Profit — the client never sees this</h3>
           <div class="grid grid-cols-3 gap-4 text-sm">
             <div>
               <span class="text-gray-500">Gross Profit</span>
@@ -164,7 +164,7 @@
     {:else if !selectedTrade}
       <!-- Trade selector -->
       <div class="space-y-4">
-        <h2 class="text-lg font-semibold text-gray-900">Select Trade</h2>
+        <h2 class="text-lg font-semibold text-gray-900">What kind of job is this?</h2>
         {#each data.tenant.enabled_trades as trade}
           <button
             onclick={() => selectedTrade = trade as TradeType}
@@ -190,10 +190,10 @@
       {#if !pricingPromptDismissed}
         <div class="rounded-lg bg-blue-50 border border-blue-200 p-4 mb-4 flex items-center justify-between">
           <div>
-            <span class="text-sm text-blue-800">Your estimates use default pricing.</span>
-            <a href="/dashboard/settings/pricing" class="text-sm text-blue-600 font-medium ml-1 hover:underline">Review your rates before generating?</a>
+            <span class="text-sm text-blue-800">This estimate uses whatever is in your Pricing settings. Have you set your prices yet?</span>
+            <a href="/dashboard/settings/pricing" class="text-sm text-blue-600 font-medium ml-1 hover:underline">Check my prices</a>
           </div>
-          <button onclick={() => { pricingPromptDismissed = true; dismissPrompt('pricing_reviewed'); }} class="text-xs text-blue-500 hover:text-blue-700 ml-4">Dismiss</button>
+          <button onclick={() => { pricingPromptDismissed = true; dismissPrompt('pricing_reviewed'); }} class="text-xs text-blue-500 hover:text-blue-700 ml-4">Not now</button>
         </div>
       {/if}
 

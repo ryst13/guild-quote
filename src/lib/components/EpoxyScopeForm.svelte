@@ -73,7 +73,7 @@
 
 <div class="space-y-6">
   <div class="flex gap-2">
-    {#each ['Client Info', 'Floor Builder', 'Project Details', 'Review'] as label, i}
+    {#each ['Client Info', 'Floors', 'Project Details', 'Review'] as label, i}
       <button onclick={() => step = i + 1} class="flex-1 text-center py-2 text-xs font-medium rounded-lg {step === i + 1 ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}">
         {label}
       </button>
@@ -84,7 +84,7 @@
     <div class="space-y-4">
       {#if demo}
         <div class="rounded-lg bg-blue-50 border border-blue-100 px-4 py-2.5 text-sm text-blue-700">
-          Pre-filled with sample data — edit or skip ahead.
+          This is an example client, already filled in. Change anything, or skip ahead.
         </div>
       {/if}
       <div>
@@ -187,7 +187,7 @@
           </div>
 
           <div>
-            <label for="floor-flake-{fi}" class="block text-xs font-medium text-gray-600 mb-1">Color/Flake Selection</label>
+            <label for="floor-flake-{fi}" class="block text-xs font-medium text-gray-600 mb-1">Color / Flake</label>
             <select id="floor-flake-{fi}" bind:value={floor.color_flake} class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm outline-none">
               <option value="none">None</option>
               <option value="standard">Standard Flake</option>
@@ -198,7 +198,7 @@
 
           <div class="flex flex-wrap gap-6">
             <label class="flex items-center gap-2 text-sm text-gray-700">
-              <input type="checkbox" bind:checked={floor.existing_coating_removal} class="rounded border-gray-300" /> Existing Coating Removal
+              <input type="checkbox" bind:checked={floor.existing_coating_removal} class="rounded border-gray-300" /> Remove Old Coating
             </label>
             <label class="flex items-center gap-2 text-sm text-gray-700">
               <input type="checkbox" bind:checked={floor.moisture_issues} class="rounded border-gray-300" /> Moisture Issues
@@ -237,7 +237,7 @@
         </select>
       </div>
       <div>
-        <label for="epoxy-timeline" class="block text-sm font-medium text-gray-700 mb-1">Timeline Preference</label>
+        <label for="epoxy-timeline" class="block text-sm font-medium text-gray-700 mb-1">When does the client want it done?</label>
         <input id="epoxy-timeline" type="text" bind:value={timeline} placeholder="e.g., ASAP, next month" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
       </div>
       <div>
@@ -274,14 +274,14 @@
         <div class="text-sm space-y-1">
           {#if concreteGrinding}<div class="text-blue-600">Concrete Grinding: Yes</div>{/if}
           <div><span class="text-gray-500">Crack Repair:</span> <span class="font-medium">{crackRepair}</span></div>
-          {#if timeline}<div><span class="text-gray-500">Timeline:</span> <span class="font-medium">{timeline}</span></div>{/if}
+          {#if timeline}<div><span class="text-gray-500">When they want it:</span> <span class="font-medium">{timeline}</span></div>{/if}
         </div>
       </div>
 
       <div class="flex justify-between">
         <button onclick={() => step = 3} class="rounded-lg border border-gray-300 px-6 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Back</button>
         <button onclick={handleSubmit} class="rounded-lg bg-green-600 px-8 py-2.5 text-sm font-semibold text-white hover:bg-green-700">
-          Generate Estimate
+          Create Estimate
         </button>
       </div>
     </div>

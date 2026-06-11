@@ -32,7 +32,18 @@
   reversibility; old estimates stay viewable/regenerable. **DONE iter 7.**
 
 ### P1 — Marcos usability
-- [ ] P1-1 Plain-language pass: every label, helper text, empty state, and error across scope forms, dashboard, settings. 6th-grade English, concrete examples, no trade-software jargon.
+- [x] P1-1a Plain-language pass, slice 1: scope forms + /dashboard/new + /demo chrome.
+  **DONE iter 8.** Software jargon killed (Generate/Builder/Dismiss/Network error);
+  Surface Grade + Prep Level got accurate one-line explanations; errors say what to do
+  next. Critic REJECT round caught: fixed room dimensions would have mis-steered the
+  most price-sensitive input (engine S/M/L are relative per room type) → replaced with
+  a relative-semantics helper line; starter-prices banner stated a falsehood → made
+  conditional; demo chrome aligned.
+- [ ] P1-1b Plain-language pass, slice 2: dashboard list, /dashboard/[id] estimate page
+  (Generate Doc/PDF buttons, room Copy vs estimate Duplicate consistency), settings
+  pages incl. D-1 inline "using default" feedback. NOTE from iter-8 Critic: the
+  pricing-reviewed banner flag is never set by actually saving prices — wire
+  `prompts_shown.pricing_reviewed` on pricing save during this slice.
 - [ ] P1-2 Driveway test — scope entry on a phone: numeric keypads (`inputmode`), thumb-size targets, steppers over free inputs where sane, minimal required fields, no dead-end validation.
 - [ ] P1-3 Settings consolidation: one "My Prices" mental model instead of Pricing (4 tabs) + Catalog as disconnected pages. Depends on P0-1..4 verdicts.
 - [ ] P1-4 Dashboard: Jobber-style status-at-a-glance + one-tap quick actions (send, mark accepted/declined, duplicate). Surface "needs action" first.
@@ -160,6 +171,20 @@ working and the zero-trades race is closed by Svelte's synchronous flush. Its ME
 non-empty-subset guard; copy/landing-page/hygiene LOWs swept.
 **Open decision logged (D-8):** duplicating a disabled-trade estimate still creates a
 draft of that trade — coherent with reversibility, but flag for a conscious choice.
+
+### Iteration 8 — P1-1a plain-language slice 1 — Critic: REJECT → fixed → green
+**Builder:** 30-edit copy pass (sub-builder inventoried, I applied): scope forms,
+/dashboard/new. Trade vocabulary untouched; software jargon killed; product concepts
+explained in place; every error now states what happened + what to do.
+**Critic (localization-editor mode): REJECT** — [HIGH] hard-coded room dimensions in the
+size dropdown only fit a Bedroom; engine S/M/L are per-room-type (a "Large 14x16" living
+room would price as 800 sqft wall ≈ +67%) → reverted to plain S/M/L + helper teaching the
+relative semantic. [MEDIUM] new banner copy asserted "starter prices, not yours" but the
+flag never reflects actual pricing-save state → conditional phrasing now, logic fix queued
+in P1-1b. [MEDIUM] /demo shares the forms but kept old chrome strings → aligned. [LOWs]
+epoxy review label, dims invisible in narrow selects anyway (moot after revert).
+**Meta-lesson recorded:** copy that encodes numbers is pricing surface, not prose — the
+Critic reviews it against the engine, not against style.
 
 ## Discovered items
 

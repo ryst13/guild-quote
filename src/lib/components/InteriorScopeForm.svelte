@@ -116,7 +116,7 @@
 <div class="space-y-6">
   <!-- Step indicator -->
   <div class="flex gap-2">
-    {#each ['Client Info', 'Room Builder', 'Project Details', 'Review'] as label, i}
+    {#each ['Client Info', 'Rooms', 'Project Details', 'Review'] as label, i}
       <button onclick={() => step = i + 1} class="flex-1 text-center py-2 text-xs font-medium rounded-lg {step === i + 1 ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}">
         {label}
       </button>
@@ -128,7 +128,7 @@
     <div class="space-y-4">
       {#if demo}
         <div class="rounded-lg bg-blue-50 border border-blue-100 px-4 py-2.5 text-sm text-blue-700">
-          Pre-filled with sample data — edit or skip ahead.
+          This is an example client, already filled in. Change anything, or skip ahead.
         </div>
       {/if}
       <div>
@@ -200,7 +200,7 @@
           <div class="flex items-center justify-between">
             <h3 class="font-semibold text-gray-900">Room {ri + 1}</h3>
             <div class="flex gap-2">
-              <button onclick={() => duplicateRoom(ri)} class="text-xs text-blue-600 hover:text-blue-700">Duplicate</button>
+              <button onclick={() => duplicateRoom(ri)} class="text-xs text-blue-600 hover:text-blue-700">Copy</button>
               {#if rooms.length > 1}
                 <button onclick={() => { removeRoom(ri); activeRoomIdx = Math.max(0, ri - 1); }} class="text-xs text-red-600 hover:text-red-700">Remove</button>
               {/if}
@@ -244,7 +244,8 @@
 
           <!-- Items -->
           <div>
-            <h4 class="text-xs font-semibold text-gray-600 uppercase mb-2">Items (quantity)</h4>
+            <p class="text-xs text-gray-500 -mt-1 mb-2">Small, Medium, and Large are relative to the room type — a small living room is bigger than a small bathroom.</p>
+          <h4 class="text-xs font-semibold text-gray-600 uppercase mb-2">Items — how many of each</h4>
             <div class="grid grid-cols-2 gap-x-6 gap-y-2">
               {#each ITEMS as item}
                 <div class="flex items-center justify-between">
@@ -294,6 +295,7 @@
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label for="int-surface-grade" class="block text-sm font-medium text-gray-700 mb-1">Surface Grade</label>
+          <p class="text-xs text-gray-500 mb-1">How the walls look right now. A is like new, D needs heavy repair.</p>
           <select id="int-surface-grade" bind:value={surfaceGrade} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none">
             <option value="A">A — Excellent</option>
             <option value="B">B — Good</option>
@@ -303,6 +305,7 @@
         </div>
         <div>
           <label for="int-prep-level" class="block text-sm font-medium text-gray-700 mb-1">Prep Level</label>
+          <p class="text-xs text-gray-500 mb-1">How much prep work the job gets. Basic is the least, Restoration is the most.</p>
           <select id="int-prep-level" bind:value={prepLevel} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none">
             <option value="Basic">Basic</option>
             <option value="Standard">Standard</option>
@@ -368,7 +371,7 @@
       <div class="flex justify-between">
         <button onclick={() => step = 3} class="rounded-lg border border-gray-300 px-6 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Back</button>
         <button onclick={handleSubmit} class="rounded-lg bg-green-600 px-8 py-2.5 text-sm font-semibold text-white hover:bg-green-700">
-          Generate Estimate
+          Create Estimate
         </button>
       </div>
     </div>
