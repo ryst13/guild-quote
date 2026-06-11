@@ -263,6 +263,7 @@
           <!-- Specialty -->
           <div>
             <h4 class="text-xs font-semibold text-gray-600 uppercase mb-2">Specialty</h4>
+            <p class="text-xs text-gray-500 mb-2">Checked items go on the estimate as "quoted separately." They do not change this price.</p>
             <div class="flex flex-wrap gap-2">
               {#each SPECIALTIES as spec}
                 <label class="flex items-center gap-1.5 text-xs text-gray-700 bg-gray-50 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-gray-100">

@@ -12,7 +12,11 @@
 - [x] P0-2 Materials: wire `pricing_config.materials` (products, coverage, $/gal) into both engines. Resolves SET-031..038. **DONE iter 2.**
 - [x] P0-3 Payment terms: wire `deposit_pct` + `progress_threshold` into estimate output (templates/PDF/doc/sheets). Resolves SET-039/040, OUT-006. **DONE iter 3.**
 - [x] P0-4 Catalog editor verdict — Critic adjudicated **Option B**: dead editor retired, replaced with a read-only Price Book computed live by the real engines; room-list drift resolved via shared `scope-options.ts`. **DONE iter 4.**
-- [ ] P0-5 Interior specialty checkboxes (drywall install, floor refinishing, plaster, wallpaper, window cleaning, room cleaning) are collected but never priced (ITEM-018..023). Critic decides per item: price it, convert to a flagged note on the estimate ("quoted separately"), or remove. Silent no-ops are forbidden.
+- [x] P0-5 Specialty checkboxes — Critic upheld "exclusion note, not priced" for all six
+  (pricing without validation data = asymmetric underbid trap; removal would lose real
+  walkthrough data). Estimate + snapshot now carry explicit "quoted separately" lines;
+  form copy states no price effect; totals locked by test. **DONE iter 5.** Bonus: fixed
+  recap-table index shift under economy of scale (interior + exterior, both tested).
 - [ ] P0-6 Secure `/api/estimate-pdf/[id]` — currently serves any PDF to anyone with the ID (MOD-033). Signed URLs or session auth; emailed links must still work for clients.
 - [ ] P0-7 Snapshot language mismatch: API supports en/es/fr, UI offers EN/ES/PT/RO/YUE (MOD-031, OUT-012). Make them agree (PT matters for the user base; UI labels stay English).
 - [ ] P0-8 Allow changing enabled trades after onboarding (SET-051) — currently impossible without DB access.
@@ -99,6 +103,18 @@ deleted; [MEDIUM] malformed catalog_json 500'd every page via unguarded JSON.par
 tenant.ts → guarded to defaultCatalog; [LOW] vacuous engine-switch assertion hardened;
 [LOW] dead payload field dropped. Zero type errors in touched files after fix.
 
+### Iteration 5 — P0-5 specialty exclusions + recap index bug — Critic: ACCEPT
+**Builder:** Per-room "Not included in this price (quoted separately): …" bullet on the
+estimate; crew-facing "Quoted separately (not this job)" line on snapshots; plain form
+copy; price-identity test. Discovered + fixed: recap rows indexed `sections[i]`, which
+the Setup & Mobilization section shifted off-by-one under economy of scale — interior and
+exterior recaps now index room sections only, regression-tested both.
+**Critic:** upheld the disposition for all six items (incl. Window/Room Cleaning — no
+validated rates, don't invent them). Logged D-5 (Google Docs output is structurally not
+the 8-section estimate), D-6 (epoxy collected-but-silent inputs), D-7 (job-level
+Exclusions block + structural section tagging). Snapshot fix + exterior recap test were
+applied in-iteration at its prompting.
+
 ## Discovered items
 
 - [ ] D-1 (from iter 2 Critic, MEDIUM): Materials/Surcharges inputs need inline
@@ -112,3 +128,14 @@ tenant.ts → guarded to defaultCatalog; [LOW] vacuous engine-switch assertion h
   (same real-engine computation pattern) when P1-3 consolidates settings.
 - [ ] D-4 (from iter 4, LOW): onboarding +page.server.ts still serializes `catalog`
   into a page that never reads it — drop during P1-5 onboarding pass.
+- [ ] D-5 (from iter 5 Critic, HIGH class but pre-existing): Google Docs output never
+  renders the 8-section EstimateDocument (no work descriptions, no surface grade, no
+  payment terms — just raw line items), so it also misses the new exclusion bullets.
+  Rebuild createEstimateDoc on EstimateDocument during P1-7 output polish.
+- [ ] D-6 (from iter 5, LOW): epoxy collects timeline + notes that reach no output;
+  epoxy also bypasses the template engine entirely (legacy PDF path). Same
+  collected-but-silent class — fold into P1-7.
+- [ ] D-7 (from iter 5, LOW): add a rolled-up job-level "Exclusions" block near payment
+  terms (PaintScout/Jobber convention) on top of the per-room bullets; rephrase
+  Window/Room Cleaning as "separate services available on request". Exterior recap
+  filter keys on the literal section label — tag sections structurally instead.

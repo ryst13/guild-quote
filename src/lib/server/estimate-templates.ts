@@ -346,6 +346,12 @@ export function assembleInteriorEstimate(
       }
     }
 
+    // Specialty work is recorded during the walkthrough but NOT priced by
+    // GuildQuote — the estimate must say so out loud, never stay silent.
+    if (room.specialty && room.specialty.length > 0) {
+      bullets.push(`Not included in this price (quoted separately): ${room.specialty.join(', ')}`);
+    }
+
     return {
       area: `${room.room_type} (${room.room_size})`,
       bullets,
@@ -353,9 +359,12 @@ export function assembleInteriorEstimate(
     };
   });
 
-  // Recap table rows
+  // Recap table rows. Index into room sections only — the Setup &
+  // Mobilization section (economy of scale) sits at the front of sections
+  // and would shift every row's price onto the wrong room.
+  const roomSections = quote.sections.filter((s) => s.label !== 'Setup & Mobilization');
   const recapRows = scope.rooms.map((room, i) => {
-    const section = quote.sections[i];
+    const section = roomSections[i];
     const doorCount = Object.entries(room.items).filter(([k, v]) => k.startsWith('Door') && v > 0).reduce((s, [, v]) => s + v, 0);
     const windowCount = Object.entries(room.items).filter(([k, v]) => k.startsWith('Window') && v > 0).reduce((s, [, v]) => s + v, 0);
     const trimCount = Object.entries(room.items).filter(([k, v]) => k.startsWith('Trim') && v > 0).reduce((s, [, v]) => s + v, 0);
@@ -503,8 +512,11 @@ export function assembleExteriorEstimate(
     return { area: surface.name, bullets, notes: surface.notes || null };
   });
 
+  // Same indexing rule as interior: skip the job-level Setup & Mobilization
+  // section so each row's price lands on the right surface.
+  const surfaceSections = quote.sections.filter((s) => s.label !== 'Setup & Mobilization');
   const recapRows = scope.surfaces.map((surface, i) => {
-    const section = quote.sections[i];
+    const section = surfaceSections[i];
     const sidingCount = Object.values(surface.siding).reduce((s, v) => s + v, 0);
     const doorCount = Object.values(surface.doors).reduce((s, v) => s + v, 0);
     const windowCount = Object.values(surface.windows).reduce((s, v) => s + v, 0);

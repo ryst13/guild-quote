@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { assembleInteriorEstimate, assembleExteriorEstimate } from './estimate-templates.js';
 import { calculateInteriorBottomUp, calculateExteriorBottomUp } from './pricing-v2.js';
-import { catalog, tenant, tenantLite, interiorScope, exteriorScope } from './test-fixtures.js';
+import { catalog, tenant, tenantWith, tenantLite, interiorScope, exteriorScope } from './test-fixtures.js';
 
 describe('assembleInteriorEstimate', () => {
 	const quote = calculateInteriorBottomUp(interiorScope, catalog, tenant);
@@ -40,6 +40,65 @@ describe('assembleExteriorEstimate', () => {
 
 	it('has one work-description block per surface', () => {
 		expect(doc.work_description).toHaveLength(exteriorScope.surfaces.length);
+	});
+});
+
+describe('specialty work — explicit exclusions, never silent', () => {
+	const scopeWithSpecialty = () => {
+		const s = JSON.parse(JSON.stringify(interiorScope)) as typeof interiorScope;
+		s.rooms[0].specialty = ['Plaster Wall/Ceiling', 'Wallpaper'];
+		return s;
+	};
+
+	it('checked specialties appear on the estimate as quoted-separately exclusions', () => {
+		const scope = scopeWithSpecialty();
+		const quote = calculateInteriorBottomUp(scope, catalog, tenant);
+		const doc = assembleInteriorEstimate(scope, quote, tenantLite, 'SPEC-1');
+		const bullets = doc.work_description[0].bullets.join(' | ');
+		expect(bullets).toContain('Not included in this price (quoted separately)');
+		expect(bullets).toContain('Plaster Wall/Ceiling');
+		expect(bullets).toContain('Wallpaper');
+	});
+
+	it('specialties never change the price (no silent charges either way)', () => {
+		const withSpec = calculateInteriorBottomUp(scopeWithSpecialty(), catalog, tenant);
+		const without = calculateInteriorBottomUp(interiorScope, catalog, tenant);
+		expect(withSpec.grand_total).toBe(without.grand_total);
+	});
+
+	it('no exclusion bullet when nothing is checked', () => {
+		const quote = calculateInteriorBottomUp(interiorScope, catalog, tenant);
+		const doc = assembleInteriorEstimate(interiorScope, quote, tenantLite, 'SPEC-2');
+		expect(doc.work_description[0].bullets.join(' | ')).not.toContain('quoted separately');
+	});
+});
+
+describe('recap table — rows track rooms even with Setup & Mobilization present', () => {
+	it('exterior recap rows stay aligned under economy of scale too', () => {
+		const eosTenant = tenantWith({ economy_of_scale_enabled: true });
+		const quote = calculateExteriorBottomUp(exteriorScope, catalog, eosTenant);
+		expect(quote.sections[0].label).toBe('Setup & Mobilization');
+		const doc = assembleExteriorEstimate(exteriorScope, quote, tenantLite, 'RECAP-EXT');
+		for (let i = 0; i < exteriorScope.surfaces.length; i++) {
+			const surface = exteriorScope.surfaces[i];
+			const section = quote.sections.find((s) => s.label === surface.name);
+			expect(doc.recap_table.rows[i].price).toBeCloseTo(section!.sales_price, 6);
+		}
+	});
+
+	it('economy-of-scale section does not shift recap prices onto wrong rooms', () => {
+		const eosTenant = tenantWith({ economy_of_scale_enabled: true });
+		const quote = calculateInteriorBottomUp(interiorScope, catalog, eosTenant);
+		expect(quote.sections[0].label).toBe('Setup & Mobilization');
+		const doc = assembleInteriorEstimate(interiorScope, quote, tenantLite, 'RECAP-1');
+		// Each recap row's price must equal its own room's section price
+		for (let i = 0; i < interiorScope.rooms.length; i++) {
+			const room = interiorScope.rooms[i];
+			const section = quote.sections.find(
+				(s) => s.label === `${room.room_type} (${room.room_size})`,
+			);
+			expect(doc.recap_table.rows[i].price).toBeCloseTo(section!.sales_price, 6);
+		}
 	});
 });
 

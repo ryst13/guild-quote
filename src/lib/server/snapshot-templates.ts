@@ -74,6 +74,10 @@ export function assembleInteriorSnapshot(
     for (const [key, val] of Object.entries(room.items)) {
       if (val > 0) items.push(`${key}: ${val}`);
     }
+    // Crew-facing signal: flagged specialty work is NOT part of this job
+    if (room.specialty && room.specialty.length > 0) {
+      items.push(`Quoted separately (not this job): ${room.specialty.join(', ')}`);
+    }
     return { name: room.room_type, items, notes: room.notes || '' };
   });
 

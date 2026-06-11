@@ -16,12 +16,12 @@ ITEM-014,Interior,Trim,Trim - Spindles/Balusters,quantity,315.56,191.5,2.5,2.55,
 ITEM-015,Interior,Trim,Trim - Radiator,quantity,82.5,50,0.6,2.78,22,,,,,
 ITEM-016,Interior,Trim,Trim - Handrail,quantity,61.88,37.5,0.4,3.12,10,,,,,
 ITEM-017,Interior,Repair,Repair - Drywall Repair,quantity,83.88,25,0.75,2.26,50,,,,,
-ITEM-018,Interior,Specialty,Drywall Install,checkbox (per room),NONE,NONE,NONE,,,,NOT PRICED — collected on the form but ignored by both engines,,,
-ITEM-019,Interior,Specialty,Floor Refinishing,checkbox (per room),NONE,NONE,NONE,,,,NOT PRICED — collected on the form but ignored by both engines,,,
-ITEM-020,Interior,Specialty,Plaster Wall/Ceiling,checkbox (per room),NONE,NONE,NONE,,,,NOT PRICED — collected on the form but ignored by both engines,,,
-ITEM-021,Interior,Specialty,Wallpaper,checkbox (per room),NONE,NONE,NONE,,,,NOT PRICED — collected on the form but ignored by both engines,,,
-ITEM-022,Interior,Specialty,Window Cleaning,checkbox (per room),NONE,NONE,NONE,,,,NOT PRICED — collected on the form but ignored by both engines,,,
-ITEM-023,Interior,Specialty,Room Cleaning,checkbox (per room),NONE,NONE,NONE,,,,NOT PRICED — collected on the form but ignored by both engines,,,
+ITEM-018,Interior,Specialty,Drywall Install,checkbox (per room),NONE,NONE,NONE,,,,RESOLVED (ralph iter 5),CHANGE,Explicit quoted-separately exclusion,Done: renders on estimate + snapshot as exclusion line; form says it does not change the price; totals locked by test
+ITEM-019,Interior,Specialty,Floor Refinishing,checkbox (per room),NONE,NONE,NONE,,,,RESOLVED (ralph iter 5),CHANGE,Explicit quoted-separately exclusion,Done: renders on estimate + snapshot as exclusion line; form says it does not change the price; totals locked by test
+ITEM-020,Interior,Specialty,Plaster Wall/Ceiling,checkbox (per room),NONE,NONE,NONE,,,,RESOLVED (ralph iter 5),CHANGE,Explicit quoted-separately exclusion,Done: renders on estimate + snapshot as exclusion line; form says it does not change the price; totals locked by test
+ITEM-021,Interior,Specialty,Wallpaper,checkbox (per room),NONE,NONE,NONE,,,,RESOLVED (ralph iter 5),CHANGE,Explicit quoted-separately exclusion,Done: renders on estimate + snapshot as exclusion line; form says it does not change the price; totals locked by test
+ITEM-022,Interior,Specialty,Window Cleaning,checkbox (per room),NONE,NONE,NONE,,,,RESOLVED (ralph iter 5),CHANGE,Explicit quoted-separately exclusion,Done: renders on estimate + snapshot as exclusion line; form says it does not change the price; totals locked by test
+ITEM-023,Interior,Specialty,Room Cleaning,checkbox (per room),NONE,NONE,NONE,,,,RESOLVED (ralph iter 5),CHANGE,Explicit quoted-separately exclusion,Done: renders on estimate + snapshot as exclusion line; form says it does not change the price; totals locked by test
 ITEM-024,Exterior,Siding,Cedar Shingles,"quantity (squares, 1 sq = 200 sqft)",660,,200 sqft @ 120 sqft/hr,7.99,200,,,,,
 ITEM-025,Exterior,Siding,Clapboard,"quantity (squares, 1 sq = 200 sqft)",550,,200 sqft @ 180 sqft/hr,9.99,200,45,,,,
 ITEM-026,Exterior,Siding,HardieBoard,"quantity (squares, 1 sq = 200 sqft)",440,,200 sqft @ 180 sqft/hr,7.99,200,,,,,
