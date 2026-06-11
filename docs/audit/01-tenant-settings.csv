@@ -19,15 +19,15 @@ SET-017,Settings > Pricing (Labor),Subcontractor Mode toggle,Toggle,sub_mode_ena
 SET-018,Settings > Pricing (Labor),Sub Margin,Number % (0-30),sub_margin,10%,,,,
 SET-019,Settings > Pricing (Labor),Output Format,Button group: Sheets / Docs / PDF,output_format,google_docs,,,,
 SET-020,Settings > Pricing (Labor),Surface Prep Options (LOSP),Toggle,show_losp,true,,,,
-SET-021,Settings > Pricing (Surcharges),Trash Removal enable,Checkbox,pricing_config.surcharges.trash_enabled,true,NOT WIRED — pricing_config is read by no engine; engines hardcode $50/$225,,,
-SET-022,Settings > Pricing (Surcharges),Trash Interior $,Number,pricing_config.surcharges.trash_interior,50,NOT WIRED,,,
-SET-023,Settings > Pricing (Surcharges),Trash Exterior $,Number,pricing_config.surcharges.trash_exterior,225,NOT WIRED,,,
-SET-024,Settings > Pricing (Surcharges),Transportation enable,Checkbox,pricing_config.surcharges.transportation_enabled,true,NOT WIRED,,,
-SET-025,Settings > Pricing (Surcharges),Transportation $,Number,pricing_config.surcharges.transportation_amount,50,NOT WIRED,,,
-SET-026,Settings > Pricing (Surcharges),CC Fee enable,Checkbox,pricing_config.surcharges.cc_fee_enabled,true,NOT WIRED,,,
-SET-027,Settings > Pricing (Surcharges),CC Fee %,Number,pricing_config.surcharges.cc_fee_pct,3.2,NOT WIRED,,,
-SET-028,Settings > Pricing (Surcharges),Color Samples enable,Checkbox,pricing_config.surcharges.color_samples_enabled,true,NOT WIRED,,,
-SET-029,Settings > Pricing (Surcharges),Color Samples $,Number,pricing_config.surcharges.color_samples_amount,98.95,NOT WIRED,,,
+SET-021,Settings > Pricing (Surcharges),Trash Removal enable,Checkbox,pricing_config.surcharges.trash_enabled,true,WIRED (ralph iter 1),CHANGE,Wire to engines,Done: engines read pricing_config.surcharges; zero/disabled amounts drop the line; scope-form labels now show tenant amounts
+SET-022,Settings > Pricing (Surcharges),Trash Interior $,Number,pricing_config.surcharges.trash_interior,50,WIRED (ralph iter 1),CHANGE,Wire to engines,Done: engines read pricing_config.surcharges; zero/disabled amounts drop the line; scope-form labels now show tenant amounts
+SET-023,Settings > Pricing (Surcharges),Trash Exterior $,Number,pricing_config.surcharges.trash_exterior,225,WIRED (ralph iter 1),CHANGE,Wire to engines,Done: engines read pricing_config.surcharges; zero/disabled amounts drop the line; scope-form labels now show tenant amounts
+SET-024,Settings > Pricing (Surcharges),Transportation enable,Checkbox,pricing_config.surcharges.transportation_enabled,true,WIRED (ralph iter 1),CHANGE,Wire to engines,Done: engines read pricing_config.surcharges; zero/disabled amounts drop the line; scope-form labels now show tenant amounts
+SET-025,Settings > Pricing (Surcharges),Transportation $,Number,pricing_config.surcharges.transportation_amount,50,WIRED (ralph iter 1),CHANGE,Wire to engines,Done: engines read pricing_config.surcharges; zero/disabled amounts drop the line; scope-form labels now show tenant amounts
+SET-026,Settings > Pricing (Surcharges),CC Fee enable,Checkbox,pricing_config.surcharges.cc_fee_enabled,true,WIRED (ralph iter 1),CHANGE,Wire to engines,Done: engines read pricing_config.surcharges; zero/disabled amounts drop the line; scope-form labels now show tenant amounts
+SET-027,Settings > Pricing (Surcharges),CC Fee %,Number,pricing_config.surcharges.cc_fee_pct,3.2,WIRED (ralph iter 1),CHANGE,Wire to engines,Done: engines read pricing_config.surcharges; zero/disabled amounts drop the line; scope-form labels now show tenant amounts
+SET-028,Settings > Pricing (Surcharges),Color Samples enable,Checkbox,pricing_config.surcharges.color_samples_enabled,true,WIRED (ralph iter 1),CHANGE,Wire to engines,Done: engines read pricing_config.surcharges; zero/disabled amounts drop the line; scope-form labels now show tenant amounts
+SET-029,Settings > Pricing (Surcharges),Color Samples $,Number,pricing_config.surcharges.color_samples_amount,98.95,WIRED (ralph iter 1),CHANGE,Wire to engines,Done: engines read pricing_config.surcharges; zero/disabled amounts drop the line; scope-form labels now show tenant amounts
 SET-030,Settings > Pricing (Surcharges),Labor Price Multiplier,Number (step 0.05),labor_price_multiplier,1.1,WIRED (top-down engine only),,,
 SET-031,Settings > Pricing (Materials),Interior walls paint (product/coverage/$gal),3 inputs,pricing_config.materials.interior.walls,Regal Select Eggshell / 350 / 63.59,NOT WIRED — engines hardcode INTERIOR_PAINT,,,
 SET-032,Settings > Pricing (Materials),Interior trim paint,3 inputs,pricing_config.materials.interior.trim,Regal Select Semi Gloss / 350 / 63.59,NOT WIRED,,,
@@ -49,7 +49,7 @@ SET-047,Settings > Catalog (Modifiers),Furniture: crew moves some,Number $/room,
 SET-048,Settings > Catalog (Modifiers),Furniture: must stay,Number $/room,catalog_json.furniture_handling.stay_in_place,50,NOT WIRED,,,
 SET-049,Settings > Catalog (Modifiers),Ceiling height multipliers,3 numbers,catalog_json.ceiling_heights,1.0 / 1.15 / 1.3,NOT WIRED,,,
 SET-050,Settings > Catalog,Trim pricing table (13 line items),NO UI,catalog_json.trim_pricing,e.g. window_standard 82.50,In catalog_json but not editable and not read by engines,,,
-SET-051,Onboarding step 1,Enabled trades,3 checkboxes (Interior/Exterior/Epoxy),enabled_trades,["interior"],No settings page to change trades after onboarding,,,
+SET-051,Onboarding step 1,Enabled trades,3 checkboxes (Interior/Exterior/Epoxy),enabled_trades,"[""interior""]",No settings page to change trades after onboarding,,,
 SET-052,Onboarding step 2,Calibration mode,"Buttons: ""I know my costs"" / ""I know my prices""",(local state),costs,,,,
 SET-053,Onboarding step 2 (costs),Metro / wage / margin,Select + 2 numbers,metro_area; crew_hourly_wage; target_gross_margin,(none) / null / 40,,,,
 SET-054,Onboarding step 2 (prices),Anchor prices,5 optional $ inputs (bedroom walls; +ceiling; door; window; trim),via /api/tenant/calibrate,115 / 158 / 62 / 83 / 62,,,,

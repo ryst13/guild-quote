@@ -2,7 +2,7 @@
   import type { InteriorScopeData, InteriorRoom } from '$lib/types/index.js';
   import { v4 as uuidv4 } from 'uuid';
 
-  let { onSubmit, demo = false }: { onSubmit: (data: InteriorScopeData) => void; demo?: boolean } = $props();
+  let { onSubmit, demo = false, colorSamplesAmount = 98.95, transportationAmount = 50 }: { onSubmit: (data: InteriorScopeData) => void; demo?: boolean; colorSamplesAmount?: number; transportationAmount?: number } = $props();
 
   let step = $state(1);
 
@@ -327,10 +327,10 @@
       </div>
       <div class="flex gap-6">
         <label class="flex items-center gap-2 text-sm text-gray-700">
-          <input type="checkbox" bind:checked={colorSamples} class="rounded border-gray-300" /> Color Samples ($98.95)
+          <input type="checkbox" bind:checked={colorSamples} class="rounded border-gray-300" /> Color Samples{#if colorSamplesAmount > 0} (${colorSamplesAmount.toFixed(2)}){/if}
         </label>
         <label class="flex items-center gap-2 text-sm text-gray-700">
-          <input type="checkbox" bind:checked={transportation} class="rounded border-gray-300" /> Transportation Included ($50)
+          <input type="checkbox" bind:checked={transportation} class="rounded border-gray-300" /> Transportation Included{#if transportationAmount > 0} (${transportationAmount.toFixed(2)}){/if}
         </label>
       </div>
       <div>

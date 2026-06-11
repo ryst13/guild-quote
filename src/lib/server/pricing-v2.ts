@@ -18,6 +18,7 @@ import type {
   TenantConfig,
 } from '$lib/types/index.js';
 import priceBenchmarks from '$lib/data/price-benchmarks.json';
+import { resolveSurcharges } from './pricing-config.js';
 import scopeCheckerRules from '$lib/data/scope-checker-rules.json';
 
 // ─── BLS METRO WAGE DEFAULTS (SOC 47-2141, May 2024) ────────────
@@ -328,13 +329,9 @@ const CARPENTRY_MATERIAL_PRICES: Record<string, number> = {
 };
 
 // ─── SURCHARGES ─────────────────────────────────────────────────
-const FIXED_SURCHARGES = {
-  color_samples: 98.95,
-  cc_pct: 0.032,
-  transportation: 50,
-  trash_interior: 50,
-  trash_exterior: 225,
-};
+// Fixed surcharges are tenant-configurable: resolved per quote from
+// tenants.pricing_config via resolveSurcharges() (defaults in pricing-config.ts
+// preserve the historical hardcoded values).
 
 // ─── BENCHMARKS ─────────────────────────────────────────────────
 const INTERIOR_BENCHMARKS = {
@@ -567,15 +564,18 @@ export function calculateInteriorBottomUp(
   // ─── SURCHARGES ─────────────────────────────────────────────
   // In bottom-up, surcharges are flat costs (not % of labor) since
   // the margin is already embedded in each line item.
+  const scfg = resolveSurcharges(tenant);
   const surcharges: { label: string; sub_amount: number; sales_amount: number }[] = [];
 
-  if (formData.project.color_samples) {
-    surcharges.push({ label: 'Color Samples', sub_amount: FIXED_SURCHARGES.color_samples, sales_amount: FIXED_SURCHARGES.color_samples });
+  if (formData.project.color_samples && scfg.color_samples_enabled && scfg.color_samples_amount > 0) {
+    surcharges.push({ label: 'Color Samples', sub_amount: scfg.color_samples_amount, sales_amount: scfg.color_samples_amount });
   }
-  if (formData.project.transportation) {
-    surcharges.push({ label: 'Transportation', sub_amount: FIXED_SURCHARGES.transportation, sales_amount: FIXED_SURCHARGES.transportation });
+  if (formData.project.transportation && scfg.transportation_enabled && scfg.transportation_amount > 0) {
+    surcharges.push({ label: 'Transportation', sub_amount: scfg.transportation_amount, sales_amount: scfg.transportation_amount });
   }
-  surcharges.push({ label: 'Trash Removal', sub_amount: FIXED_SURCHARGES.trash_interior, sales_amount: FIXED_SURCHARGES.trash_interior });
+  if (scfg.trash_enabled && scfg.trash_interior > 0) {
+    surcharges.push({ label: 'Trash Removal', sub_amount: scfg.trash_interior, sales_amount: scfg.trash_interior });
+  }
 
   const surchargeSubTotal = surcharges.reduce((s, sc) => s + sc.sub_amount, 0);
   const surchargeSalesTotal = surcharges.reduce((s, sc) => s + sc.sales_amount, 0);
@@ -608,8 +608,10 @@ export function calculateInteriorBottomUp(
 
   // CC surcharge on grand total
   const grandBeforeCC = laborTotal + materialsTotal;
-  const ccFee = grandBeforeCC * FIXED_SURCHARGES.cc_pct;
-  surcharges.push({ label: `CC Fee (${(FIXED_SURCHARGES.cc_pct * 100).toFixed(1)}%)`, sub_amount: ccFee, sales_amount: ccFee });
+  const ccFee = scfg.cc_fee_enabled ? grandBeforeCC * scfg.cc_pct : 0;
+  if (scfg.cc_fee_enabled && scfg.cc_pct > 0) {
+    surcharges.push({ label: `CC Fee (${(scfg.cc_pct * 100).toFixed(1)}%)`, sub_amount: ccFee, sales_amount: ccFee });
+  }
 
   const grandTotal = grandBeforeCC + ccFee;
 
@@ -809,15 +811,20 @@ export function calculateExteriorBottomUp(
   }
 
   // ─── SURCHARGES ─────────────────────────────────────────────
+  const scfg = resolveSurcharges(tenant);
   const surcharges: { label: string; sub_amount: number; sales_amount: number }[] = [];
 
   // Exterior surcharges: staging and color scheme affect hours via condition modifier,
   // not as percentage surcharges. So we only add fixed surcharges here.
-  if (formData.project.color_samples) {
-    surcharges.push({ label: 'Color Samples', sub_amount: FIXED_SURCHARGES.color_samples, sales_amount: FIXED_SURCHARGES.color_samples });
+  if (formData.project.color_samples && scfg.color_samples_enabled && scfg.color_samples_amount > 0) {
+    surcharges.push({ label: 'Color Samples', sub_amount: scfg.color_samples_amount, sales_amount: scfg.color_samples_amount });
   }
-  surcharges.push({ label: 'Transportation', sub_amount: FIXED_SURCHARGES.transportation, sales_amount: FIXED_SURCHARGES.transportation });
-  surcharges.push({ label: 'Trash Removal', sub_amount: FIXED_SURCHARGES.trash_exterior, sales_amount: FIXED_SURCHARGES.trash_exterior });
+  if (scfg.transportation_enabled && scfg.transportation_amount > 0) {
+    surcharges.push({ label: 'Transportation', sub_amount: scfg.transportation_amount, sales_amount: scfg.transportation_amount });
+  }
+  if (scfg.trash_enabled && scfg.trash_exterior > 0) {
+    surcharges.push({ label: 'Trash Removal', sub_amount: scfg.trash_exterior, sales_amount: scfg.trash_exterior });
+  }
 
   // Staging surcharge — in bottom-up this is additional hours, not a % markup
   if (formData.project.staging) {
@@ -865,8 +872,10 @@ export function calculateExteriorBottomUp(
 
   // CC fee
   const grandBeforeCC = laborTotal + materialsTotal;
-  const ccFee = grandBeforeCC * FIXED_SURCHARGES.cc_pct;
-  surcharges.push({ label: `CC Fee (${(FIXED_SURCHARGES.cc_pct * 100).toFixed(1)}%)`, sub_amount: ccFee, sales_amount: ccFee });
+  const ccFee = scfg.cc_fee_enabled ? grandBeforeCC * scfg.cc_pct : 0;
+  if (scfg.cc_fee_enabled && scfg.cc_pct > 0) {
+    surcharges.push({ label: `CC Fee (${(scfg.cc_pct * 100).toFixed(1)}%)`, sub_amount: ccFee, sales_amount: ccFee });
+  }
 
   const grandTotal = grandBeforeCC + ccFee;
 
@@ -1083,7 +1092,10 @@ export function calculateEpoxyBottomUp(
     totalPainterHours += hours;
   }
 
-  surcharges.push({ label: 'Transportation', sub_amount: FIXED_SURCHARGES.transportation, sales_amount: FIXED_SURCHARGES.transportation });
+  const scfg = resolveSurcharges(tenant);
+  if (scfg.transportation_enabled && scfg.transportation_amount > 0) {
+    surcharges.push({ label: 'Transportation', sub_amount: scfg.transportation_amount, sales_amount: scfg.transportation_amount });
+  }
 
   const surchargeSales = surcharges.reduce((s, sc) => s + sc.sales_amount, 0);
   const surchargeSub = surcharges.reduce((s, sc) => s + sc.sub_amount, 0);

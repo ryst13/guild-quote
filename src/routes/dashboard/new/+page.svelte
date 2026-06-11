@@ -199,9 +199,9 @@
 
       <div class="rounded-2xl bg-white border border-gray-200 p-6">
         {#if selectedTrade === 'interior'}
-          <InteriorScopeForm onSubmit={(scope) => handleGenerate('interior', scope)} />
+          <InteriorScopeForm onSubmit={(scope) => handleGenerate('interior', scope)} colorSamplesAmount={data.surcharges.color_samples} transportationAmount={data.surcharges.transportation} />
         {:else if selectedTrade === 'exterior'}
-          <ExteriorScopeForm onSubmit={(scope) => handleGenerate('exterior', scope)} />
+          <ExteriorScopeForm onSubmit={(scope) => handleGenerate('exterior', scope)} colorSamplesAmount={data.surcharges.color_samples} />
         {:else if selectedTrade === 'epoxy'}
           <EpoxyScopeForm onSubmit={(scope) => handleGenerate('epoxy', scope)} />
         {/if}

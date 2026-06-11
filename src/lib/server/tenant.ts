@@ -3,7 +3,7 @@ import { tenants } from './schema.js';
 import { eq } from 'drizzle-orm';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import type { TenantConfig, CatalogConfig, TradeType } from '$lib/types/index.js';
+import type { TenantConfig, CatalogConfig, TradeType, PricingConfig } from '$lib/types/index.js';
 
 const defaultCatalog: CatalogConfig = JSON.parse(
   readFileSync(resolve('config/defaults/catalog.json'), 'utf-8')
@@ -29,6 +29,15 @@ export function getTenantById(id: string): TenantConfig | null {
   if (!row) return null;
 
   return buildTenantConfig(row);
+}
+
+function parsePricingConfig(raw: string | null): PricingConfig | null {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as PricingConfig;
+  } catch {
+    return null;
+  }
 }
 
 function buildTenantConfig(row: typeof tenants.$inferSelect): TenantConfig {
@@ -69,6 +78,7 @@ function buildTenantConfig(row: typeof tenants.$inferSelect): TenantConfig {
     economy_of_scale_enabled: row.economy_of_scale_enabled ?? false,
     mobilization_hours: row.mobilization_hours ?? null,
     setup_hours_per_area: row.setup_hours_per_area ?? null,
+    pricing_config: parsePricingConfig(row.pricing_config),
     stripe_customer_id: row.stripe_customer_id,
     payment_status: (row.payment_status as TenantConfig['payment_status']) || 'none',
     plan: (row.plan as TenantConfig['plan']) || 'trial',

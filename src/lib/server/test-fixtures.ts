@@ -63,6 +63,7 @@ export const tenant: TenantConfig = {
 	economy_of_scale_enabled: false,
 	mobilization_hours: null,
 	setup_hours_per_area: null,
+	pricing_config: null,
 	stripe_customer_id: null,
 	payment_status: 'active',
 	plan: 'gq_pro',

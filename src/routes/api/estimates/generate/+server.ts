@@ -4,6 +4,7 @@ import { submissions, tenants } from '$lib/server/schema.js';
 import { eq } from 'drizzle-orm';
 import { getTenantById } from '$lib/server/tenant.js';
 import { calculateInteriorQuote, calculateExteriorQuote, calculateEpoxyQuote } from '$lib/server/pricing.js';
+import { resolveSurcharges } from '$lib/server/pricing-config.js';
 import { calculateInteriorBottomUp, calculateExteriorBottomUp, calculateEpoxyBottomUp } from '$lib/server/pricing-v2.js';
 import { generateEstimatePDF, generateEstimatePDFLegacy } from '$lib/server/pdf.js';
 import { assembleInteriorEstimate, assembleExteriorEstimate } from '$lib/server/estimate-templates.js';
@@ -31,24 +32,25 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   let quoteV2;
   const multiplier = tenant.labor_price_multiplier;
   const useBottomUp = tenant.pricing_mode === 'bottom_up';
+  const scfg = resolveSurcharges(tenant);
 
   switch (trade_type) {
     case 'interior': {
-      const topDown = calculateInteriorQuote(scope as InteriorScopeData, tenant.catalog, multiplier);
+      const topDown = calculateInteriorQuote(scope as InteriorScopeData, tenant.catalog, multiplier, scfg);
       const bottomUp = calculateInteriorBottomUp(scope as InteriorScopeData, tenant.catalog, tenant);
       quote = useBottomUp ? bottomUp : topDown;
       quoteV2 = useBottomUp ? topDown : bottomUp;
       break;
     }
     case 'exterior': {
-      const topDown = calculateExteriorQuote(scope as ExteriorScopeData, tenant.catalog, multiplier);
+      const topDown = calculateExteriorQuote(scope as ExteriorScopeData, tenant.catalog, multiplier, scfg);
       const bottomUp = calculateExteriorBottomUp(scope as ExteriorScopeData, tenant.catalog, tenant);
       quote = useBottomUp ? bottomUp : topDown;
       quoteV2 = useBottomUp ? topDown : bottomUp;
       break;
     }
     case 'epoxy': {
-      const topDown = calculateEpoxyQuote(scope as EpoxyScopeData, tenant.catalog, multiplier);
+      const topDown = calculateEpoxyQuote(scope as EpoxyScopeData, tenant.catalog, multiplier, scfg);
       const bottomUp = calculateEpoxyBottomUp(scope as EpoxyScopeData, tenant.catalog, tenant);
       quote = useBottomUp ? bottomUp : topDown;
       quoteV2 = useBottomUp ? topDown : bottomUp;

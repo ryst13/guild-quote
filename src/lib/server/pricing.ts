@@ -1,5 +1,6 @@
 import type { InteriorScopeData, ExteriorScopeData, EpoxyScopeData, QuoteResult, SectionResult, LineItem, CatalogConfig } from '$lib/types/index.js';
 import priceBenchmarks from '$lib/data/price-benchmarks.json';
+import { DEFAULT_SURCHARGES, type ResolvedSurcharges } from './pricing-config.js';
 import scopeCheckerRules from '$lib/data/scope-checker-rules.json';
 
 const HOURLY_RATE = 40;
@@ -82,12 +83,9 @@ const INTERIOR_SURCHARGES = {
   } as Record<string, { sub_pct: number; sales_pct: number }>,
 };
 
-const FIXED_SURCHARGES = {
-  color_samples: 98.95,
-  cc_pct: 0.032,
-  transportation: 50,
-  trash: 50,
-};
+// Fixed surcharges are tenant-configurable: callers pass a ResolvedSurcharges
+// (from resolveSurcharges(tenant)); the DEFAULT_SURCHARGES fallback preserves
+// the historical hardcoded values for callers without tenant config (demo).
 
 // ─── PAINT PRODUCTS ─────────────────────────────────────────────
 const INTERIOR_PAINT = {
@@ -113,7 +111,7 @@ const CEILING_RATE_SALES = 0.25;
 // ═══════════════════════════════════════════════════════════════
 // INTERIOR PRICING ENGINE
 // ═══════════════════════════════════════════════════════════════
-export function calculateInteriorQuote(formData: InteriorScopeData, _catalog: CatalogConfig, multiplier: number = 1.1): QuoteResult {
+export function calculateInteriorQuote(formData: InteriorScopeData, _catalog: CatalogConfig, multiplier: number = 1.1, scfg: ResolvedSurcharges = DEFAULT_SURCHARGES): QuoteResult {
   const sections: SectionResult[] = [];
   let totalSubCost = 0;
   let totalSalesPrice = 0;
@@ -246,13 +244,15 @@ export function calculateInteriorQuote(formData: InteriorScopeData, _catalog: Ca
     });
   }
 
-  if (formData.project.color_samples) {
-    surcharges.push({ label: 'Color Samples', sub_amount: FIXED_SURCHARGES.color_samples, sales_amount: FIXED_SURCHARGES.color_samples });
+  if (formData.project.color_samples && scfg.color_samples_enabled && scfg.color_samples_amount > 0) {
+    surcharges.push({ label: 'Color Samples', sub_amount: scfg.color_samples_amount, sales_amount: scfg.color_samples_amount });
   }
-  if (formData.project.transportation) {
-    surcharges.push({ label: 'Transportation', sub_amount: FIXED_SURCHARGES.transportation, sales_amount: FIXED_SURCHARGES.transportation });
+  if (formData.project.transportation && scfg.transportation_enabled && scfg.transportation_amount > 0) {
+    surcharges.push({ label: 'Transportation', sub_amount: scfg.transportation_amount, sales_amount: scfg.transportation_amount });
   }
-  surcharges.push({ label: 'Trash Removal', sub_amount: FIXED_SURCHARGES.trash, sales_amount: FIXED_SURCHARGES.trash });
+  if (scfg.trash_enabled && scfg.trash_interior > 0) {
+    surcharges.push({ label: 'Trash Removal', sub_amount: scfg.trash_interior, sales_amount: scfg.trash_interior });
+  }
 
   const surchargeSubTotal = surcharges.reduce((s, sc) => s + sc.sub_amount, 0);
   const surchargeSalesTotal = surcharges.reduce((s, sc) => s + sc.sales_amount, 0);
@@ -289,8 +289,10 @@ export function calculateInteriorQuote(formData: InteriorScopeData, _catalog: Ca
 
   // CC surcharge on grand total
   const grandBeforeCC = laborTotal + materialsTotal;
-  const ccFee = grandBeforeCC * FIXED_SURCHARGES.cc_pct;
-  surcharges.push({ label: `CC Fee (${(FIXED_SURCHARGES.cc_pct * 100).toFixed(1)}%)`, sub_amount: ccFee, sales_amount: ccFee });
+  const ccFee = scfg.cc_fee_enabled ? grandBeforeCC * scfg.cc_pct : 0;
+  if (scfg.cc_fee_enabled && scfg.cc_pct > 0) {
+    surcharges.push({ label: `CC Fee (${(scfg.cc_pct * 100).toFixed(1)}%)`, sub_amount: ccFee, sales_amount: ccFee });
+  }
 
   const grandTotal = grandBeforeCC + ccFee;
 
@@ -475,7 +477,7 @@ const EXTERIOR_BENCHMARKS = {
   by_surfaces: priceBenchmarks.exterior_by_surfaces as Record<string, { p25: number; p50: number; p75: number; mean: number; n: number }>,
 };
 
-export function calculateExteriorQuote(formData: ExteriorScopeData, _catalog: CatalogConfig, multiplier: number = 1.1): QuoteResult {
+export function calculateExteriorQuote(formData: ExteriorScopeData, _catalog: CatalogConfig, multiplier: number = 1.1, scfg: ResolvedSurcharges = DEFAULT_SURCHARGES): QuoteResult {
   const sections: SectionResult[] = [];
   let totalSubCost = 0;
   let totalSalesPrice = 0;
@@ -544,9 +546,9 @@ export function calculateExteriorQuote(formData: ExteriorScopeData, _catalog: Ca
     surcharges.push({ label: `Prep: ${formData.project.prep_level}`, sub_amount: totalSubCost * prepS.sub_pct, sales_amount: totalSalesPrice * prepS.sales_pct });
   }
 
-  if (formData.project.color_samples) surcharges.push({ label: 'Color Samples', sub_amount: 98.95, sales_amount: 98.95 });
-  surcharges.push({ label: 'Trash Removal', sub_amount: 225, sales_amount: 225 });
-  surcharges.push({ label: 'Transportation', sub_amount: 50, sales_amount: 50 });
+  if (formData.project.color_samples && scfg.color_samples_enabled && scfg.color_samples_amount > 0) surcharges.push({ label: 'Color Samples', sub_amount: scfg.color_samples_amount, sales_amount: scfg.color_samples_amount });
+  if (scfg.trash_enabled && scfg.trash_exterior > 0) surcharges.push({ label: 'Trash Removal', sub_amount: scfg.trash_exterior, sales_amount: scfg.trash_exterior });
+  if (scfg.transportation_enabled && scfg.transportation_amount > 0) surcharges.push({ label: 'Transportation', sub_amount: scfg.transportation_amount, sales_amount: scfg.transportation_amount });
 
   const surchargeSalesTotal = surcharges.reduce((s, sc) => s + sc.sales_amount, 0);
   const surchargeSubTotal = surcharges.reduce((s, sc) => s + sc.sub_amount, 0);
@@ -570,8 +572,10 @@ export function calculateExteriorQuote(formData: ExteriorScopeData, _catalog: Ca
   const materialsTotal = materialSubtotal + materialSubtotal * 0.10;
 
   const grandBeforeCC = laborTotal + materialsTotal;
-  const ccFee = grandBeforeCC * 0.032;
-  surcharges.push({ label: 'CC Fee (3.2%)', sub_amount: ccFee, sales_amount: ccFee });
+  const ccFee = scfg.cc_fee_enabled ? grandBeforeCC * scfg.cc_pct : 0;
+  if (scfg.cc_fee_enabled && scfg.cc_pct > 0) {
+    surcharges.push({ label: `CC Fee (${(scfg.cc_pct * 100).toFixed(1)}%)`, sub_amount: ccFee, sales_amount: ccFee });
+  }
   const grandTotal = grandBeforeCC + ccFee;
 
   const paintingHours = totalAllocatedTime;
@@ -669,7 +673,7 @@ const EPOXY_OPTIONS = {
   flake_metallic: 3.00,
 };
 
-export function calculateEpoxyQuote(formData: EpoxyScopeData, _catalog: CatalogConfig, multiplier: number = 1.1): QuoteResult {
+export function calculateEpoxyQuote(formData: EpoxyScopeData, _catalog: CatalogConfig, multiplier: number = 1.1, scfg: ResolvedSurcharges = DEFAULT_SURCHARGES): QuoteResult {
   const sections: SectionResult[] = [];
   let totalSalesPrice = 0;
 
@@ -727,7 +731,9 @@ export function calculateEpoxyQuote(formData: EpoxyScopeData, _catalog: CatalogC
     surcharges.push({ label: `Crack Repair (${formData.project.crack_repair})`, sub_amount: cost * 0.5, sales_amount: cost });
   }
 
-  surcharges.push({ label: 'Transportation', sub_amount: 50, sales_amount: 50 });
+  if (scfg.transportation_enabled && scfg.transportation_amount > 0) {
+    surcharges.push({ label: 'Transportation', sub_amount: scfg.transportation_amount, sales_amount: scfg.transportation_amount });
+  }
 
   const surchargeSales = surcharges.reduce((s, sc) => s + sc.sales_amount, 0);
   const surchargeSub = surcharges.reduce((s, sc) => s + sc.sub_amount, 0);

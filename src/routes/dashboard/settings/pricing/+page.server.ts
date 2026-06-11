@@ -9,13 +9,8 @@ export const load: PageServerLoad = async ({ locals }) => {
   const tenant = getTenantById(locals.user.tenant_id);
   if (!tenant) throw redirect(303, '/auth/register');
 
-  // Parse pricing config from tenant, or return defaults
-  let pricingConfig;
-  try {
-    pricingConfig = tenant.pricing_config ? JSON.parse(tenant.pricing_config as string) : null;
-  } catch {
-    pricingConfig = null;
-  }
+  // tenant.pricing_config is already parsed by buildTenantConfig
+  const pricingConfig = tenant.pricing_config ?? null;
 
   const defaults = {
     surcharges: {

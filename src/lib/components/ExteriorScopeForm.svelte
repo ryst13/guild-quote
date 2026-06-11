@@ -2,7 +2,7 @@
   import type { ExteriorScopeData, ExteriorSurface } from '$lib/types/index.js';
   import { v4 as uuidv4 } from 'uuid';
 
-  let { onSubmit, demo = false }: { onSubmit: (data: ExteriorScopeData) => void; demo?: boolean } = $props();
+  let { onSubmit, demo = false, colorSamplesAmount = 98.95 }: { onSubmit: (data: ExteriorScopeData) => void; demo?: boolean; colorSamplesAmount?: number } = $props();
 
   let step = $state(1);
 
@@ -298,7 +298,7 @@
           <input type="checkbox" bind:checked={staging} class="rounded border-gray-300" /> Staging Required
         </label>
         <label class="flex items-center gap-2 text-sm text-gray-700">
-          <input type="checkbox" bind:checked={colorSamples} class="rounded border-gray-300" /> Color Samples ($98.95)
+          <input type="checkbox" bind:checked={colorSamples} class="rounded border-gray-300" /> Color Samples{#if colorSamplesAmount > 0} (${colorSamplesAmount.toFixed(2)}){/if}
         </label>
       </div>
       <div>

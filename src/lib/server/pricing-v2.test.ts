@@ -194,6 +194,86 @@ describe('bottom-up engine — economy of scale (Layer 1: Setup & Mobilization)'
 	});
 });
 
+describe('bottom-up engine — tenant surcharge config (pricing_config wiring)', () => {
+	const findSurcharge = (q: QuoteResult, label: string) =>
+		q.surcharges.find((s) => s.label.startsWith(label));
+
+	it('null pricing_config prices identically to a fully-default config object', () => {
+		const off = calculateInteriorBottomUp(interiorScope, catalog, tenant);
+		const withDefaults = calculateInteriorBottomUp(
+			interiorScope,
+			catalog,
+			tenantWith({
+				pricing_config: {
+					surcharges: {
+						trash_enabled: true, trash_interior: 50, trash_exterior: 225,
+						transportation_enabled: true, transportation_amount: 50,
+						cc_fee_enabled: true, cc_fee_pct: 3.2,
+						color_samples_enabled: true, color_samples_amount: 98.95,
+					},
+				},
+			}),
+		);
+		expect(withDefaults.grand_total).toBeCloseTo(off.grand_total, 6);
+	});
+
+	it('custom trash amount flows into the quote', () => {
+		const q = calculateInteriorBottomUp(
+			interiorScope,
+			catalog,
+			tenantWith({ pricing_config: { surcharges: { trash_interior: 120 } } }),
+		);
+		expect(findSurcharge(q, 'Trash Removal')!.sales_amount).toBe(120);
+	});
+
+	it('disabling trash removes the line and lowers the total', () => {
+		const on = calculateInteriorBottomUp(interiorScope, catalog, tenant);
+		const off = calculateInteriorBottomUp(
+			interiorScope,
+			catalog,
+			tenantWith({ pricing_config: { surcharges: { trash_enabled: false } } }),
+		);
+		expect(findSurcharge(off, 'Trash Removal')).toBeUndefined();
+		expect(off.grand_total).toBeLessThan(on.grand_total);
+	});
+
+	it('disabling the CC fee zeroes it across trades', () => {
+		const cfg = tenantWith({ pricing_config: { surcharges: { cc_fee_enabled: false } } });
+		for (const q of [
+			calculateInteriorBottomUp(interiorScope, catalog, cfg),
+			calculateExteriorBottomUp(exteriorScope, catalog, cfg),
+		]) {
+			expect(findSurcharge(q, 'CC Fee')).toBeUndefined();
+			expect(q.grand_total).toBeCloseTo(q.labor_total + q.materials_total, 2);
+		}
+	});
+
+	it('custom CC percent changes the fee and its label', () => {
+		const q = calculateInteriorBottomUp(
+			interiorScope,
+			catalog,
+			tenantWith({ pricing_config: { surcharges: { cc_fee_pct: 2.5 } } }),
+		);
+		const fee = findSurcharge(q, 'CC Fee');
+		expect(fee!.label).toBe('CC Fee (2.5%)');
+	});
+
+	it('exterior trash uses the exterior amount; epoxy honors transportation config', () => {
+		const ext = calculateExteriorBottomUp(
+			exteriorScope,
+			catalog,
+			tenantWith({ pricing_config: { surcharges: { trash_exterior: 300 } } }),
+		);
+		expect(findSurcharge(ext, 'Trash Removal')!.sales_amount).toBe(300);
+		const ep = calculateEpoxyBottomUp(
+			epoxyScope,
+			catalog,
+			tenantWith({ pricing_config: { surcharges: { transportation_enabled: false } } }),
+		);
+		expect(findSurcharge(ep, 'Transportation')).toBeUndefined();
+	});
+});
+
 describe('bottom-up engine — GAN validation deltas (epoxy)', () => {
 	it('epoxy 500sqft garage prices in a sane band', () => {
 		const q = calculateEpoxyBottomUp(epoxyScope, catalog, tenant);

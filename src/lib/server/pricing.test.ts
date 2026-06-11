@@ -47,6 +47,19 @@ describe('top-down engine — monotonicity', () => {
 		const hi = calculateInteriorQuote(interiorScope, catalog, 1.3);
 		expect(hi.grand_total).toBeGreaterThan(lo.grand_total);
 	});
+
+	it('custom surcharge config flows through (and omitting it preserves defaults)', () => {
+		const def = calculateInteriorQuote(interiorScope, catalog, 1.1);
+		const custom = calculateInteriorQuote(interiorScope, catalog, 1.1, {
+			trash_enabled: false, trash_interior: 50, trash_exterior: 225,
+			transportation_enabled: true, transportation_amount: 50,
+			cc_fee_enabled: true, cc_pct: 0.032,
+			color_samples_enabled: true, color_samples_amount: 98.95,
+		});
+		expect(custom.surcharges.find((s) => s.label === 'Trash Removal')).toBeUndefined();
+		expect(custom.grand_total).toBeLessThan(def.grand_total);
+		expect(def.surcharges.find((s) => s.label === 'Trash Removal')!.sales_amount).toBe(50);
+	});
 });
 
 describe('cross-engine sanity', () => {

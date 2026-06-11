@@ -37,20 +37,34 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   // Default: anchor-based calibration (existing behavior)
   const rates = calibrateFromAnchors(body as CalibrationAnswers);
 
-  // Store the calibrated rates as pricing_config and update labor_multiplier
+  // Merge calibrated values into any existing config — calibration derives
+  // amounts, but the tenant's enable/disable choices and unrelated settings
+  // must survive a recalibration (engines now read this config).
+  const existingRow = db.select().from(tenants).where(eq(tenants.id, locals.user.tenant_id)).get();
+  let existing: Record<string, any> = {};
+  try {
+    existing = existingRow?.pricing_config ? JSON.parse(existingRow.pricing_config) : {};
+  } catch {
+    existing = {};
+  }
+
   const pricingConfig = {
+    ...existing,
     surcharges: {
       trash_enabled: true,
-      trash_interior: rates.trash_fee,
-      trash_exterior: rates.trash_fee * 4.5, // Exterior trash is typically higher
       transportation_enabled: true,
-      transportation_amount: rates.transportation_fee,
       cc_fee_enabled: true,
-      cc_fee_pct: rates.cc_fee_pct,
       color_samples_enabled: true,
       color_samples_amount: 98.95,
+      ...existing.surcharges,
+      // Calibration-derived amounts overwrite
+      trash_interior: rates.trash_fee,
+      trash_exterior: rates.trash_fee * 4.5, // Exterior trash is typically higher
+      transportation_amount: rates.transportation_fee,
+      cc_fee_pct: rates.cc_fee_pct,
     },
-    materials: {
+    // Materials are not derived by calibration — keep the tenant's if set
+    materials: existing.materials ?? {
       interior: {
         walls: { product: 'Regal Select Eggshell', coverage: 350, price_per_gallon: 63.59 },
         trim: { product: 'Regal Select Semi Gloss', coverage: 350, price_per_gallon: 63.59 },
@@ -68,8 +82,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     },
     labor_multiplier: rates.labor_multiplier,
     payment_terms: {
-      deposit_pct: rates.deposit_pct,
       progress_threshold: 10000,
+      ...existing.payment_terms,
+      deposit_pct: rates.deposit_pct, // calibration-derived
     },
     calibrated_rates: rates, // Store the full calibrated rates for reference
   };

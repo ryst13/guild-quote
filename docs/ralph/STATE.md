@@ -8,7 +8,7 @@
 ## Backlog
 
 ### P0 — Trust & correctness
-- [ ] P0-1 Surcharges: wire `pricing_config.surcharges` into both engines (enable flags + amounts; defaults preserve byte-parity). Resolves SET-021..029.
+- [x] P0-1 Surcharges: wire `pricing_config.surcharges` into both engines (enable flags + amounts; defaults preserve byte-parity). Resolves SET-021..029. **DONE iter 1.**
 - [ ] P0-2 Materials: wire `pricing_config.materials` (products, coverage, $/gal) into both engines. Resolves SET-031..038.
 - [ ] P0-3 Payment terms: wire `deposit_pct` + `progress_threshold` into estimate output (templates/PDF/doc/sheets). Resolves SET-039/040, OUT-006.
 - [ ] P0-4 Catalog editor verdict: the 360-cell matrix is unread by engines (SET-041). Critic decides: wire a simplified ServiceTitan-style "price book" to the top-down engine, or remove the matrix in favor of calibration. Implement the verdict. Also resolve room-type list drift (catalog 15 names vs form/engine 19).
@@ -38,7 +38,23 @@
 
 ## Iteration log
 
-(none yet — loop not started)
+### Iteration 1 — P0-1 surcharge wiring — Critic: REJECT → all findings fixed in-iteration
+**Builder:** New `pricing-config.ts` resolver (`resolveSurcharges`, defaults = historical
+constants). `TenantConfig.pricing_config` now parsed in `buildTenantConfig`. All six engine
+functions honor enable flags + amounts (v2 via tenant, v1 via optional param; demo keeps
+defaults). 7 new tests; 56/56 pass; parity verified byte-identical at null config.
+**Critic findings & resolutions:**
+1. [CRITICAL] Settings page double-parsed the now-pre-parsed config → always showed
+   defaults and Save would revert live pricing. FIXED: page uses parsed object directly.
+2. [HIGH] `pricing-config.ts` untracked → diff didn't build standalone. FIXED: committed.
+3. [MEDIUM] Scope forms hardcoded "$98.95"/"$50" labels. FIXED: forms take amounts as
+   props; dashboard/new passes tenant-resolved values; disabled surcharge hides the price.
+4. [MEDIUM] Quick Calibrate replaced the whole pricing_config (would stomp tenant's
+   disable choices + materials). FIXED: merge semantics — calibration-derived amounts
+   overwrite, tenant choices survive.
+5. [LOW] Enabled surcharge at $0 printed a $0.00 line. FIXED: zero-amount guards.
+**Notes for future iterations:** settings-page preview claims and any other hardcoded
+dollar copy should be checked whenever a config value gets wired (pattern from finding 3).
 
 ## Discovered items
 

@@ -141,6 +141,30 @@ export interface QuoteResult {
 export type PaymentStatus = 'none' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired';
 export type PlanTier = 'trial' | 'gq' | 'gq_pro';
 
+// Shape of tenants.pricing_config (written by the Pricing settings page and
+// /api/tenant/calibrate). All fields optional — missing values fall back to
+// engine defaults.
+export interface PricingConfig {
+  surcharges?: {
+    trash_enabled?: boolean;
+    trash_interior?: number;
+    trash_exterior?: number;
+    transportation_enabled?: boolean;
+    transportation_amount?: number;
+    cc_fee_enabled?: boolean;
+    cc_fee_pct?: number; // percent, e.g. 3.2
+    color_samples_enabled?: boolean;
+    color_samples_amount?: number;
+  };
+  materials?: Record<string, Record<string, { product?: string; coverage?: number; price_per_gallon?: number }>>;
+  labor_multiplier?: number;
+  payment_terms?: {
+    deposit_pct?: number; // percent, e.g. 30
+    progress_threshold?: number; // dollars
+  };
+  calibrated_rates?: Record<string, unknown>;
+}
+
 export interface TenantConfig {
   id: string;
   slug: string;
@@ -174,6 +198,8 @@ export interface TenantConfig {
   economy_of_scale_enabled: boolean;
   mobilization_hours: number | null;
   setup_hours_per_area: number | null;
+  // Parsed tenants.pricing_config JSON (Pricing settings tabs); null = defaults
+  pricing_config: PricingConfig | null;
   // Billing
   stripe_customer_id: string | null;
   payment_status: PaymentStatus;
