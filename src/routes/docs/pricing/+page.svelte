@@ -78,7 +78,7 @@
       </div>
 
       <div class="mt-4 prose prose-sm prose-gray max-w-none">
-        <p>Quick Calibrate gives you a working baseline. It does not lock you in. After onboarding, you can adjust any rate, production speed, or margin in the full catalog editor.</p>
+        <p>Quick Calibrate gives you a working baseline. It does not lock you in. After onboarding, you can change your crew wage, margin, price level, surcharges, and materials anytime under My Prices.</p>
         <p>If you are not sure where to start, pick "I know what I charge" and enter your most common rate. You can always refine later.</p>
       </div>
     </div>
@@ -88,17 +88,17 @@
   <section id="catalog-surcharges">
     <div class="rounded-xl border border-gray-200 bg-white p-6">
       <div class="prose prose-sm prose-gray max-w-none">
-        <h2 class="text-xl font-bold text-gray-900 mt-0 mb-3">Catalog & Surcharges</h2>
+        <h2 class="text-xl font-bold text-gray-900 mt-0 mb-3">Price Book & Surcharges</h2>
 
-        <h3>Pricing Catalog</h3>
-        <p>Your pricing catalog is the master list of rates for every surface type, prep item, and accessory in each trade. Quick Calibrate creates the initial catalog; the catalog editor lets you fine-tune it.</p>
-        <p>In the catalog editor you can:</p>
+        <h3>Price Book</h3>
+        <p>Your Price Book is the first tab under My Prices. It shows what you currently charge for every room size and every door, window, trim, and repair item — computed live from your settings, so it is always accurate.</p>
+        <p>To change those numbers, use the other My Prices tabs:</p>
         <ul>
-          <li>Set per-sqft or per-unit rates for each surface type</li>
-          <li>Adjust production rates (sqft per hour) for the cost-based engine</li>
-          <li>Set condition-grade multipliers (how much more a C-grade surface costs vs. an A-grade)</li>
-          <li>Configure LOSP tier adjustments</li>
-          <li>Add or remove surface types</li>
+          <li><strong>Labor &amp; Margins</strong> — pricing method, crew wage, margin, and price level</li>
+          <li><strong>Surcharges</strong> — trash, transportation, card fees, color samples</li>
+          <li><strong>Materials</strong> — your paint products, coverage, and per-gallon prices</li>
+          <li><strong>Payment Terms</strong> — deposit percent and the progress-payment threshold</li>
+          <li><strong>Estimate Output</strong> — Google Docs, Sheets, or PDF, plus prep-level options</li>
         </ul>
 
         <h3>Surcharges</h3>

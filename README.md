@@ -46,7 +46,7 @@ smart-quote-pro/
 │   │   ├── (auth)/auth/        # Login, register, verify
 │   │   ├── onboarding/         # 4-step contractor setup wizard
 │   │   ├── dashboard/          # Contractor dashboard + detail view
-│   │   │   ├── settings/catalog/  # Price Book (read-only computed prices)
+│   │   │   ├── settings/catalog/  # Redirects to settings/pricing?tab=pricebook
 │   │   │   └── [id]/           # Submission detail + actions
 │   │   ├── client/             # Homeowner portal
 │   │   ├── [slug]/quote/       # Embeddable quote wizard

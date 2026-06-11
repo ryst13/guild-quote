@@ -35,8 +35,7 @@ When building features — be a sharp SvelteKit/TypeScript engineer following th
 - `/dashboard` — Estimate list with analytics, trade/status filters, action-needed banners
 - `/dashboard/new` — Trade selection → 4-step scope form → estimate generation
 - `/dashboard/[id]` — Estimate editor: quote breakdown, price adjustment with PDF/Doc regen, quick actions
-- `/dashboard/settings/catalog` — Price Book: live prices computed from the tenant's real engine settings (read-only; the old 360-cell catalog editor is retired — catalog_json is vestigial and unread)
-- `/dashboard/settings/pricing` — Surcharges, materials, payment terms configuration
+- `/dashboard/settings/pricing` — "My Prices": Price Book (live engine-computed prices) + Labor & Margins, Surcharges, Materials, Payment Terms, Estimate Output tabs. `/dashboard/settings/catalog` permanently redirects here (catalog_json is vestigial and unread)
 - `/demo` — Public demo: scope form → pricing calculation → email capture
 - `/api/estimates/generate` — Generate estimate (pricing engine + PDF + Google Doc)
 - `/api/submissions/[id]/regenerate` — Regenerate PDF/Doc with adjusted price

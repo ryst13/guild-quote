@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types.js';
+  import PriceBookView from '$lib/components/PriceBookView.svelte';
 
   let { data }: { data: PageData } = $props();
   let config = $state(structuredClone(data.config));
@@ -7,7 +8,7 @@
   let showLosp = $state(data.showLosp);
   let saving = $state(false);
   let saved = $state(false);
-  let activeTab = $state<'labor' | 'surcharges' | 'materials' | 'payment'>('labor');
+  let activeTab = $state(data.tab as 'pricebook' | 'labor' | 'surcharges' | 'materials' | 'payment' | 'output');
 
   // Bottom-up pricing settings
   let crewWage = $state<number | null>(data.crewHourlyWage);
@@ -103,7 +104,7 @@
 </script>
 
 <svelte:head>
-  <title>Pricing & Surcharges — GuildQuote</title>
+  <title>My Prices — GuildQuote</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50">
@@ -111,7 +112,7 @@
     <div class="mx-auto max-w-3xl px-4 py-3 flex items-center justify-between">
       <div class="flex items-center gap-4">
         <a href="/dashboard" class="text-sm text-gray-500 hover:text-gray-700">&larr; Dashboard</a>
-        <h1 class="font-bold text-gray-900">Pricing & Surcharges</h1>
+        <h1 class="font-bold text-gray-900">My Prices</h1>
       </div>
       <div class="flex items-center gap-3">
         {#if saved}
@@ -127,12 +128,18 @@
 
   <div class="mx-auto max-w-3xl px-4 py-6">
     <!-- Tabs -->
-    <div class="flex gap-2 mb-6">
+    <div class="flex flex-wrap gap-2 mb-6">
+      <button onclick={() => activeTab = 'pricebook'} class="px-4 py-2 text-sm font-medium rounded-lg {activeTab === 'pricebook' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">Price Book</button>
       <button onclick={() => activeTab = 'labor'} class="px-4 py-2 text-sm font-medium rounded-lg {activeTab === 'labor' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">Labor & Margins</button>
       <button onclick={() => activeTab = 'surcharges'} class="px-4 py-2 text-sm font-medium rounded-lg {activeTab === 'surcharges' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">Surcharges</button>
       <button onclick={() => activeTab = 'materials'} class="px-4 py-2 text-sm font-medium rounded-lg {activeTab === 'materials' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">Materials</button>
       <button onclick={() => activeTab = 'payment'} class="px-4 py-2 text-sm font-medium rounded-lg {activeTab === 'payment' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">Payment Terms</button>
+      <button onclick={() => activeTab = 'output'} class="px-4 py-2 text-sm font-medium rounded-lg {activeTab === 'output' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">Estimate Output</button>
     </div>
+
+    {#if activeTab === 'pricebook'}
+      <PriceBookView priceBook={data.priceBook} hadCustomCatalog={data.hadCustomCatalog} onGoToTab={(t) => (activeTab = t)} />
+    {/if}
 
     {#if activeTab === 'labor'}
       <!-- Pricing Mode -->
@@ -156,6 +163,13 @@
           </button>
         </div>
         <p class="text-xs text-gray-500 mt-3">New to rates? <a href="/docs/pricing#quick-calibrate" class="text-blue-600 hover:underline">Read how Quick Calibrate works</a>.</p>
+        {#if pricingMode === 'top_down'}
+          <div class="mt-4 border-t border-gray-100 pt-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Price Level (Labor Multiplier)</label>
+            <p class="text-xs text-gray-500 mb-2">Raises or lowers all your rate-based labor prices at once. Higher number = higher prices. Standard is 1.1.</p>
+            <input type="number" step="0.05" bind:value={config.labor_multiplier} class="w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none" />
+          </div>
+        {/if}
       </div>
 
       <!-- Crew & Margin Settings -->
@@ -362,54 +376,6 @@
       </div>
 
     {:else if activeTab === 'surcharges'}
-      <!-- Output Format -->
-      <div class="rounded-xl bg-white border border-gray-200 p-6 mb-6">
-        <h2 class="font-semibold text-gray-900 mb-1">Estimate Output Format</h2>
-        <p class="text-sm text-gray-500 mb-4">Choose how estimates are saved to your Google Drive.</p>
-        <div class="flex gap-3">
-          <button
-            onclick={() => outputFormat = 'google_sheets'}
-            class="flex-1 rounded-xl border p-4 text-left {outputFormat === 'google_sheets' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}"
-          >
-            <div class="font-semibold text-gray-900 text-sm">Google Sheets</div>
-            <div class="text-xs text-gray-500 mt-1">Formatted spreadsheet. Easy to edit, prints well. Recommended.</div>
-          </button>
-          <button
-            onclick={() => outputFormat = 'google_docs'}
-            class="flex-1 rounded-xl border p-4 text-left {outputFormat === 'google_docs' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}"
-          >
-            <div class="font-semibold text-gray-900 text-sm">Google Docs</div>
-            <div class="text-xs text-gray-500 mt-1">Document format. Good for narrative-heavy estimates.</div>
-          </button>
-          <button
-            onclick={() => outputFormat = 'pdf'}
-            class="flex-1 rounded-xl border p-4 text-left {outputFormat === 'pdf' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}"
-          >
-            <div class="font-semibold text-gray-900 text-sm">PDF Only</div>
-            <div class="text-xs text-gray-500 mt-1">Works without Google. The estimate becomes a PDF and is attached to your emails.</div>
-          </button>
-        </div>
-      </div>
-
-      <!-- LOSP Toggle -->
-      <div class="rounded-xl bg-white border border-gray-200 p-6 mb-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="font-semibold text-gray-900">Surface Preparation Options</h2>
-            <p class="text-sm text-gray-500 mt-1">Show Level of Surface Preparation (LOSP) options on estimates. When on, each estimate lists prep levels with prices.</p>
-          </div>
-          <button
-            onclick={() => showLosp = !showLosp}
-            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out {showLosp ? 'bg-blue-600' : 'bg-gray-200'}"
-            role="switch"
-            aria-checked={showLosp}
-            aria-label="Toggle surface preparation options"
-          >
-            <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {showLosp ? 'translate-x-5' : 'translate-x-0'}"></span>
-          </button>
-        </div>
-      </div>
-
       <div class="rounded-xl bg-white border border-gray-200 p-6 space-y-6">
         <h2 class="font-semibold text-gray-900">Surcharges</h2>
         <p class="text-sm text-gray-500">Turn surcharges on or off and set your amounts. They're added to every estimate automatically. Leave an amount empty and estimates use the standard amount.</p>
@@ -484,12 +450,6 @@
           {/if}
         </div>
 
-        <!-- Labor Multiplier -->
-        <div class="border-t border-gray-200 pt-4">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Labor Price Multiplier</label>
-          <p class="text-xs text-gray-500 mb-2">Raises or lowers all your labor prices at once. Higher number = higher prices. Standard is 1.1.</p>
-          <input type="number" step="0.05" bind:value={config.labor_multiplier} class="w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none" />
-        </div>
       </div>
 
     {:else if activeTab === 'materials'}
@@ -608,6 +568,54 @@
               <p>Over ${config.payment_terms.progress_threshold.toLocaleString()}: {dep}% deposit, {100 - dep}% at completion (no halfway payment when the deposit is over 60%)</p>
             {/if}
           {/if}
+        </div>
+      </div>
+    {:else if activeTab === 'output'}
+      <!-- Output Format -->
+      <div class="rounded-xl bg-white border border-gray-200 p-6 mb-6">
+        <h2 class="font-semibold text-gray-900 mb-1">Estimate Output Format</h2>
+        <p class="text-sm text-gray-500 mb-4">Choose how estimates are saved to your Google Drive.</p>
+        <div class="flex gap-3">
+          <button
+            onclick={() => outputFormat = 'google_sheets'}
+            class="flex-1 rounded-xl border p-4 text-left {outputFormat === 'google_sheets' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}"
+          >
+            <div class="font-semibold text-gray-900 text-sm">Google Sheets</div>
+            <div class="text-xs text-gray-500 mt-1">Formatted spreadsheet. Easy to edit, prints well. Recommended.</div>
+          </button>
+          <button
+            onclick={() => outputFormat = 'google_docs'}
+            class="flex-1 rounded-xl border p-4 text-left {outputFormat === 'google_docs' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}"
+          >
+            <div class="font-semibold text-gray-900 text-sm">Google Docs</div>
+            <div class="text-xs text-gray-500 mt-1">Document format. Good for narrative-heavy estimates.</div>
+          </button>
+          <button
+            onclick={() => outputFormat = 'pdf'}
+            class="flex-1 rounded-xl border p-4 text-left {outputFormat === 'pdf' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}"
+          >
+            <div class="font-semibold text-gray-900 text-sm">PDF Only</div>
+            <div class="text-xs text-gray-500 mt-1">Works without Google. The estimate becomes a PDF and is attached to your emails.</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- LOSP Toggle -->
+      <div class="rounded-xl bg-white border border-gray-200 p-6 mb-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="font-semibold text-gray-900">Surface Preparation Options</h2>
+            <p class="text-sm text-gray-500 mt-1">Show Level of Surface Preparation (LOSP) options on estimates. When on, each estimate lists prep levels with prices.</p>
+          </div>
+          <button
+            onclick={() => showLosp = !showLosp}
+            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out {showLosp ? 'bg-blue-600' : 'bg-gray-200'}"
+            role="switch"
+            aria-checked={showLosp}
+            aria-label="Toggle surface preparation options"
+          >
+            <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {showLosp ? 'translate-x-5' : 'translate-x-0'}"></span>
+          </button>
         </div>
       </div>
     {/if}

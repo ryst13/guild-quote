@@ -55,7 +55,13 @@
   item grids missed the responsive fix exactly where steppers landed, leftover
   parseInt type error — all fixed; stepper capped at 999 (spindle counts), shrink-0
   guards keep tap targets honest.
-- [ ] P1-3 Settings consolidation: one "My Prices" mental model instead of Pricing (4 tabs) + Catalog as disconnected pages. Depends on P0-1..4 verdicts.
+- [x] P1-3 Settings consolidation: the pricing page is now "My Prices" with the Price
+  Book as its first tab (shared PriceBookView component; in-place tab links); Labor
+  Multiplier relocated from the Surcharges tab to Labor (Rate-Based only, renamed
+  "Price Level"); Output Format + LOSP moved to a new Estimate Output tab; old catalog
+  URL 308-redirects; nav unified to one "My Prices" entry. **DONE iter 11.** Critic
+  REJECT round fixed: admin nav not renamed, /docs still teaching the dead catalog
+  editor, CLAUDE.md/README/audit-register staleness, whitespace residue.
 - [ ] P1-4 Dashboard: Jobber-style status-at-a-glance + one-tap quick actions (send, mark accepted/declined, duplicate). Surface "needs action" first.
 - [ ] P1-5 Onboarding: measure and minimize time-to-first-estimate; sample-data preview before any setup; skip-everything path that still works.
 - [ ] P1-6 Error handling sweep: no raw error text reaches the user; every failure says what happened and what to do, in plain words.
@@ -219,6 +225,18 @@ at 390px exactly where the steppers landed (tap targets would compress), and a l
 parseInt on the changed signature. All fixed; svelte-check back to the 14-error baseline.
 **Process lesson recorded: every scripted string-replace must assert its expected match
 count — the two misses this iteration were silent zero-match replaces.**
+
+### Iteration 11 — P1-3 settings consolidation — Critic: REJECT → fixed → green
+**Builder:** Price Book becomes the front door of one consolidated "My Prices" page
+(6 tabs, flex-wrap to 3 readable rows at 390px); misplaced controls rehomed; deep links
+via validated ?tab= params; catalog URL kept alive as a permanent redirect.
+**Critic:** verified the tab chain integrity, save-path persistence (hidden multiplier
+survives Cost-Based saves), the multiplier's top-down-only scoping, SSR safety, and the
+~71-engine-call page load cost (single-digit ms — eager is fine). Rejected on
+consistency: admin nav, user docs, and project docs all still described the old
+structure — "one mental model" includes the documentation. All fixed; 308 over 301.
+**LOW noted (latent):** activeTab doesn't track ?tab= changes during client-side nav —
+no in-app link does this today.
 
 ## Discovered items
 

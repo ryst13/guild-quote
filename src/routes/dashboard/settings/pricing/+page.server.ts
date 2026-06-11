@@ -1,8 +1,9 @@
 import { redirect } from '@sveltejs/kit';
-import { getTenantById } from '$lib/server/tenant.js';
+import { getTenantById, defaultCatalog } from '$lib/server/tenant.js';
+import { buildPriceBook } from '$lib/server/price-book.js';
 import type { PageServerLoad } from './$types.js';
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
   if (!locals.user) throw redirect(303, '/auth/login');
   if (!locals.user.tenant_id) throw redirect(303, '/auth/register');
 
@@ -58,7 +59,17 @@ export const load: PageServerLoad = async ({ locals }) => {
       }
     : defaults;
 
+  const hadCustomCatalog =
+    tenant.catalog !== defaultCatalog &&
+    JSON.stringify(tenant.catalog) !== JSON.stringify(defaultCatalog);
+
+  const VALID_TABS = ['pricebook', 'labor', 'surcharges', 'materials', 'payment', 'output'];
+  const requestedTab = url.searchParams.get('tab') ?? 'pricebook';
+
   return {
+    priceBook: buildPriceBook(tenant),
+    hadCustomCatalog,
+    tab: VALID_TABS.includes(requestedTab) ? requestedTab : 'pricebook',
     config,
     defaults,
     enabledTrades: tenant.enabled_trades,

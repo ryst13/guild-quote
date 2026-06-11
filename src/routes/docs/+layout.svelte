@@ -26,7 +26,7 @@
       children: [
         { title: 'Pricing Engines', href: '/docs/pricing#pricing-engines' },
         { title: 'Quick Calibrate', href: '/docs/pricing#quick-calibrate' },
-        { title: 'Catalog & Surcharges', href: '/docs/pricing#catalog-surcharges' },
+        { title: 'Price Book & Surcharges', href: '/docs/pricing#catalog-surcharges' },
       ],
     },
     {
