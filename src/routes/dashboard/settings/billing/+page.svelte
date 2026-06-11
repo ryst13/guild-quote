@@ -7,7 +7,7 @@
   const planLabels: Record<string, string> = {
     trial: 'Free Trial',
     gq: 'GQ ($49/mo)',
-    gq_pro: 'GQ Pro ($149/mo)',
+    gq_pro: 'GQ Pro ($129/mo)',
   };
 
   const statusLabels: Record<string, string> = {
@@ -125,7 +125,7 @@
           <div class="rounded-xl border-2 border-blue-500 p-5 relative">
             <div class="absolute -top-3 left-4 bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">RECOMMENDED</div>
             <div class="text-lg font-bold text-gray-900">GQ Pro</div>
-            <div class="text-2xl font-bold text-gray-900 mt-1">$149<span class="text-sm font-normal text-gray-500">/mo</span></div>
+            <div class="text-2xl font-bold text-gray-900 mt-1">$129<span class="text-sm font-normal text-gray-500">/mo</span></div>
             <ul class="mt-4 space-y-2 text-sm text-gray-600">
               <li>Everything in GQ, plus:</li>
               <li>Google Docs/Sheets output</li>
@@ -140,7 +140,7 @@
               disabled={loading !== '' || data.plan === 'gq_pro'}
               class="mt-4 w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
             >
-              {loading === 'gq_pro-month' ? 'Loading...' : data.plan === 'gq_pro' ? 'Current Plan' : 'Subscribe — $149/mo'}
+              {loading === 'gq_pro-month' ? 'Loading...' : data.plan === 'gq_pro' ? 'Current Plan' : 'Subscribe — $129/mo'}
             </button>
           </div>
         </div>

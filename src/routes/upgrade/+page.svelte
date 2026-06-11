@@ -44,7 +44,7 @@
         <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-bold px-4 py-1 rounded-full">RECOMMENDED</div>
         <div class="text-sm font-medium text-blue-600 mb-1">Upgrade</div>
         <h3 class="text-2xl font-bold text-gray-900 mb-1">GQ Pro</h3>
-        <div class="text-gray-500 mb-6">$149/mo</div>
+        <div class="text-gray-500 mb-6">$129/mo</div>
         <ul class="space-y-3 text-sm text-gray-700">
           <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> Everything in GQ, plus:</li>
           <li class="flex items-start gap-2"><span class="text-blue-600 mt-0.5 font-bold">+</span> <strong>Job tracker pipeline</strong> — Kanban board, 6 stages from estimate to paid</li>
@@ -58,7 +58,7 @@
           <li class="flex items-start gap-2"><span class="text-blue-600 mt-0.5 font-bold">+</span> <strong>3 user seats</strong> included</li>
         </ul>
         <button class="mt-6 w-full rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700">
-          Upgrade to GQ Pro — $149/mo
+          Upgrade to GQ Pro — $129/mo
         </button>
         <p class="text-xs text-gray-400 text-center mt-2">Annual: $1,490/yr (2 months free)</p>
       </div>

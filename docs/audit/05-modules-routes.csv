@@ -13,7 +13,7 @@ MOD-011,/dashboard/[id]/send,Page,Email composer for estimate delivery,Contracto
 MOD-012,/dashboard/settings/profile,Page,Company profile & branding,Contractor,,,,
 MOD-013,/dashboard/settings/pricing,Page,"Labor, surcharges, materials, payment tabs",Contractor,See 01-tenant-settings.csv flags — 3 of 4 tabs not wired,,,
 MOD-014,/dashboard/settings/catalog,Page,Room pricing matrix + modifiers editor,Contractor,NOT WIRED to engines (see SET-041),REBUILT (ralph iter 4),CHANGE,Done: page rebuilt; nav renamed; per-row fallback; both engines honored
-MOD-015,/dashboard/settings/billing,Page,"Plan, trial countdown, Stripe portal",Contractor,Billing page advertises GQ Pro at $149/mo; strategy docs and CLAUDE.md say $129 — reconcile,,,
+MOD-015,/dashboard/settings/billing,Page,"Plan, trial countdown, Stripe portal",Contractor,Billing page advertises GQ Pro at $149/mo; strategy docs and CLAUDE.md say $129 — reconcile,RESOLVED (2026-06-11),CHANGE,Ryan decided $129; all UI displays fixed; Stripe live Price object at $129 tracked in LR-2
 MOD-016,/upgrade,Page,Plan comparison GQ vs GQ Pro,Contractor,,,,
 MOD-017,/billing/success + /billing/cancel,Pages,Stripe checkout return pages,Contractor,,,,
 MOD-018,/demo,Page,Public demo: scope -> price -> email capture,Public,No DB writes; profitability stripped,,,

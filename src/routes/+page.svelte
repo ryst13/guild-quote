@@ -168,7 +168,7 @@
       <div class="rounded-2xl border-2 border-blue-600 bg-white p-8 text-center relative">
         <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-bold px-4 py-1 rounded-full">RECOMMENDED</div>
         <h4 class="text-xl font-bold text-gray-900 mb-1">GQ Pro</h4>
-        <div class="text-3xl font-bold text-gray-900 mb-1">$149<span class="text-base font-normal text-gray-400">/mo</span></div>
+        <div class="text-3xl font-bold text-gray-900 mb-1">$129<span class="text-base font-normal text-gray-400">/mo</span></div>
         <p class="text-xs text-gray-400 mb-6">$1,490/yr (2 months free)</p>
         <p class="text-sm text-gray-500 mb-6">Estimates + job tracking, scheduling, follow-ups, payments, and crew management.</p>
         <a href="/auth/register" class="block w-full rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">

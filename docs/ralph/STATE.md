@@ -47,8 +47,22 @@
 - [ ] P2-4 Dead schema cleanup decision: `stages_json`, `thresholds_json`, `subscription_tier` (SET-064..066) — document or deprecate (additive-only: mark deprecated, don't drop).
 - [ ] P2-5 Tier gating review: which knobs are Pro-only per spec (complexity factors, economy-of-scale hours)? Implement gating consistent with $49/$129 positioning.
 
-### Blocked (questions for Ryan)
-- BLOCKED(question) Pro price: billing page says $149/mo, strategy says $129/mo. Which is correct? (No code change until answered — guardrail 2.)
+### LR — Launch readiness (added 2026-06-11 from Ryan's launch decisions)
+- [ ] LR-1 Google OAuth option C: drop the `gmail.send` scope (restricted — would
+  require Google security assessment); estimate emails default to Resend/SMTP from a
+  GuildQuote domain; keep drive.file + documents scopes for Docs/Sheets output. Update
+  the send flow copy accordingly.
+- [ ] LR-2 Deployment rig (build when Ryan green-lights pre-launch): Fly.io single
+  instance + persistent volume (SQLite + PDFs) + Litestream backups to object storage;
+  prod env vars; Resend keys; Sentry; uptime monitor. Stripe live mode + $129 Pro Price
+  object + webhook — gated on Ryan's entity/banking step.
+
+### Resolved questions
+- ~~Pro price $149 vs $129~~ → **Ryan decided $129 (2026-06-11)**; all six UI displays
+  fixed. Stripe live Price must be created at $129 (LR-2).
+- Hosting → most cost-effective reliable option; loop's standing choice: **Fly.io +
+  Litestream** (single instance fits SQLite + local PDF storage).
+- Entity/banking/legal review → Ryan handles directly, right before ship.
 
 ## Iteration log
 
