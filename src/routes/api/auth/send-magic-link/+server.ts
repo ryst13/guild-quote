@@ -19,11 +19,17 @@ export const POST: RequestHandler = async ({ request }) => {
   const loginUrl = `${BASE_URL}/auth/verify?token=${token}`;
   const html = buildMagicLinkEmail(user.first_name, loginUrl);
 
-  await sendEmail({
+  const sent = await sendEmail({
     to: user.email,
     subject: 'Your GuildQuote login link',
     html,
   });
+
+  // Dev fallback: with SMTP unconfigured the email is skipped, so surface the
+  // link in the server terminal instead of silently dropping it.
+  if (!sent && process.env.NODE_ENV !== 'production') {
+    console.log('[auth] SMTP not configured — magic link for', user.email, ':', loginUrl);
+  }
 
   return json({ success: true, message: 'Check your email for a login link!' });
 };
