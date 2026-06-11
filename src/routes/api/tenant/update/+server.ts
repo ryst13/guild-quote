@@ -21,6 +21,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     'enabled_trades', 'output_format', 'labor_price_multiplier', 'show_losp',
     'crew_hourly_wage', 'default_crew_size', 'target_gross_margin', 'pricing_mode', 'metro_area',
     'sub_mode_enabled', 'sub_margin',
+    'economy_of_scale_enabled', 'mobilization_hours', 'setup_hours_per_area',
   ];
 
   for (const field of allowedFields) {

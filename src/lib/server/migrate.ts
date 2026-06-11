@@ -111,6 +111,10 @@ const alterations = [
   `ALTER TABLE tenants ADD COLUMN metro_area TEXT`,
   `ALTER TABLE tenants ADD COLUMN sub_mode_enabled INTEGER NOT NULL DEFAULT 0`,
   `ALTER TABLE tenants ADD COLUMN sub_margin REAL`,
+  // Economy-of-scale pricing (Layer 1 — mobilization split)
+  `ALTER TABLE tenants ADD COLUMN economy_of_scale_enabled INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE tenants ADD COLUMN mobilization_hours REAL`,
+  `ALTER TABLE tenants ADD COLUMN setup_hours_per_area REAL`,
   // Phase I: Google Drive folder restructuring
   `ALTER TABLE tenants ADD COLUMN google_drive_root_folder_id TEXT`,
   `ALTER TABLE tenants ADD COLUMN google_drive_active_folder_id TEXT`,

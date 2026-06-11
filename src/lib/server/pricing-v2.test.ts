@@ -96,12 +96,12 @@ describe('bottom-up engine — pricing levers move the right way', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────
-// CHARACTERIZATION TESTS — current linear behavior (NO economy of scale).
-// These lock today's behavior. When the economy-of-scale feature ships
-// (docs/economy-of-scale-pricing-spec.md), these assertions must be UPDATED
-// to expect sub-linear scaling — they are the regression baseline.
+// CHARACTERIZATION TESTS — linear behavior with economy of scale DISABLED.
+// The fixture tenant has economy_of_scale_enabled: false, so these lock the
+// default path: it must stay byte-identical to the pre-feature engine
+// (docs/economy-of-scale-pricing-spec.md §9, parity criterion).
 // ─────────────────────────────────────────────────────────────────────────
-describe('bottom-up engine — linearity (no economy of scale yet)', () => {
+describe('bottom-up engine — linearity (economy of scale disabled)', () => {
 	it('per-unit window price is independent of quantity', () => {
 		const small = calculateInteriorBottomUp(interiorRoomWithWindows(2), catalog, tenant);
 		const large = calculateInteriorBottomUp(interiorRoomWithWindows(8), catalog, tenant);
@@ -119,6 +119,78 @@ describe('bottom-up engine — linearity (no economy of scale yet)', () => {
 		const four = calculateInteriorBottomUp(interiorRoomWithWindows(2, 4), catalog, tenant);
 		// labor_subtotal excludes flat surcharges, so 4 identical rooms == 4x one room.
 		expect(four.labor_subtotal).toBeCloseTo(one.labor_subtotal * 4, 2);
+	});
+});
+
+describe('bottom-up engine — economy of scale (Layer 1: Setup & Mobilization)', () => {
+	const eosTenant = tenantWith({ economy_of_scale_enabled: true });
+	// Fixture tenant resolves to Boston wage $28.50 and default 40% margin.
+	const BILLING_RATE = 28.5 / (1 - 0.4);
+
+	it('explicitly disabled ignores the hour knobs entirely (parity lock)', () => {
+		const off = calculateInteriorBottomUp(interiorScope, catalog, tenant);
+		const offWithKnobs = calculateInteriorBottomUp(
+			interiorScope,
+			catalog,
+			tenantWith({ economy_of_scale_enabled: false, mobilization_hours: 99, setup_hours_per_area: 9 }),
+		);
+		expect(offWithKnobs.grand_total).toBe(off.grand_total);
+		expect(offWithKnobs.sections).toHaveLength(off.sections.length);
+	});
+
+	it('enabled prepends a Setup & Mobilization section on all three trades', () => {
+		const interior = calculateInteriorBottomUp(interiorScope, catalog, eosTenant);
+		const exterior = calculateExteriorBottomUp(exteriorScope, catalog, eosTenant);
+		const epoxy = calculateEpoxyBottomUp(epoxyScope, catalog, eosTenant);
+		for (const q of [interior, exterior, epoxy]) {
+			expect(q.sections[0].label).toBe('Setup & Mobilization');
+			expect(q.sections[0].sales_price).toBeGreaterThan(0);
+		}
+	});
+
+	it('interior: the line prices exactly mobilization + setup×rooms at the billing rate', () => {
+		const off = calculateInteriorBottomUp(interiorScope, catalog, tenant);
+		const on = calculateInteriorBottomUp(interiorScope, catalog, eosTenant);
+		const hours = 3.5 + 0.5 * interiorScope.rooms.length;
+		expect(on.labor_subtotal - off.labor_subtotal).toBeCloseTo(hours * BILLING_RATE, 2);
+		expect(on.sections[0].items[0].allocated_time).toBeCloseTo(hours, 5);
+	});
+
+	it('tenant-edited mobilization hours move the line accordingly', () => {
+		const lo = calculateInteriorBottomUp(interiorScope, catalog, tenantWith({ economy_of_scale_enabled: true, mobilization_hours: 2 }));
+		const hi = calculateInteriorBottomUp(interiorScope, catalog, tenantWith({ economy_of_scale_enabled: true, mobilization_hours: 8 }));
+		expect(hi.labor_subtotal - lo.labor_subtotal).toBeCloseTo(6 * BILLING_RATE, 2);
+	});
+
+	it('per-room labor decreases with job size, but the total still grows (monotonic sub-linear)', () => {
+		const small = calculateInteriorBottomUp(interiorRoomWithWindows(2, 2), catalog, eosTenant);
+		const large = calculateInteriorBottomUp(interiorRoomWithWindows(2, 8), catalog, eosTenant);
+		expect(large.labor_subtotal / 8).toBeLessThan(small.labor_subtotal / 2);
+		expect(large.grand_total).toBeGreaterThan(small.grand_total);
+	});
+
+	it('exterior: per-surface setup shrinks and the job-level block appears once', () => {
+		const off = calculateExteriorBottomUp(exteriorScope, catalog, tenant);
+		const on = calculateExteriorBottomUp(exteriorScope, catalog, eosTenant);
+		const stagingOff = findItem(off, 'Setup & Staging');
+		const stagingOn = findItem(on, 'Setup & Staging');
+		expect(stagingOff!.allocated_time).toBeCloseTo(1.0, 5);
+		expect(stagingOn!.allocated_time).toBeCloseTo(0.5, 5);
+		expect(on.sections.filter((s) => s.label === 'Setup & Mobilization')).toHaveLength(1);
+	});
+
+	it('never unprofitable when enabled (guardrail)', () => {
+		const quotes = [
+			calculateInteriorBottomUp(interiorScope, catalog, eosTenant),
+			calculateExteriorBottomUp(exteriorScope, catalog, eosTenant),
+			calculateEpoxyBottomUp(epoxyScope, catalog, eosTenant),
+		];
+		for (const q of quotes) {
+			expect(q.profitability.gross_profit).toBeGreaterThan(0);
+			expect(q.grand_total).toBeGreaterThanOrEqual(
+				q.profitability.labor_expense + q.profitability.material_expense,
+			);
+		}
 	});
 });
 

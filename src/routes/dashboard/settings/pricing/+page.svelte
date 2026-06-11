@@ -18,6 +18,12 @@
   let subModeEnabled = $state(data.subModeEnabled);
   let subMargin = $state<number | null>(data.subMargin != null ? Math.round(data.subMargin * 100) : 10);
 
+  // Economy of scale (Layer 1 — mobilization split)
+  let economyOfScaleEnabled = $state(data.economyOfScaleEnabled);
+  let mobilizationHours = $state<number | null>(data.mobilizationHours);
+  let setupHoursPerArea = $state<number | null>(data.setupHoursPerArea);
+  const EOS_DEFAULTS = { mobilization_hours: 3.5, setup_hours_per_area: 0.5 };
+
   const metros = [
     { value: '', label: 'Select your metro...' },
     { value: 'boston', label: 'Boston' },
@@ -74,6 +80,9 @@
         metro_area: metroArea || null,
         sub_mode_enabled: subModeEnabled,
         sub_margin: subMargin != null ? subMargin / 100 : null,
+        economy_of_scale_enabled: economyOfScaleEnabled,
+        mobilization_hours: mobilizationHours || null,
+        setup_hours_per_area: setupHoursPerArea || null,
       }),
     });
     const res = await fetch('/api/tenant/update-pricing', {
@@ -245,6 +254,70 @@
               <div>
                 <span class="text-gray-400">You keep per $1,000</span>
                 <div class="font-semibold text-gray-900">${Math.round(grossMargin * 10)}</div>
+              </div>
+            </div>
+          </div>
+        {/if}
+      </div>
+
+      <!-- Economy of Scale -->
+      <div class="rounded-xl bg-white border border-gray-200 p-6 mb-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="font-semibold text-gray-900">Setup &amp; Mobilization</h2>
+            <p class="text-sm text-gray-500 mt-1">Add a fixed "Setup &amp; Mobilization" line to every estimate — loading, travel, surface protection, and cleanup happen once per job regardless of size. Larger jobs spread this cost across more rooms, so your big quotes get naturally sharper per room while small jobs stop absorbing the overhead for free.</p>
+          </div>
+          <button
+            onclick={() => economyOfScaleEnabled = !economyOfScaleEnabled}
+            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out {economyOfScaleEnabled ? 'bg-blue-600' : 'bg-gray-200'}"
+            role="switch"
+            aria-checked={economyOfScaleEnabled}
+            aria-label="Toggle setup and mobilization pricing"
+          >
+            <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {economyOfScaleEnabled ? 'translate-x-5' : 'translate-x-0'}"></span>
+          </button>
+        </div>
+        {#if economyOfScaleEnabled}
+          {#if pricingMode !== 'bottom_up'}
+            <div class="mt-4 rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
+              Setup &amp; Mobilization only applies with the Cost-Based pricing engine. Switch the engine above for this setting to take effect.
+            </div>
+          {/if}
+          <div class="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-4">
+            <div>
+              <label for="mobilization-hours" class="block text-sm font-medium text-gray-700 mb-1">Mobilization Hours</label>
+              <p class="text-xs text-gray-500 mb-2">Crew-hours per job for loading, travel, protection, and cleanup. Typical: 2–7.</p>
+              <input id="mobilization-hours" type="number" step="0.5" min="0" max="16" bind:value={mobilizationHours}
+                placeholder={String(EOS_DEFAULTS.mobilization_hours)}
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none" />
+            </div>
+            <div>
+              <label for="setup-per-area" class="block text-sm font-medium text-gray-700 mb-1">Setup per Room / Surface</label>
+              <p class="text-xs text-gray-500 mb-2">Extra crew-hours per room or surface for masking and moving furniture.</p>
+              <input id="setup-per-area" type="number" step="0.25" min="0" max="4" bind:value={setupHoursPerArea}
+                placeholder={String(EOS_DEFAULTS.setup_hours_per_area)}
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none" />
+            </div>
+          </div>
+          {@const eosWage = crewWage || metroWages[metroArea] || 22.40}
+          {@const eosMargin = (grossMargin ?? 40) / 100}
+          {@const eosBilling = eosWage / (1 - eosMargin)}
+          {@const eosMob = mobilizationHours ?? EOS_DEFAULTS.mobilization_hours}
+          {@const eosSetup = setupHoursPerArea ?? EOS_DEFAULTS.setup_hours_per_area}
+          {@const smallLine = (eosMob + eosSetup * 4) * eosBilling}
+          {@const largeLine = (eosMob + eosSetup * 12) * eosBilling}
+          <div class="mt-4 rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
+            <p class="font-medium mb-2">Preview at these settings:</p>
+            <div class="grid grid-cols-2 gap-4 text-xs">
+              <div>
+                <span class="text-gray-400">4-room job</span>
+                <div class="font-semibold text-gray-900">Setup &amp; Mobilization line: ${Math.round(smallLine)}</div>
+                <div class="text-gray-500">${Math.round(smallLine / 4)} per room</div>
+              </div>
+              <div>
+                <span class="text-gray-400">12-room job</span>
+                <div class="font-semibold text-gray-900">Setup &amp; Mobilization line: ${Math.round(largeLine)}</div>
+                <div class="text-gray-500">${Math.round(largeLine / 12)} per room &mdash; {Math.round((1 - (largeLine / 12) / (smallLine / 4)) * 100)}% less than the small job</div>
               </div>
             </div>
           </div>

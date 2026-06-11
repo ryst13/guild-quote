@@ -35,6 +35,10 @@ export const tenants = sqliteTable('tenants', {
   metro_area: text('metro_area'),
   sub_mode_enabled: integer('sub_mode_enabled', { mode: 'boolean' }).notNull().default(false),
   sub_margin: real('sub_margin'),
+  // Economy of scale (Layer 1 — mobilization split)
+  economy_of_scale_enabled: integer('economy_of_scale_enabled', { mode: 'boolean' }).notNull().default(false),
+  mobilization_hours: real('mobilization_hours'),
+  setup_hours_per_area: real('setup_hours_per_area'),
   // Billing
   stripe_customer_id: text('stripe_customer_id'),
   stripe_subscription_id: text('stripe_subscription_id'),

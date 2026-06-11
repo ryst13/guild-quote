@@ -1,6 +1,6 @@
 # Economy-of-Scale Pricing — Feature Spec
 
-**Status:** Proposed (not built)
+**Status:** Proposed (not built). **Calibration (§5) completed 2026-06-10** — see results inline; Layer 2 failed its data gate and is dropped.
 **Engine:** `pricing-v2.ts` (bottom-up) only — see §6
 **Default:** OFF. Opt-in per tenant. Preserves RP-validated parity when disabled.
 **Owner:** Ryan
@@ -64,7 +64,11 @@ discount knob to mis-set; it is honest cost accounting.
 - `setup_hours_per_area` — small per-room/per-surface fixed cost (masking, moving
   furniture). Default ~0.5.
 
-### Layer 2 — Repetition-efficiency curve (optional, data-gated)
+### Layer 2 — Repetition-efficiency curve — ❌ DROPPED (failed data gate, 2026-06-10)
+
+> Calibration found **no residual per-unit decay** beyond the fixed block (§5 P2):
+> large jobs actually price *above* the fixed+linear model. Do not build this layer.
+> The design is kept below for reference only.
 
 For identical repeated items beyond a threshold, decay the **variable** portion via a
 learning curve, floored so unit time never collapses:
@@ -101,21 +105,35 @@ When `economy_of_scale_enabled = false`, the engine path is **byte-identical to 
 
 ## 5. Prerequisites (do before shipping the curve)
 
-### P1 — Fix the room-count data
-`price-benchmarks.json` `interior_by_rooms` is corrupted: the `1-2` bucket (n=116)
-medians **higher** ($5,668) than the `3-4` bucket (n=10, $3,813). The room-count field is
-miscategorized upstream. Fix the categorization in the benchmark-build pipeline so size
-buckets are monotonic and trustworthy.
+### P1 — Fix the room-count data — ✅ DONE 2026-06-10
+`interior_by_rooms` was corrupted by an extraction bug in RP's ML pipeline
+(`extract_gen_v2.py` counted pre-filled area *numbers* in column B of the Generator
+area table instead of the 0/1 active flag in column A, so most jobs read "14 areas";
+trim companion lines also double-counted rooms, and misclassified exterior workbooks
+polluted the interior stats). Corrected counts were re-extracted from the 696 Generator
+workbooks (`calibrate_economy_of_scale.py` in RP's ml-data) and `price-benchmarks.json`
+was regenerated. Buckets are now monotonic: 1–2 rooms $1,966 (n=46) → 3–4 $5,202 (n=29)
+→ 5–7 $7,659 (n=50) → 8+ $14,225 (n=24). All pricing tests pass unchanged.
 
-### P2 — Calibrate from RP's 470 jobs
-Regress `total_price ~ unit_count` (or `~ sqft`) across RP's historical jobs:
+### P2 — Calibrate from RP's jobs — ✅ DONE 2026-06-10
+Population: 149 interior Generator quotes with corrected room counts, quoted price, and
+estimated hours (sanity-gated to $300–$5,000/room). Full report:
+RP ml-data `CALIBRATION_ECONOMY_OF_SCALE.md`.
 
-- **Intercept ⇒ `mobilization_hours`** (the fixed block).
-- **Slope ⇒ true per-unit variable cost.**
-- Negative residual trend at high volume ⇒ evidence for Layer 2; its shape sets `L`.
+- **Price ~ rooms:** OLS intercept **$223** + $1,483/room (R²=0.63); Theil–Sen (robust)
+  intercept **$479** + $1,281/room. At the RP basis ($27/hr wage, 45.5% margin) the
+  intercept converts to **4.5–9.7 fixed crew-hours**. GQ's flat surcharges (trash,
+  transport) already absorb ~$100–150 of that block, leaving roughly **2–7 hours** of
+  true unmodeled mobilization. **The 3.5-hour default is validated** — keep it.
+- **Hours ~ rooms:** intercept ≈ **0** (−7 to −6 hrs) + 12–14 hrs/room (R²=0.46) —
+  confirms the Generator's estimated hours are purely linear by design; the fixed block
+  in *price* comes from flat surcharges plus small-job pricing behavior.
+- **Layer 2 evidence: NONE.** Median $/room: $1,622 (1–2) → $1,482 (3–4) → $1,265 (5–7)
+  → **$1,442 (8+, rises)**. Log-log elasticity 0.91; residual-vs-rooms correlation
+  **+0.18** (positive — large jobs price *above* the fixed+linear model, likely richer
+  per-room scope). There is no repetition-efficiency decay to model.
 
-If the slope shows no per-unit decline, **do not ship Layer 2.** Layer 1 (fixed split)
-is still valid on first-principles grounds and can ship regardless.
+**Verdict: ship Layer 1 with the 3.5 hr / 0.5 hr defaults. Do not build Layer 2.**
 
 ## 6. Why bottom-up only
 

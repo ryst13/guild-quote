@@ -170,6 +170,10 @@ export interface TenantConfig {
   metro_area: string | null;
   sub_mode_enabled: boolean;
   sub_margin: number | null;
+  // Economy of scale (Layer 1 — mobilization split)
+  economy_of_scale_enabled: boolean;
+  mobilization_hours: number | null;
+  setup_hours_per_area: number | null;
   // Billing
   stripe_customer_id: string | null;
   payment_status: PaymentStatus;

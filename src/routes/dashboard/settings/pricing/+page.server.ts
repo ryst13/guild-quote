@@ -65,5 +65,8 @@ export const load: PageServerLoad = async ({ locals }) => {
     metroArea: tenant.metro_area,
     subModeEnabled: tenant.sub_mode_enabled ?? false,
     subMargin: tenant.sub_margin,
+    economyOfScaleEnabled: tenant.economy_of_scale_enabled ?? false,
+    mobilizationHours: tenant.mobilization_hours,
+    setupHoursPerArea: tenant.setup_hours_per_area,
   };
 };

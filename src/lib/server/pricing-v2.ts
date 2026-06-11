@@ -353,7 +353,20 @@ interface BottomUpSettings {
   crew_wage: number;
   crew_size: number;
   gross_margin: number;
+  eos_enabled: boolean;
+  mobilization_hours: number;
+  setup_hours_per_area: number;
 }
+
+// Economy-of-scale defaults (Layer 1 — mobilization split). Calibrated
+// 2026-06-10 against RP's Generator archive (n=149 interior quotes): the
+// observed fixed block is $223–$479/job ≈ 4.5–9.7 crew-hours, of which flat
+// surcharges already cover ~$100–150. 3.5 + 0.5/area sits at the conservative
+// end of that range. See docs/economy-of-scale-pricing-spec.md §5.
+const ECONOMY_OF_SCALE_DEFAULTS = {
+  mobilization_hours: 3.5,
+  setup_hours_per_area: 0.5,
+};
 
 export function resolveSettings(tenant: TenantConfig): BottomUpSettings {
   const wage = tenant.crew_hourly_wage
@@ -364,6 +377,34 @@ export function resolveSettings(tenant: TenantConfig): BottomUpSettings {
     crew_wage: wage,
     crew_size: tenant.default_crew_size ?? 2,
     gross_margin: tenant.target_gross_margin ?? 0.40,
+    eos_enabled: tenant.economy_of_scale_enabled ?? false,
+    mobilization_hours: tenant.mobilization_hours ?? ECONOMY_OF_SCALE_DEFAULTS.mobilization_hours,
+    setup_hours_per_area: tenant.setup_hours_per_area ?? ECONOMY_OF_SCALE_DEFAULTS.setup_hours_per_area,
+  };
+}
+
+// Builds the explicit "Setup & Mobilization" section shown on the estimate
+// when economy-of-scale pricing is enabled. Complexity 1.0 — this is plain
+// labor time (load, drive, unload, protect, clean up), not skilled brushwork.
+function mobilizationSection(
+  hours: number,
+  areaCount: number,
+  areaNoun: string,
+  wage: number,
+  margin: number,
+): SectionResult {
+  const price = priceFromHours(hours, wage, margin, 1.0);
+  return {
+    label: 'Setup & Mobilization',
+    items: [{
+      label: `Mobilization, protection & site setup (${areaCount} ${areaNoun}${areaCount === 1 ? '' : 's'})`,
+      quantity: 1,
+      sub_cost: price.sub_cost,
+      sales_price: price.sales_price,
+      allocated_time: hours,
+    }],
+    sub_cost: price.sub_cost,
+    sales_price: price.sales_price,
   };
 }
 
@@ -508,6 +549,19 @@ export function calculateInteriorBottomUp(
     totalSubCost += sectionSubCost;
     totalSalesPrice += sectionSalesPrice;
     totalPainterHours += sectionTime;
+  }
+
+  // ─── ECONOMY OF SCALE (Layer 1) ─────────────────────────────
+  // One fixed block per job: mobilization plus per-room setup. Disabled
+  // (the default) prices byte-identically to the original linear path.
+  if (settings.eos_enabled) {
+    const roomCount = formData.rooms.length;
+    const mobHours = settings.mobilization_hours + settings.setup_hours_per_area * roomCount;
+    const mob = mobilizationSection(mobHours, roomCount, 'room', crew_wage, gross_margin);
+    sections.unshift(mob);
+    totalSubCost += mob.sub_cost;
+    totalSalesPrice += mob.sales_price;
+    totalPainterHours += mobHours;
   }
 
   // ─── SURCHARGES ─────────────────────────────────────────────
@@ -669,8 +723,12 @@ export function calculateExteriorBottomUp(
   for (const surface of formData.surfaces) {
     const items: LineItem[] = [];
 
-    // Setup time per surface (flat, per crew)
-    const setupHours = PRODUCTION.exterior_setup_per_surface;
+    // Setup time per surface (flat, per crew). With economy of scale on,
+    // the job-level mobilization block (added below) absorbs the truck/site
+    // overhead, so per-surface setup drops to the smaller staging-only figure.
+    const setupHours = settings.eos_enabled
+      ? settings.setup_hours_per_area
+      : PRODUCTION.exterior_setup_per_surface;
     const setupPrice = priceFromHours(setupHours, crew_wage, gross_margin, 1.0);
     items.push({
       label: 'Setup & Staging',
@@ -736,6 +794,18 @@ export function calculateExteriorBottomUp(
     totalSubCost += sectionSubCost;
     totalSalesPrice += sectionSalesPrice;
     totalPainterHours += sectionTime;
+  }
+
+  // ─── ECONOMY OF SCALE (Layer 1) ─────────────────────────────
+  // Job-level mobilization once per job; per-surface staging stays in each
+  // surface section above (at the reduced setup_hours_per_area rate).
+  if (settings.eos_enabled) {
+    const surfaceCount = formData.surfaces.length;
+    const mob = mobilizationSection(settings.mobilization_hours, surfaceCount, 'surface', crew_wage, gross_margin);
+    sections.unshift(mob);
+    totalSubCost += mob.sub_cost;
+    totalSalesPrice += mob.sales_price;
+    totalPainterHours += settings.mobilization_hours;
   }
 
   // ─── SURCHARGES ─────────────────────────────────────────────
@@ -973,6 +1043,16 @@ export function calculateEpoxyBottomUp(
     });
     totalSalesPrice += sectionSales;
     totalPainterHours += sectionTime;
+  }
+
+  // ─── ECONOMY OF SCALE (Layer 1) ─────────────────────────────
+  if (settings.eos_enabled) {
+    const floorCount = formData.floors.length;
+    const mobHours = settings.mobilization_hours + settings.setup_hours_per_area * floorCount;
+    const mob = mobilizationSection(mobHours, floorCount, 'area', crew_wage, gross_margin);
+    sections.unshift(mob);
+    totalSalesPrice += mob.sales_price;
+    totalPainterHours += mobHours;
   }
 
   const totalSubCost = sections.reduce((s, sec) => s + sec.sub_cost, 0);
