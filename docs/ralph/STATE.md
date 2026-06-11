@@ -46,7 +46,15 @@
   iter 9.** Critic REJECT round fixed: my D-1 note falsely claimed $0 price is ignored
   (it's valid paint pricing); <a>-in-<button> invalid HTML; docs still taught
   Accepted/Declined; calibrate path missed the banner flag.
-- [ ] P1-2 Driveway test — scope entry on a phone: numeric keypads (`inputmode`), thumb-size targets, steppers over free inputs where sane, minimal required fields, no dead-end validation.
+- [x] P1-2 Driveway test: QtyStepper component (40px tap targets, numeric keypad,
+  nonzero highlight) replaces all 18 tiny quantity inputs across the three forms;
+  responsive single-column grids at phone width; epoxy free-number inputs get numeric
+  keypads; Copy/Remove get real tap padding; client name is the only required field,
+  enforced with a jump-back + inline message instead of a dead end. **DONE iter 10.**
+  Critic REJECT round: epoxy form's message never rendered (silent bounce), exterior
+  item grids missed the responsive fix exactly where steppers landed, leftover
+  parseInt type error — all fixed; stepper capped at 999 (spindle counts), shrink-0
+  guards keep tap targets honest.
 - [ ] P1-3 Settings consolidation: one "My Prices" mental model instead of Pricing (4 tabs) + Catalog as disconnected pages. Depends on P0-1..4 verdicts.
 - [ ] P1-4 Dashboard: Jobber-style status-at-a-glance + one-tap quick actions (send, mark accepted/declined, duplicate). Surface "needs action" first.
 - [ ] P1-5 Onboarding: measure and minimize time-to-first-estimate; sample-data preview before any setup; skip-everything path that still works.
@@ -200,6 +208,17 @@ fallback note claimed "zero is ignored" while $0/gallon is valid → reworded tr
 Plus invalid <a>-in-<button>, docs vocabulary drift, calibrate flag gap — all fixed.
 **Standing rule now in the ledger: every fallback/helper sentence must be checked
 word-by-word against the resolver condition it describes.**
+
+### Iteration 10 — P1-2 driveway ergonomics — Critic: REJECT → fixed → green
+**Builder:** QtyStepper (controlled −/+ component, Svelte-5-verified sync), 18 input
+replacements, responsive grids, tap padding, name-only validation with no dead ends.
+**Critic:** probed the stepper's compiled set_value semantics (type-5-then-plus shows 6 ✓),
+then rejected on three real gaps: epoxy validation message never rendered (my anchor
+string didn't exist — silent replace miss), exterior's five item grids kept grid-cols-2
+at 390px exactly where the steppers landed (tap targets would compress), and a leftover
+parseInt on the changed signature. All fixed; svelte-check back to the 14-error baseline.
+**Process lesson recorded: every scripted string-replace must assert its expected match
+count — the two misses this iteration were silent zero-match replaces.**
 
 ## Discovered items
 

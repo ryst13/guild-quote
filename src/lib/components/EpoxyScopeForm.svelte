@@ -59,7 +59,15 @@
   function addFloor() { floors = [...floors, createFloor()]; }
   function removeFloor(idx: number) { if (floors.length > 1) floors = floors.filter((_, i) => i !== idx); }
 
+  let validationMsg = $state('');
+
   function handleSubmit() {
+    if (!clientName.trim()) {
+      validationMsg = "Add the client's name first — it goes at the top of the estimate.";
+      step = 1;
+      return;
+    }
+    validationMsg = '';
     const data: EpoxyScopeData = {
       client: { name: clientName, email: clientEmail, phone: clientPhone, address: clientAddress, notes: clientNotes, source: clientSource },
       floors,
@@ -89,9 +97,12 @@
       {/if}
       <div>
         <label for="epoxy-name" class="block text-sm font-medium text-gray-700 mb-1">Client Name</label>
-        <input id="epoxy-name" type="text" bind:value={clientName} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
+        {#if validationMsg}
+          <p class="text-sm text-amber-700 mb-1">{validationMsg}</p>
+        {/if}
+        <input id="epoxy-name" type="text" bind:value={clientName} oninput={() => (validationMsg = '')} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
       </div>
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label for="epoxy-email" class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-gray-400 font-normal">(optional)</span></label>
           <input id="epoxy-email" type="email" bind:value={clientEmail} placeholder="Add before sending" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
@@ -106,7 +117,7 @@
         <input id="epoxy-addr" type="text" bind:value={clientAddress} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
       </div>
       {#if !demo}
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label for="epoxy-client-source" class="block text-sm font-medium text-gray-700 mb-1">How'd they find you? <span class="text-gray-400 font-normal">(optional)</span></label>
             <select id="epoxy-client-source" bind:value={clientSource} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500">
@@ -152,11 +163,11 @@
           <div class="flex items-center justify-between">
             <h3 class="font-semibold text-gray-900">Floor {fi + 1}</h3>
             {#if floors.length > 1}
-              <button onclick={() => { removeFloor(fi); activeFloorIdx = Math.max(0, fi - 1); }} class="text-xs text-red-600">Remove</button>
+              <button onclick={() => { removeFloor(fi); activeFloorIdx = Math.max(0, fi - 1); }} class="text-xs text-red-600 px-2 py-1.5 -my-1.5 rounded hover:bg-red-50">Remove</button>
             {/if}
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label for="floor-type-{fi}" class="block text-xs font-medium text-gray-600 mb-1">Area Type</label>
               <select id="floor-type-{fi}" bind:value={floor.area_type} class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm outline-none">
@@ -165,11 +176,11 @@
             </div>
             <div>
               <label for="floor-sqft-{fi}" class="block text-xs font-medium text-gray-600 mb-1">Square Footage</label>
-              <input id="floor-sqft-{fi}" type="number" min="0" bind:value={floor.sqft} class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm outline-none" />
+              <input id="floor-sqft-{fi}" type="number" inputmode="numeric" min="0" bind:value={floor.sqft} class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm outline-none" />
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label for="floor-coating-{fi}" class="block text-xs font-medium text-gray-600 mb-1">Coating Type</label>
               <select id="floor-coating-{fi}" bind:value={floor.coating_type} class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm outline-none">
@@ -211,7 +222,7 @@
           {#if floor.cove_base}
             <div>
               <label for="floor-cove-{fi}" class="block text-xs font-medium text-gray-600 mb-1">Cove Base Linear Feet</label>
-              <input id="floor-cove-{fi}" type="number" min="0" bind:value={floor.cove_base_linear_feet} class="w-32 rounded-lg border border-gray-300 px-2 py-1.5 text-sm outline-none" />
+              <input id="floor-cove-{fi}" type="number" inputmode="numeric" min="0" bind:value={floor.cove_base_linear_feet} class="w-32 rounded-lg border border-gray-300 px-2 py-1.5 text-sm outline-none" />
             </div>
           {/if}
         </div>

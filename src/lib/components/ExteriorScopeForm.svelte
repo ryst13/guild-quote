@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { ExteriorScopeData, ExteriorSurface } from '$lib/types/index.js';
   import { v4 as uuidv4 } from 'uuid';
+  import QtyStepper from './QtyStepper.svelte';
 
   let { onSubmit, demo = false, colorSamplesAmount = 98.95 }: { onSubmit: (data: ExteriorScopeData) => void; demo?: boolean; colorSamplesAmount?: number } = $props();
 
@@ -74,13 +75,21 @@
     if (surfaces.length > 1) surfaces = surfaces.filter((_, i) => i !== idx);
   }
 
-  function setQty(surfIdx: number, category: 'siding' | 'doors' | 'windows' | 'trim' | 'carpentry_repairs', item: string, val: string) {
-    const qty = Math.max(0, parseInt(val) || 0);
+  function setQty(surfIdx: number, category: 'siding' | 'doors' | 'windows' | 'trim' | 'carpentry_repairs', item: string, val: number) {
+    const qty = Math.max(0, val);
     surfaces[surfIdx][category][item] = qty;
     surfaces = [...surfaces];
   }
 
+  let validationMsg = $state('');
+
   function handleSubmit() {
+    if (!clientName.trim()) {
+      validationMsg = "Add the client's name first — it goes at the top of the estimate.";
+      step = 1;
+      return;
+    }
+    validationMsg = '';
     const data: ExteriorScopeData = {
       client: { name: clientName, email: clientEmail, phone: clientPhone, address: clientAddress, notes: clientNotes, source: clientSource },
       surfaces,
@@ -110,9 +119,12 @@
       {/if}
       <div>
         <label for="ext-client-name" class="block text-sm font-medium text-gray-700 mb-1">Client Name</label>
-        <input id="ext-client-name" type="text" bind:value={clientName} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
+        {#if validationMsg}
+          <p class="text-sm text-amber-700 mb-1">{validationMsg}</p>
+        {/if}
+        <input id="ext-client-name" type="text" bind:value={clientName} oninput={() => (validationMsg = '')} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
       </div>
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label for="ext-client-email" class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-gray-400 font-normal">(optional)</span></label>
           <input id="ext-client-email" type="email" bind:value={clientEmail} placeholder="Add before sending" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
@@ -127,7 +139,7 @@
         <input id="ext-client-addr" type="text" bind:value={clientAddress} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
       </div>
       {#if !demo}
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label for="ext-client-source" class="block text-sm font-medium text-gray-700 mb-1">How'd they find you? <span class="text-gray-400 font-normal">(optional)</span></label>
             <select id="ext-client-source" bind:value={clientSource} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500">
@@ -180,18 +192,18 @@
               </select>
             </div>
             {#if surfaces.length > 1}
-              <button onclick={() => { removeSurface(si); activeSurfaceIdx = Math.max(0, si - 1); }} class="text-xs text-red-600">Remove</button>
+              <button onclick={() => { removeSurface(si); activeSurfaceIdx = Math.max(0, si - 1); }} class="text-xs text-red-600 px-2 py-1.5 -my-1.5 rounded hover:bg-red-50">Remove</button>
             {/if}
           </div>
 
           <!-- Siding -->
           <div>
             <h4 class="text-xs font-semibold text-gray-600 uppercase mb-2">Siding — count in squares (in this app, 1 square covers 200 sqft)</h4>
-            <div class="grid grid-cols-2 gap-x-6 gap-y-2">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
               {#each SIDING_ITEMS as item}
                 <div class="flex items-center justify-between">
                   <span class="text-xs text-gray-700">{item}</span>
-                  <input type="number" min="0" value={surf.siding[item] || 0} oninput={(e) => setQty(si, 'siding', item, (e.target as HTMLInputElement).value)} class="w-14 rounded border border-gray-200 px-2 py-1 text-xs text-right outline-none" />
+                  <QtyStepper value={surf.siding[item] || 0} label={item} onchange={(v) => setQty(si, 'siding', item, v)} />
                 </div>
               {/each}
             </div>
@@ -200,11 +212,11 @@
           <!-- Doors -->
           <div>
             <h4 class="text-xs font-semibold text-gray-600 uppercase mb-2">Doors</h4>
-            <div class="grid grid-cols-2 gap-x-6 gap-y-2">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
               {#each DOOR_ITEMS as item}
                 <div class="flex items-center justify-between">
                   <span class="text-xs text-gray-700">{item}</span>
-                  <input type="number" min="0" value={surf.doors[item] || 0} oninput={(e) => setQty(si, 'doors', item, (e.target as HTMLInputElement).value)} class="w-14 rounded border border-gray-200 px-2 py-1 text-xs text-right outline-none" />
+                  <QtyStepper value={surf.doors[item] || 0} label={item} onchange={(v) => setQty(si, 'doors', item, v)} />
                 </div>
               {/each}
             </div>
@@ -213,11 +225,11 @@
           <!-- Windows -->
           <div>
             <h4 class="text-xs font-semibold text-gray-600 uppercase mb-2">Windows</h4>
-            <div class="grid grid-cols-2 gap-x-6 gap-y-2">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
               {#each WINDOW_ITEMS as item}
                 <div class="flex items-center justify-between">
                   <span class="text-xs text-gray-700">{item}</span>
-                  <input type="number" min="0" value={surf.windows[item] || 0} oninput={(e) => setQty(si, 'windows', item, (e.target as HTMLInputElement).value)} class="w-14 rounded border border-gray-200 px-2 py-1 text-xs text-right outline-none" />
+                  <QtyStepper value={surf.windows[item] || 0} label={item} onchange={(v) => setQty(si, 'windows', item, v)} />
                 </div>
               {/each}
             </div>
@@ -226,11 +238,11 @@
           <!-- Trim -->
           <div>
             <h4 class="text-xs font-semibold text-gray-600 uppercase mb-2">Trim</h4>
-            <div class="grid grid-cols-2 gap-x-6 gap-y-2">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
               {#each TRIM_ITEMS as item}
                 <div class="flex items-center justify-between">
                   <span class="text-xs text-gray-700">{item}</span>
-                  <input type="number" min="0" value={surf.trim[item] || 0} oninput={(e) => setQty(si, 'trim', item, (e.target as HTMLInputElement).value)} class="w-14 rounded border border-gray-200 px-2 py-1 text-xs text-right outline-none" />
+                  <QtyStepper value={surf.trim[item] || 0} label={item} onchange={(v) => setQty(si, 'trim', item, v)} />
                 </div>
               {/each}
             </div>
@@ -239,11 +251,11 @@
           <!-- Carpentry Repairs -->
           <div>
             <h4 class="text-xs font-semibold text-gray-600 uppercase mb-2">Carpentry Repairs</h4>
-            <div class="grid grid-cols-2 gap-x-6 gap-y-2">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
               {#each CARPENTRY_ITEMS as item}
                 <div class="flex items-center justify-between">
                   <span class="text-xs text-gray-700">{item}</span>
-                  <input type="number" min="0" value={surf.carpentry_repairs[item] || 0} oninput={(e) => setQty(si, 'carpentry_repairs', item, (e.target as HTMLInputElement).value)} class="w-14 rounded border border-gray-200 px-2 py-1 text-xs text-right outline-none" />
+                  <QtyStepper value={surf.carpentry_repairs[item] || 0} label={item} onchange={(v) => setQty(si, 'carpentry_repairs', item, v)} />
                 </div>
               {/each}
             </div>
@@ -265,7 +277,7 @@
 
   {:else if step === 3}
     <div class="space-y-4">
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label for="ext-grade" class="block text-sm font-medium text-gray-700 mb-1">Surface Grade</label>
           <p class="text-xs text-gray-500 mb-1">How the surfaces look right now. A is like new, D needs heavy repair.</p>

@@ -25,6 +25,7 @@
   let projectNotes = $state('');
 
   import { INTERIOR_ROOM_TYPES, INTERIOR_ITEMS, INTERIOR_SPECIALTIES } from '$lib/scope-options.js';
+  import QtyStepper from './QtyStepper.svelte';
 
   const ROOM_TYPES = INTERIOR_ROOM_TYPES;
   const ITEMS = INTERIOR_ITEMS;
@@ -96,12 +97,20 @@
     rooms = [...rooms];
   }
 
-  function setItemQty(roomIdx: number, item: string, val: string) {
-    rooms[roomIdx].items[item] = Math.max(0, parseInt(val) || 0);
+  function setItemQty(roomIdx: number, item: string, val: number) {
+    rooms[roomIdx].items[item] = Math.max(0, val);
     rooms = [...rooms];
   }
 
+  let validationMsg = $state('');
+
   function handleSubmit() {
+    if (!clientName.trim()) {
+      validationMsg = "Add the client's name first — it goes at the top of the estimate.";
+      step = 1;
+      return;
+    }
+    validationMsg = '';
     const data: InteriorScopeData = {
       client: { name: clientName, email: clientEmail, phone: clientPhone, address: clientAddress, notes: clientNotes, source: clientSource },
       rooms,
@@ -133,9 +142,12 @@
       {/if}
       <div>
         <label for="int-client-name" class="block text-sm font-medium text-gray-700 mb-1">Client Name</label>
-        <input id="int-client-name" type="text" bind:value={clientName} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
+        {#if validationMsg}
+          <p class="text-sm text-amber-700 mb-1">{validationMsg}</p>
+        {/if}
+        <input id="int-client-name" type="text" bind:value={clientName} oninput={() => (validationMsg = '')} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
       </div>
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label for="int-client-email" class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-gray-400 font-normal">(optional)</span></label>
           <input id="int-client-email" type="email" bind:value={clientEmail} placeholder="Add before sending" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
@@ -150,7 +162,7 @@
         <input id="int-client-address" type="text" bind:value={clientAddress} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
       </div>
       {#if !demo}
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label for="int-client-source" class="block text-sm font-medium text-gray-700 mb-1">How'd they find you? <span class="text-gray-400 font-normal">(optional)</span></label>
             <select id="int-client-source" bind:value={clientSource} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500">
@@ -200,14 +212,14 @@
           <div class="flex items-center justify-between">
             <h3 class="font-semibold text-gray-900">Room {ri + 1}</h3>
             <div class="flex gap-2">
-              <button onclick={() => duplicateRoom(ri)} class="text-xs text-blue-600 hover:text-blue-700">Copy</button>
+              <button onclick={() => duplicateRoom(ri)} class="text-xs text-blue-600 hover:text-blue-700 px-2 py-1.5 -my-1.5 rounded hover:bg-blue-50">Copy</button>
               {#if rooms.length > 1}
-                <button onclick={() => { removeRoom(ri); activeRoomIdx = Math.max(0, ri - 1); }} class="text-xs text-red-600 hover:text-red-700">Remove</button>
+                <button onclick={() => { removeRoom(ri); activeRoomIdx = Math.max(0, ri - 1); }} class="text-xs text-red-600 hover:text-red-700 px-2 py-1.5 -my-1.5 rounded hover:bg-red-50">Remove</button>
               {/if}
             </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label for="room-type-{ri}" class="block text-xs font-medium text-gray-600 mb-1">Room Type</label>
               <select id="room-type-{ri}" bind:value={room.room_type} class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-gray-900 outline-none">
@@ -246,16 +258,11 @@
           <div>
             <p class="text-xs text-gray-500 -mt-1 mb-2">Small, Medium, and Large are relative to the room type — a small living room is bigger than a small bathroom.</p>
           <h4 class="text-xs font-semibold text-gray-600 uppercase mb-2">Items — how many of each</h4>
-            <div class="grid grid-cols-2 gap-x-6 gap-y-2">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
               {#each ITEMS as item}
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between gap-2">
                   <span class="text-xs text-gray-700">{item}</span>
-                  <input
-                    type="number" min="0"
-                    value={room.items[item] || 0}
-                    oninput={(e) => setItemQty(ri, item, (e.target as HTMLInputElement).value)}
-                    class="w-14 rounded border border-gray-200 px-2 py-1 text-xs text-right text-gray-900 outline-none"
-                  />
+                  <QtyStepper value={room.items[item] || 0} label={item} onchange={(v) => setItemQty(ri, item, v)} />
                 </div>
               {/each}
             </div>
@@ -292,7 +299,7 @@
   {:else if step === 3}
     <!-- Project Details -->
     <div class="space-y-4">
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label for="int-surface-grade" class="block text-sm font-medium text-gray-700 mb-1">Surface Grade</label>
           <p class="text-xs text-gray-500 mb-1">How the walls look right now. A is like new, D needs heavy repair.</p>
