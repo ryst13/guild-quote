@@ -274,6 +274,83 @@ describe('bottom-up engine — tenant surcharge config (pricing_config wiring)',
 	});
 });
 
+describe('bottom-up engine — tenant materials config (pricing_config wiring)', () => {
+	it('explicit default materials price identically to null config', () => {
+		const base = calculateInteriorBottomUp(interiorScope, catalog, tenant);
+		const explicit = calculateInteriorBottomUp(
+			interiorScope,
+			catalog,
+			tenantWith({
+				pricing_config: {
+					materials: {
+						interior: {
+							walls: { product: 'Regal Select Eggshell', coverage: 350, price_per_gallon: 63.59 },
+							trim: { product: 'Regal Select Semi Gloss', coverage: 350, price_per_gallon: 63.59 },
+							primer: { product: 'Fresh Start', coverage: 400, price_per_gallon: 44.99 },
+							ceiling: { product: 'Ben Moore Muresco', coverage: 400, price_per_gallon: 40.78 },
+						},
+					},
+				},
+			}),
+		);
+		expect(explicit.grand_total).toBeCloseTo(base.grand_total, 6);
+	});
+
+	it('custom product name reaches the customer-facing materials list', () => {
+		const q = calculateInteriorBottomUp(
+			interiorScope,
+			catalog,
+			tenantWith({
+				pricing_config: { materials: { interior: { walls: { product: 'SuperPaint Eg-Shel' } } } },
+			}),
+		);
+		expect(q.materials.some((m) => m.label === 'SuperPaint Eg-Shel')).toBe(true);
+		expect(q.materials.some((m) => m.label === 'Regal Select Eggshell')).toBe(false);
+	});
+
+	it('higher price per gallon raises materials_total; worse coverage raises gallons', () => {
+		const base = calculateInteriorBottomUp(interiorScope, catalog, tenant);
+		const pricier = calculateInteriorBottomUp(
+			interiorScope,
+			catalog,
+			tenantWith({ pricing_config: { materials: { interior: { walls: { price_per_gallon: 99 } } } } }),
+		);
+		expect(pricier.materials_total).toBeGreaterThan(base.materials_total);
+
+		const thirsty = calculateInteriorBottomUp(
+			interiorScope,
+			catalog,
+			tenantWith({ pricing_config: { materials: { interior: { walls: { coverage: 100 } } } } }),
+		);
+		const wallsBase = base.materials[0];
+		const wallsThirsty = thirsty.materials[0];
+		expect(wallsThirsty.gallons).toBeGreaterThan(wallsBase.gallons);
+	});
+
+	it('invalid coverage (0) falls back to the default instead of dividing by zero', () => {
+		const q = calculateInteriorBottomUp(
+			interiorScope,
+			catalog,
+			tenantWith({ pricing_config: { materials: { interior: { walls: { coverage: 0 } } } } }),
+		);
+		expect(Number.isFinite(q.materials_total)).toBe(true);
+		expect(q.grand_total).toBeCloseTo(
+			calculateInteriorBottomUp(interiorScope, catalog, tenant).grand_total,
+			6,
+		);
+	});
+
+	it('epoxy coating price config flows into epoxy materials', () => {
+		const base = calculateEpoxyBottomUp(epoxyScope, catalog, tenant);
+		const q = calculateEpoxyBottomUp(
+			epoxyScope,
+			catalog,
+			tenantWith({ pricing_config: { materials: { epoxy: { coating: { price_per_gallon: 120 } } } } }),
+		);
+		expect(q.materials_total).toBeGreaterThan(base.materials_total);
+	});
+});
+
 describe('bottom-up engine — GAN validation deltas (epoxy)', () => {
 	it('epoxy 500sqft garage prices in a sane band', () => {
 		const q = calculateEpoxyBottomUp(epoxyScope, catalog, tenant);

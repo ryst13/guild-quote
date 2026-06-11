@@ -9,7 +9,7 @@
 
 ### P0 — Trust & correctness
 - [x] P0-1 Surcharges: wire `pricing_config.surcharges` into both engines (enable flags + amounts; defaults preserve byte-parity). Resolves SET-021..029. **DONE iter 1.**
-- [ ] P0-2 Materials: wire `pricing_config.materials` (products, coverage, $/gal) into both engines. Resolves SET-031..038.
+- [x] P0-2 Materials: wire `pricing_config.materials` (products, coverage, $/gal) into both engines. Resolves SET-031..038. **DONE iter 2.**
 - [ ] P0-3 Payment terms: wire `deposit_pct` + `progress_threshold` into estimate output (templates/PDF/doc/sheets). Resolves SET-039/040, OUT-006.
 - [ ] P0-4 Catalog editor verdict: the 360-cell matrix is unread by engines (SET-041). Critic decides: wire a simplified ServiceTitan-style "price book" to the top-down engine, or remove the matrix in favor of calibration. Implement the verdict. Also resolve room-type list drift (catalog 15 names vs form/engine 19).
 - [ ] P0-5 Interior specialty checkboxes (drywall install, floor refinishing, plaster, wallpaper, window cleaning, room cleaning) are collected but never priced (ITEM-018..023). Critic decides per item: price it, convert to a flagged note on the estimate ("quoted separately"), or remove. Silent no-ops are forbidden.
@@ -56,6 +56,18 @@ defaults). 7 new tests; 56/56 pass; parity verified byte-identical at null confi
 **Notes for future iterations:** settings-page preview claims and any other hardcoded
 dollar copy should be checked whenever a config value gets wired (pattern from finding 3).
 
+### Iteration 2 — P0-2 materials wiring — Critic: ACCEPT (1 MEDIUM logged, 2 LOWs fixed)
+**Builder:** `resolveMaterials()` + `DEFAULT_MATERIALS` in pricing-config.ts (defaults =
+historical constants; coverage<=0 and cleared fields fall back safely). All six engine
+functions read tenant materials; legacy engine's 4th param refactored to an
+`EngineConfig` options object before the positional shape ossified. 6 new tests; 62/62.
+**Critic findings:** [MEDIUM] Materials tab gives no feedback when an invalid value
+(coverage 0, cleared product) is silently replaced by a default → logged as D-1.
+[LOW] partial-config crash landmine on settings page → FIXED (per-section merge over
+defaults). [LOW] no top-down materials test → FIXED (added).
+
 ## Discovered items
 
-(Critic findings that became new backlog rows get logged here with provenance.)
+- [ ] D-1 (from iter 2 Critic, MEDIUM): Materials/Surcharges inputs need inline
+  validation + "using default: X" feedback when the engine falls back (coverage <= 0,
+  cleared product/price). Fold into P1-1 plain-language pass or P1-6 error sweep.

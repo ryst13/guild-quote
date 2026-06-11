@@ -18,7 +18,7 @@ import type {
   TenantConfig,
 } from '$lib/types/index.js';
 import priceBenchmarks from '$lib/data/price-benchmarks.json';
-import { resolveSurcharges } from './pricing-config.js';
+import { resolveSurcharges, resolveMaterials } from './pricing-config.js';
 import scopeCheckerRules from '$lib/data/scope-checker-rules.json';
 
 // ─── BLS METRO WAGE DEFAULTS (SOC 47-2141, May 2024) ────────────
@@ -291,17 +291,9 @@ const CEILING_RATIO: Record<string, number> = {
 const CLOSET_SQFT: Record<string, number> = { small: 48, medium: 64, large: 96 };
 
 // ─── PAINT PRODUCTS ─────────────────────────────────────────────
-const INTERIOR_PAINT = {
-  walls:   { product: 'Regal Select Eggshell',   coverage: 350, price_per_gallon: 63.59 },
-  trim:    { product: 'Regal Select Semi Gloss',  coverage: 350, price_per_gallon: 63.59 },
-  primer:  { product: 'Fresh Start',              coverage: 400, price_per_gallon: 44.99 },
-  ceiling: { product: 'Ben Moore Muresco',         coverage: 400, price_per_gallon: 40.78 },
-};
+// Paint products are tenant-configurable - defaults live in pricing-config.ts (DEFAULT_MATERIALS).
 
-const EXTERIOR_PAINT = {
-  trim:   { product: 'Moorgard Soft Gloss', coverage: 300, price_per_gallon: 69.59 },
-  siding: { product: 'Moorgard Low Lustre', coverage: 300, price_per_gallon: 69.59 },
-};
+// Exterior paint defaults live in pricing-config.ts (DEFAULT_MATERIALS).
 
 // ─── SQFT PER UNIT (for material calculations) ──────────────────
 const INTERIOR_ITEM_SQFT: Record<string, number> = {
@@ -565,6 +557,7 @@ export function calculateInteriorBottomUp(
   // In bottom-up, surcharges are flat costs (not % of labor) since
   // the margin is already embedded in each line item.
   const scfg = resolveSurcharges(tenant);
+  const mcfg = resolveMaterials(tenant);
   const surcharges: { label: string; sub_amount: number; sales_amount: number }[] = [];
 
   if (formData.project.color_samples && scfg.color_samples_enabled && scfg.color_samples_amount > 0) {
@@ -585,21 +578,21 @@ export function calculateInteriorBottomUp(
   // ─── MATERIALS ──────────────────────────────────────────────
   const materials: { label: string; gallons: number; cost: number }[] = [];
 
-  const wallGallons = Math.ceil(totalWallSqft / INTERIOR_PAINT.walls.coverage);
+  const wallGallons = Math.ceil(totalWallSqft / mcfg.interior.walls.coverage);
   if (wallGallons > 0) {
-    materials.push({ label: INTERIOR_PAINT.walls.product, gallons: wallGallons, cost: wallGallons * INTERIOR_PAINT.walls.price_per_gallon });
+    materials.push({ label: mcfg.interior.walls.product, gallons: wallGallons, cost: wallGallons * mcfg.interior.walls.price_per_gallon });
   }
-  const trimGallons = Math.ceil(totalTrimSqft / INTERIOR_PAINT.trim.coverage);
+  const trimGallons = Math.ceil(totalTrimSqft / mcfg.interior.trim.coverage);
   if (trimGallons > 0) {
-    materials.push({ label: INTERIOR_PAINT.trim.product, gallons: trimGallons, cost: trimGallons * INTERIOR_PAINT.trim.price_per_gallon });
+    materials.push({ label: mcfg.interior.trim.product, gallons: trimGallons, cost: trimGallons * mcfg.interior.trim.price_per_gallon });
   }
   if (totalPrimerSqft > 0) {
-    const primerGallons = Math.ceil(totalPrimerSqft / INTERIOR_PAINT.primer.coverage);
-    materials.push({ label: INTERIOR_PAINT.primer.product, gallons: primerGallons, cost: primerGallons * INTERIOR_PAINT.primer.price_per_gallon });
+    const primerGallons = Math.ceil(totalPrimerSqft / mcfg.interior.primer.coverage);
+    materials.push({ label: mcfg.interior.primer.product, gallons: primerGallons, cost: primerGallons * mcfg.interior.primer.price_per_gallon });
   }
   if (totalCeilingSqft > 0) {
-    const ceilingGallons = Math.ceil(totalCeilingSqft / INTERIOR_PAINT.ceiling.coverage);
-    materials.push({ label: INTERIOR_PAINT.ceiling.product, gallons: ceilingGallons, cost: ceilingGallons * INTERIOR_PAINT.ceiling.price_per_gallon });
+    const ceilingGallons = Math.ceil(totalCeilingSqft / mcfg.interior.ceiling.coverage);
+    materials.push({ label: mcfg.interior.ceiling.product, gallons: ceilingGallons, cost: ceilingGallons * mcfg.interior.ceiling.price_per_gallon });
   }
 
   const materialSubtotal = materials.reduce((s, m) => s + m.cost, 0);
@@ -812,6 +805,7 @@ export function calculateExteriorBottomUp(
 
   // ─── SURCHARGES ─────────────────────────────────────────────
   const scfg = resolveSurcharges(tenant);
+  const mcfg = resolveMaterials(tenant);
   const surcharges: { label: string; sub_amount: number; sales_amount: number }[] = [];
 
   // Exterior surcharges: staging and color scheme affect hours via condition modifier,
@@ -854,13 +848,13 @@ export function calculateExteriorBottomUp(
   // ─── MATERIALS ──────────────────────────────────────────────
   const materials: { label: string; gallons: number; cost: number }[] = [];
 
-  const sidingGallons = Math.ceil(totalSidingSqft / EXTERIOR_PAINT.siding.coverage);
+  const sidingGallons = Math.ceil(totalSidingSqft / mcfg.exterior.siding.coverage);
   if (sidingGallons > 0) {
-    materials.push({ label: EXTERIOR_PAINT.siding.product, gallons: sidingGallons, cost: sidingGallons * EXTERIOR_PAINT.siding.price_per_gallon });
+    materials.push({ label: mcfg.exterior.siding.product, gallons: sidingGallons, cost: sidingGallons * mcfg.exterior.siding.price_per_gallon });
   }
-  const trimGallons = Math.ceil(totalTrimSqft / EXTERIOR_PAINT.trim.coverage);
+  const trimGallons = Math.ceil(totalTrimSqft / mcfg.exterior.trim.coverage);
   if (trimGallons > 0) {
-    materials.push({ label: EXTERIOR_PAINT.trim.product, gallons: trimGallons, cost: trimGallons * EXTERIOR_PAINT.trim.price_per_gallon });
+    materials.push({ label: mcfg.exterior.trim.product, gallons: trimGallons, cost: trimGallons * mcfg.exterior.trim.price_per_gallon });
   }
   if (totalCarpentryMaterials > 0) {
     materials.push({ label: 'Carpentry Materials', gallons: 0, cost: totalCarpentryMaterials });
@@ -1093,6 +1087,7 @@ export function calculateEpoxyBottomUp(
   }
 
   const scfg = resolveSurcharges(tenant);
+  const mcfg = resolveMaterials(tenant);
   if (scfg.transportation_enabled && scfg.transportation_amount > 0) {
     surcharges.push({ label: 'Transportation', sub_amount: scfg.transportation_amount, sales_amount: scfg.transportation_amount });
   }
@@ -1102,11 +1097,11 @@ export function calculateEpoxyBottomUp(
 
   // Materials
   const materials: { label: string; gallons: number; cost: number }[] = [];
-  const epoxyGallons = Math.ceil(totalSqft / 200);
-  materials.push({ label: 'Epoxy / Coating', gallons: epoxyGallons, cost: epoxyGallons * 85 });
+  const epoxyGallons = Math.ceil(totalSqft / mcfg.epoxy.coating.coverage);
+  materials.push({ label: mcfg.epoxy.coating.product, gallons: epoxyGallons, cost: epoxyGallons * mcfg.epoxy.coating.price_per_gallon });
   if (totalSqft > 0) {
-    const primerGallons = Math.ceil(totalSqft / 300);
-    materials.push({ label: 'Concrete Primer', gallons: primerGallons, cost: primerGallons * 55 });
+    const primerGallons = Math.ceil(totalSqft / mcfg.epoxy.primer.coverage);
+    materials.push({ label: mcfg.epoxy.primer.product, gallons: primerGallons, cost: primerGallons * mcfg.epoxy.primer.price_per_gallon });
   }
 
   const materialSubtotal = materials.reduce((s, m) => s + m.cost, 0);

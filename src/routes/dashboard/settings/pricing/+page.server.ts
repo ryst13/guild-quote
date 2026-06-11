@@ -9,8 +9,9 @@ export const load: PageServerLoad = async ({ locals }) => {
   const tenant = getTenantById(locals.user.tenant_id);
   if (!tenant) throw redirect(303, '/auth/register');
 
-  // tenant.pricing_config is already parsed by buildTenantConfig
-  const pricingConfig = tenant.pricing_config ?? null;
+  // tenant.pricing_config is already parsed by buildTenantConfig. Merge over
+  // defaults per section so a partial blob (future writers) can't break tabs.
+  const saved = tenant.pricing_config ?? null;
 
   const defaults = {
     surcharges: {
@@ -47,8 +48,18 @@ export const load: PageServerLoad = async ({ locals }) => {
     },
   };
 
+  const config = saved
+    ? {
+        ...defaults,
+        ...saved,
+        surcharges: { ...defaults.surcharges, ...saved.surcharges },
+        materials: saved.materials ?? defaults.materials,
+        payment_terms: { ...defaults.payment_terms, ...saved.payment_terms },
+      }
+    : defaults;
+
   return {
-    config: pricingConfig || defaults,
+    config,
     defaults,
     enabledTrades: tenant.enabled_trades,
     outputFormat: tenant.output_format || 'google_docs',

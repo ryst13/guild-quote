@@ -51,14 +51,42 @@ describe('top-down engine — monotonicity', () => {
 	it('custom surcharge config flows through (and omitting it preserves defaults)', () => {
 		const def = calculateInteriorQuote(interiorScope, catalog, 1.1);
 		const custom = calculateInteriorQuote(interiorScope, catalog, 1.1, {
+			surcharges: {
 			trash_enabled: false, trash_interior: 50, trash_exterior: 225,
 			transportation_enabled: true, transportation_amount: 50,
 			cc_fee_enabled: true, cc_pct: 0.032,
 			color_samples_enabled: true, color_samples_amount: 98.95,
+			},
 		});
 		expect(custom.surcharges.find((s) => s.label === 'Trash Removal')).toBeUndefined();
 		expect(custom.grand_total).toBeLessThan(def.grand_total);
 		expect(def.surcharges.find((s) => s.label === 'Trash Removal')!.sales_amount).toBe(50);
+	});
+});
+
+describe('top-down engine — materials config', () => {
+	it('custom materials flow through (product label + higher price)', () => {
+		const def = calculateInteriorQuote(interiorScope, catalog, 1.1);
+		const custom = calculateInteriorQuote(interiorScope, catalog, 1.1, {
+			materials: {
+				interior: {
+					walls: { product: 'SuperPaint Eg-Shel', coverage: 350, price_per_gallon: 99 },
+					trim: { product: 'Regal Select Semi Gloss', coverage: 350, price_per_gallon: 63.59 },
+					primer: { product: 'Fresh Start', coverage: 400, price_per_gallon: 44.99 },
+					ceiling: { product: 'Ben Moore Muresco', coverage: 400, price_per_gallon: 40.78 },
+				},
+				exterior: {
+					siding: { product: 'Moorgard Low Lustre', coverage: 300, price_per_gallon: 69.59 },
+					trim: { product: 'Moorgard Soft Gloss', coverage: 300, price_per_gallon: 69.59 },
+				},
+				epoxy: {
+					coating: { product: 'Epoxy / Coating', coverage: 200, price_per_gallon: 85 },
+					primer: { product: 'Concrete Primer', coverage: 300, price_per_gallon: 55 },
+				},
+			},
+		});
+		expect(custom.materials.some((m) => m.label === 'SuperPaint Eg-Shel')).toBe(true);
+		expect(custom.materials_total).toBeGreaterThan(def.materials_total);
 	});
 });
 
