@@ -137,7 +137,7 @@
     {#if activeTab === 'labor'}
       <!-- Pricing Mode -->
       <div class="rounded-xl bg-white border border-gray-200 p-6 mb-6">
-        <h2 class="font-semibold text-gray-900 mb-1">Pricing Engine</h2>
+        <h2 class="font-semibold text-gray-900 mb-1">How Your Prices Are Set</h2>
         <p class="text-sm text-gray-500 mb-4">Choose how GuildQuote calculates your estimates.</p>
         <div class="flex gap-3">
           <button
@@ -145,16 +145,17 @@
             class="flex-1 rounded-xl border p-4 text-left {pricingMode === 'top_down' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}"
           >
             <div class="font-semibold text-gray-900 text-sm">Rate-Based</div>
-            <div class="text-xs text-gray-500 mt-1">Price from $/sqft and $/item rates. Calibrate with Quick Calibrate or edit rates directly.</div>
+            <div class="text-xs text-gray-500 mt-1">Prices come from your per-sqft and per-item rates. Set them fast with Quick Calibrate.</div>
           </button>
           <button
             onclick={() => pricingMode = 'bottom_up'}
             class="flex-1 rounded-xl border p-4 text-left {pricingMode === 'bottom_up' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}"
           >
             <div class="font-semibold text-gray-900 text-sm">Cost-Based</div>
-            <div class="text-xs text-gray-500 mt-1">Price from crew wages and your target margin. Automatically adjusts to your market.</div>
+            <div class="text-xs text-gray-500 mt-1">Prices come from what you pay your crew plus the margin you want to keep.</div>
           </button>
         </div>
+        <p class="text-xs text-gray-500 mt-3">New to rates? <a href="/docs/pricing#quick-calibrate" class="text-blue-600 hover:underline">Read how Quick Calibrate works</a>.</p>
       </div>
 
       <!-- Crew & Margin Settings -->
@@ -173,7 +174,7 @@
         <!-- Metro Area -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Metro Area</label>
-          <p class="text-xs text-gray-500 mb-2">Sets default crew wage for your area. You can override below.</p>
+          <p class="text-xs text-gray-500 mb-2">Fills in a typical crew wage for your area. You can change it below.</p>
           <select
             bind:value={metroArea}
             class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none"
@@ -218,7 +219,7 @@
           <!-- Gross Margin -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Target Gross Margin</label>
-            <p class="text-xs text-gray-500 mb-2">% of every dollar you keep.</p>
+            <p class="text-xs text-gray-500 mb-2">Of every $100 the client pays for labor, how much you keep.</p>
             <div class="relative">
               <input
                 type="number"
@@ -244,7 +245,7 @@
             <p class="font-medium mb-2">Preview at these settings:</p>
             <div class="grid grid-cols-3 gap-4 text-xs">
               <div>
-                <span class="text-gray-400">Effective billing rate</span>
+                <span class="text-gray-400">Your billing rate</span>
                 <div class="font-semibold text-gray-900">${billingRate.toFixed(2)}/hr per painter</div>
               </div>
               <div>
@@ -265,7 +266,7 @@
         <div class="flex items-center justify-between">
           <div>
             <h2 class="font-semibold text-gray-900">Setup &amp; Mobilization</h2>
-            <p class="text-sm text-gray-500 mt-1">Add a fixed "Setup &amp; Mobilization" line to every estimate — loading, travel, surface protection, and cleanup happen once per job regardless of size. Larger jobs spread this cost across more rooms, so your big quotes get naturally sharper per room while small jobs stop absorbing the overhead for free.</p>
+            <p class="text-sm text-gray-500 mt-1">Adds one "Setup &amp; Mobilization" line to every estimate. Loading, travel, covering surfaces, and cleanup happen once per job no matter the size. Big jobs spread this cost over more rooms; small jobs stop eating it.</p>
           </div>
           <button
             onclick={() => economyOfScaleEnabled = !economyOfScaleEnabled}
@@ -280,7 +281,7 @@
         {#if economyOfScaleEnabled}
           {#if pricingMode !== 'bottom_up'}
             <div class="mt-4 rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
-              Setup &amp; Mobilization only applies with the Cost-Based pricing engine. Switch the engine above for this setting to take effect.
+              Setup &amp; Mobilization only works with Cost-Based pricing. Choose Cost-Based above to turn this on.
             </div>
           {/if}
           <div class="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-4">
@@ -329,7 +330,7 @@
         <div class="flex items-center justify-between">
           <div>
             <h2 class="font-semibold text-gray-900">Subcontractor Mode</h2>
-            <p class="text-sm text-gray-500 mt-1">Do you take on subcontracted projects? When enabled, you can generate sub estimates priced at your labor cost plus a small margin — for bidding to general contractors.</p>
+            <p class="text-sm text-gray-500 mt-1">Do you take on subcontracted projects? Turn this on to create sub estimates priced at your labor cost plus a small margin — for bidding to general contractors.</p>
           </div>
           <button
             onclick={() => subModeEnabled = !subModeEnabled}
@@ -385,7 +386,7 @@
             class="flex-1 rounded-xl border p-4 text-left {outputFormat === 'pdf' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}"
           >
             <div class="font-semibold text-gray-900 text-sm">PDF Only</div>
-            <div class="text-xs text-gray-500 mt-1">No Google integration needed. PDF generated and attached to emails.</div>
+            <div class="text-xs text-gray-500 mt-1">Works without Google. The estimate becomes a PDF and is attached to your emails.</div>
           </button>
         </div>
       </div>
@@ -395,7 +396,7 @@
         <div class="flex items-center justify-between">
           <div>
             <h2 class="font-semibold text-gray-900">Surface Preparation Options</h2>
-            <p class="text-sm text-gray-500 mt-1">Show Level of Surface Preparation (LOSP) tier options on estimates. When enabled, estimates include prep tier options with pricing.</p>
+            <p class="text-sm text-gray-500 mt-1">Show Level of Surface Preparation (LOSP) options on estimates. When on, each estimate lists prep levels with prices.</p>
           </div>
           <button
             onclick={() => showLosp = !showLosp}
@@ -411,7 +412,7 @@
 
       <div class="rounded-xl bg-white border border-gray-200 p-6 space-y-6">
         <h2 class="font-semibold text-gray-900">Surcharges</h2>
-        <p class="text-sm text-gray-500">Toggle surcharges on or off and set your amounts. These are applied automatically to every estimate.</p>
+        <p class="text-sm text-gray-500">Turn surcharges on or off and set your amounts. They're added to every estimate automatically. Leave an amount empty and estimates use the standard amount.</p>
 
         <!-- Trash Removal -->
         <div class="border-b border-gray-100 pb-4">
@@ -486,7 +487,7 @@
         <!-- Labor Multiplier -->
         <div class="border-t border-gray-200 pt-4">
           <label class="block text-sm font-medium text-gray-700 mb-1">Labor Price Multiplier</label>
-          <p class="text-xs text-gray-500 mb-2">Applied to base labor rates. Default 1.1 (10% markup).</p>
+          <p class="text-xs text-gray-500 mb-2">Raises or lowers all your labor prices at once. Higher number = higher prices. Standard is 1.1.</p>
           <input type="number" step="0.05" bind:value={config.labor_multiplier} class="w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none" />
         </div>
       </div>
@@ -512,6 +513,9 @@
                     <label class="block text-xs text-gray-500 mb-1">Price/Gallon ($)</label>
                     <input type="number" step="0.01" bind:value={mat.price_per_gallon} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none" />
                   </div>
+                  {#if !mat.product || !mat.coverage || mat.coverage <= 0 || mat.price_per_gallon == null || mat.price_per_gallon < 0}
+                    <p class="col-span-3 text-xs text-amber-600">Empty fields are ignored — estimates use the standard value. (Coverage must be more than 0.)</p>
+                  {/if}
                 </div>
               {/each}
             </div>
@@ -537,6 +541,9 @@
                     <label class="block text-xs text-gray-500 mb-1">Price/Gallon ($)</label>
                     <input type="number" step="0.01" bind:value={mat.price_per_gallon} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none" />
                   </div>
+                  {#if !mat.product || !mat.coverage || mat.coverage <= 0 || mat.price_per_gallon == null || mat.price_per_gallon < 0}
+                    <p class="col-span-3 text-xs text-amber-600">Empty fields are ignored — estimates use the standard value. (Coverage must be more than 0.)</p>
+                  {/if}
                 </div>
               {/each}
             </div>
@@ -562,6 +569,9 @@
                     <label class="block text-xs text-gray-500 mb-1">Price/Gallon ($)</label>
                     <input type="number" step="0.01" bind:value={mat.price_per_gallon} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none" />
                   </div>
+                  {#if !mat.product || !mat.coverage || mat.coverage <= 0 || mat.price_per_gallon == null || mat.price_per_gallon < 0}
+                    <p class="col-span-3 text-xs text-amber-600">Empty fields are ignored — estimates use the standard value. (Coverage must be more than 0.)</p>
+                  {/if}
                 </div>
               {/each}
             </div>

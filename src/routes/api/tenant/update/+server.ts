@@ -44,6 +44,18 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     }
   }
 
+  // prompts_shown is merge-only: a client dismissing one banner must never
+  // clobber flags it doesn't know about (e.g. pricing_reviewed).
+  if ('prompts_shown' in body) {
+    const current = db.select({ prompts_shown: tenants.prompts_shown }).from(tenants)
+      .where(eq(tenants.id, locals.user.tenant_id)).get();
+    let existing: Record<string, unknown> = {};
+    let incoming: Record<string, unknown> = {};
+    try { existing = current?.prompts_shown ? JSON.parse(current.prompts_shown) : {}; } catch {}
+    try { incoming = typeof body.prompts_shown === 'string' ? JSON.parse(body.prompts_shown) : body.prompts_shown ?? {}; } catch {}
+    updates.prompts_shown = JSON.stringify({ ...existing, ...incoming });
+  }
+
   db.update(tenants).set(updates).where(eq(tenants.id, locals.user.tenant_id)).run();
 
   // Invalidate cache

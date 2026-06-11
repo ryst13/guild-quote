@@ -17,7 +17,7 @@
 
   async function sendEstimate() {
     if (!recipientEmail) {
-      sendError = 'Recipient email is required.';
+      sendError = "Enter the client's email address first.";
       return;
     }
     sending = true;
@@ -38,8 +38,8 @@
     if (res.ok) {
       sent = true;
     } else {
-      const result = await res.json().catch(() => ({ error: 'Send failed' }));
-      sendError = result.error || 'Failed to send email.';
+      const result = await res.json().catch(() => ({ error: "The email didn't send. Wait a minute and try again." }));
+      sendError = result.error || "The email didn't send. Check the address and try again.";
     }
     sending = false;
   }
@@ -99,7 +99,7 @@
           <label for="send-to" class="block text-sm font-medium text-gray-700 mb-1">Send to</label>
           <input id="send-to" type="email" bind:value={recipientEmail} placeholder="client@email.com" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
           {#if !sub.email}
-            <p class="text-xs text-yellow-600 mt-1">No email was provided during scope entry. Add the client's email above.</p>
+            <p class="text-xs text-yellow-600 mt-1">No email saved for this client yet. Type it above.</p>
           {/if}
         </div>
 
@@ -138,9 +138,9 @@
         <div class="border-t border-gray-100 pt-4">
           <div class="text-xs text-gray-400">
             {#if data.tenant.has_google}
-              Sending via your connected Gmail account
+              This email goes out from your Gmail account
             {:else}
-              Sending via GuildQuote email
+              This email goes out from GuildQuote
             {/if}
           </div>
         </div>

@@ -25,9 +25,9 @@
         <span class="text-gray-300">&rarr;</span>
         <span class="px-3 py-1.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">Viewed</span>
         <span class="text-gray-300">&rarr;</span>
-        <span class="px-3 py-1.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Accepted</span>
+        <span class="px-3 py-1.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Won</span>
         <span class="text-sm text-gray-400 ml-1">or</span>
-        <span class="px-3 py-1.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Declined</span>
+        <span class="px-3 py-1.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Lost</span>
       </div>
 
       <div class="mt-5 space-y-3">
@@ -44,11 +44,11 @@
           <p class="text-sm text-gray-500">The client has opened the estimate. This is tracked when they view the Google Doc link or open the email.</p>
         </div>
         <div class="rounded-lg border border-gray-200 p-4">
-          <div class="font-semibold text-gray-900 text-sm mb-1">Accepted</div>
+          <div class="font-semibold text-gray-900 text-sm mb-1">Won</div>
           <p class="text-sm text-gray-500">The client said yes. Record the <strong>close price</strong> (which may differ from the estimate if you negotiated). This data feeds into your benchmarks.</p>
         </div>
         <div class="rounded-lg border border-gray-200 p-4">
-          <div class="font-semibold text-gray-900 text-sm mb-1">Declined</div>
+          <div class="font-semibold text-gray-900 text-sm mb-1">Lost</div>
           <p class="text-sm text-gray-500">The client passed. Record a <strong>decline reason</strong> -- too expensive, went with someone else, project canceled, etc. Over time, decline reasons reveal patterns you can act on.</p>
         </div>
       </div>

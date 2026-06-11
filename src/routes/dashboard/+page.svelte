@@ -15,6 +15,10 @@
   );
 
   // Action-needed counts
+  const STATUS_DISPLAY: Record<string, string> = {
+    draft: 'Draft', sent: 'Sent', viewed: 'Viewed', accepted: 'Won', declined: 'Lost', expired: 'Expired',
+  };
+
   let draftsCount = $derived(data.submissions.filter(s => s.estimate_status === 'draft').length);
   let sentCount = $derived(data.submissions.filter(s => s.estimate_status === 'sent').length);
 
@@ -95,7 +99,7 @@
           <button onclick={() => { statusFilter = 'sent'; tradeFilter = 'all'; }}
             class="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm hover:bg-blue-100">
             <span class="font-semibold text-blue-800">{sentCount}</span>
-            <span class="text-blue-700">sent, awaiting response</span>
+            <span class="text-blue-700">sent, waiting to hear back</span>
           </button>
         {/if}
       </div>
@@ -112,7 +116,7 @@
         <div class="text-2xl font-bold text-gray-900 mt-1">${data.analytics.totalValue.toLocaleString()}</div>
       </div>
       <div class="rounded-xl bg-white border border-gray-200 p-5">
-        <div class="text-sm text-gray-500">Acceptance rate</div>
+        <div class="text-sm text-gray-500">Win rate</div>
         <div class="text-2xl font-bold text-gray-900 mt-1">{data.analytics.conversionRate}%</div>
       </div>
     </div>
@@ -121,7 +125,7 @@
     {#if !data.benchmarks}
       <div class="rounded-xl border border-dashed border-gray-200 bg-white p-4 mb-6 flex items-center justify-between opacity-80">
         <div>
-          <span class="text-sm text-gray-500">With <span class="font-semibold text-blue-600">GQ Pro</span>: job pipeline, payment tracking, scheduling, follow-up automation, and analytics.</span>
+          <span class="text-sm text-gray-500">With <span class="font-semibold text-blue-600">GQ Pro</span>: track jobs and payments, schedule crews, send automatic follow-ups, and see your numbers.</span>
         </div>
         <a href="/upgrade" class="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 whitespace-nowrap ml-4 hover:bg-blue-200">Learn More</a>
       </div>
@@ -131,7 +135,7 @@
     {#if data.benchmarks}
       <div class="rounded-xl bg-white border border-gray-200 p-5 mb-6">
         <div class="flex items-center justify-between mb-3">
-          <h3 class="text-sm font-semibold text-gray-900">Your Pricing Benchmarks</h3>
+          <h3 class="text-sm font-semibold text-gray-900">Your Averages</h3>
           <span class="text-xs text-gray-400">{data.benchmarks.totalEstimates} estimates</span>
         </div>
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -180,7 +184,7 @@
             {#each ['draft', 'sent', 'accepted', 'declined'] as status}
               <button onclick={() => statusFilter = status}
                 class="px-3 py-1 text-xs font-medium rounded-full {statusFilter === status ? filterActiveColors[status] : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
-                {status.charAt(0).toUpperCase() + status.slice(1)}
+                {STATUS_DISPLAY[status] ?? status}
               </button>
             {/each}
           </div>
@@ -195,7 +199,7 @@
         <div class="p-16 text-center">
           <div class="text-4xl mb-4">&#128196;</div>
           <h3 class="text-lg font-semibold text-gray-900 mb-2">Create your first estimate</h3>
-          <p class="text-sm text-gray-500 mb-6 max-w-sm mx-auto">Scope a job, generate a professional estimate, and send it to your client in minutes.</p>
+          <p class="text-sm text-gray-500 mb-6 max-w-sm mx-auto">Scope a job, create a professional estimate, and send it to your client in minutes.</p>
           <a href="/dashboard/new" class="inline-block rounded-lg bg-blue-600 px-8 py-3 text-sm font-semibold text-white hover:bg-blue-700">
             + New Estimate
           </a>
@@ -235,7 +239,7 @@
                   <td class="px-4 py-3 text-right font-medium text-gray-900">{sub.sales_price ? `$${Math.round(sub.sales_price).toLocaleString()}` : '—'}</td>
                   <td class="px-4 py-3">
                     <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium {statusColors[sub.estimate_status] || 'bg-gray-100 text-gray-700'}">
-                      {sub.estimate_status}
+                      {STATUS_DISPLAY[sub.estimate_status] ?? sub.estimate_status}
                     </span>
                   </td>
                   <td class="px-4 py-3 text-gray-500 text-xs">{timeAgo(sub.created_at)}</td>

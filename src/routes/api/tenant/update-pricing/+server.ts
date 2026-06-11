@@ -21,6 +21,19 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     updates.labor_price_multiplier = body.labor_multiplier;
   }
 
+  // Saving pricing config counts as reviewing your prices — clears the
+  // "have you set your prices yet?" banner on New Estimate.
+  const current = db.select({ prompts_shown: tenants.prompts_shown }).from(tenants)
+    .where(eq(tenants.id, locals.user.tenant_id)).get();
+  let prompts: Record<string, unknown> = {};
+  try {
+    prompts = current?.prompts_shown ? JSON.parse(current.prompts_shown) : {};
+  } catch {
+    prompts = {};
+  }
+  prompts.pricing_reviewed = true;
+  updates.prompts_shown = JSON.stringify(prompts);
+
   db.update(tenants).set(updates).where(eq(tenants.id, locals.user.tenant_id)).run();
 
   const tenant = db.select().from(tenants).where(eq(tenants.id, locals.user.tenant_id)).get();

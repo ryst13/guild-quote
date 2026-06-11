@@ -39,11 +39,13 @@
   most price-sensitive input (engine S/M/L are relative per room type) → replaced with
   a relative-semantics helper line; starter-prices banner stated a falsehood → made
   conditional; demo chrome aligned.
-- [ ] P1-1b Plain-language pass, slice 2: dashboard list, /dashboard/[id] estimate page
-  (Generate Doc/PDF buttons, room Copy vs estimate Duplicate consistency), settings
-  pages incl. D-1 inline "using default" feedback. NOTE from iter-8 Critic: the
-  pricing-reviewed banner flag is never set by actually saving prices — wire
-  `prompts_shown.pricing_reviewed` on pricing save during this slice.
+- [x] P1-1b Plain-language slice 2: dashboard, estimate page, send, pricing + billing
+  settings (~50 edits); Won/Lost adopted as the single status vocabulary (display-only);
+  estimate Duplicate→Copy; D-1 inline fallback notes; pricing_reviewed flag set by both
+  pricing save AND calibrate; prompts_shown made merge-only and persistent. **DONE
+  iter 9.** Critic REJECT round fixed: my D-1 note falsely claimed $0 price is ignored
+  (it's valid paint pricing); <a>-in-<button> invalid HTML; docs still taught
+  Accepted/Declined; calibrate path missed the banner flag.
 - [ ] P1-2 Driveway test — scope entry on a phone: numeric keypads (`inputmode`), thumb-size targets, steppers over free inputs where sane, minimal required fields, no dead-end validation.
 - [ ] P1-3 Settings consolidation: one "My Prices" mental model instead of Pricing (4 tabs) + Catalog as disconnected pages. Depends on P0-1..4 verdicts.
 - [ ] P1-4 Dashboard: Jobber-style status-at-a-glance + one-tap quick actions (send, mark accepted/declined, duplicate). Surface "needs action" first.
@@ -185,6 +187,19 @@ in P1-1b. [MEDIUM] /demo shares the forms but kept old chrome strings → aligne
 epoxy review label, dims invisible in narrow selects anyway (moot after revert).
 **Meta-lesson recorded:** copy that encodes numbers is pricing surface, not prose — the
 Critic reviews it against the engine, not against style.
+
+### Iteration 9 — P1-1b plain-language slice 2 — Critic: REJECT → fixed → green
+**Builder:** sub-builder inventoried ~50 edits with RISKY flags; I verified each risky
+claim against code before applying — including discovering the price-adjustment helper
+contradiction (the page claimed adjustments appear as a separate markup line; the
+endpoint actually rescales every line proportionally — false copy replaced both places).
+Mechanical: prompts_shown.pricing_reviewed now set by update-pricing AND calibrate (both
+modes); prompts_shown writes are merge-only so banner dismissals can't clobber flags.
+**Critic REJECT** caught me re-committing the exact sin this slice fixes: my materials
+fallback note claimed "zero is ignored" while $0/gallon is valid → reworded truthfully.
+Plus invalid <a>-in-<button>, docs vocabulary drift, calibrate flag gap — all fixed.
+**Standing rule now in the ledger: every fallback/helper sentence must be checked
+word-by-word against the resolver condition it describes.**
 
 ## Discovered items
 

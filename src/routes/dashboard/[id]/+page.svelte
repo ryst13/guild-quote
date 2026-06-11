@@ -116,8 +116,8 @@
     draft: 'Draft',
     sent: 'Sent',
     viewed: 'Viewed',
-    accepted: 'Accepted',
-    declined: 'Declined',
+    accepted: 'Won',
+    declined: 'Lost',
     expired: 'Expired',
   };
 
@@ -182,16 +182,16 @@
         const pdfStillMissing = !sub.estimate_pdf_url;
         const docStillMissing = data.tenant.output_format && !sub.google_doc_url;
         if (pdfStillMissing || docStillMissing) {
-          docRegenError = 'Some documents could not be generated. Check your Google connection or try again.';
+          docRegenError = "We couldn't make some files. Check your Google connection in Profile, then try again.";
         } else {
           saved = true;
           setTimeout(() => { saved = false; }, 2000);
         }
       } else {
-        docRegenError = 'Regeneration failed. Please try again.';
+        docRegenError = "That didn't work. Wait a minute and try again.";
       }
     } catch {
-      docRegenError = 'Network error. Please check your connection and try again.';
+      docRegenError = "Couldn't connect. Check your internet and try again.";
     }
     regeneratingDoc = false;
   }
@@ -390,11 +390,11 @@
                 </label>
                 {#if editingPricing}
                   <button onclick={savePricingEdits} disabled={savingPricing} class="px-3 py-1 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">
-                    {savingPricing ? 'Saving...' : 'Save & Regenerate'}
+                    {savingPricing ? 'Saving...' : 'Save & Update Estimate'}
                   </button>
                   <button onclick={() => { editingPricing = false; window.location.reload(); }} class="px-3 py-1 text-xs rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50">Cancel</button>
                 {:else}
-                  <button onclick={() => { editingPricing = true; showLineItems = true; }} class="px-3 py-1 text-xs font-medium rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50">Edit Pricing</button>
+                  <button onclick={() => { editingPricing = true; showLineItems = true; }} class="px-3 py-1 text-xs font-medium rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50">Edit Prices</button>
                 {/if}
               </div>
             </div>
@@ -498,7 +498,7 @@
                     </div>
                   {/each}
                   <div class="flex justify-between pt-2 text-base font-bold text-blue-700 border-t border-blue-200 mt-2">
-                    <span>Sub Total</span>
+                    <span>Sub Estimate Total</span>
                     <span>${fmt(subGrandTotal)}</span>
                   </div>
                   <p class="text-xs text-gray-400 mt-2">This is what you'd bid to a general contractor for this scope. Materials at cost, labor at your sub rate.</p>
@@ -528,7 +528,7 @@
           <!-- Notes -->
           <div class="rounded-xl bg-white border border-gray-200 p-6">
             <h2 class="font-semibold text-gray-900 mb-3">Notes</h2>
-            <textarea bind:value={notes} rows={4} placeholder="Internal notes about this estimate..." class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 mb-2"></textarea>
+            <textarea bind:value={notes} rows={4} placeholder="Private notes — your client never sees these." class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 mb-2"></textarea>
             <button onclick={saveNotes} disabled={saving} class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
               {saving ? 'Saving...' : 'Save Notes'}
             </button>
@@ -555,7 +555,7 @@
                 </div>
               </div>
             {:else if data.isPro}
-              <p class="text-xs text-gray-500">We're building your benchmark. Insights appear after 10 estimates ({data.estimateCount} so far).</p>
+              <p class="text-xs text-gray-500">We're learning your numbers. Insights show up after 10 estimates ({data.estimateCount} so far).</p>
             {:else}
               <div class="space-y-2 text-sm">
                 <div class="flex justify-between">
@@ -623,11 +623,11 @@
 
         <!-- Price Adjustment -->
         <div class="rounded-xl bg-white border border-gray-200 p-5">
-          <h3 class="text-sm font-semibold text-gray-900 mb-1">Price Adjustment</h3>
-          <p class="text-xs text-gray-400 mb-3">Change the total and regenerate — all line items adjust proportionally.</p>
+          <h3 class="text-sm font-semibold text-gray-900 mb-1">Change the Price</h3>
+          <p class="text-xs text-gray-400 mb-3">Type a new total. Every line item scales up or down to match it.</p>
           <div class="space-y-3">
             <div>
-              <label for="detail-price" class="block text-xs text-gray-500 mb-1">Set Total Price ($)</label>
+              <label for="detail-price" class="block text-xs text-gray-500 mb-1">New total price ($)</label>
               <input id="detail-price" type="number" bind:value={adjustedPrice} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
             </div>
             {#if priceChanged}
@@ -636,7 +636,7 @@
               {@const pct = Math.round((diff / originalPrice) * 100)}
               <div class="rounded-lg bg-gray-50 p-3 text-xs space-y-1">
                 <div class="flex justify-between text-gray-500">
-                  <span>Calculated total</span>
+                  <span>Current total</span>
                   <span>${fmt(originalPrice)}</span>
                 </div>
                 <div class="flex justify-between font-medium {diff > 0 ? 'text-green-700' : 'text-red-700'}">
@@ -648,13 +648,13 @@
                   <span>${fmt(adj)}</span>
                 </div>
               </div>
-              <p class="text-xs text-gray-400">The adjustment appears as a {diff > 0 ? 'markup' : 'discount'} line on the estimate. Line item prices stay the same.</p>
+              <p class="text-xs text-gray-400">All line items scale {diff > 0 ? 'up' : 'down'} so they add up to the new total.</p>
               <button
                 onclick={regenerateEstimate}
                 disabled={regenerating}
                 class="w-full rounded-lg bg-yellow-500 px-4 py-2 text-sm font-semibold text-white hover:bg-yellow-600 disabled:opacity-50"
               >
-                {regenerating ? 'Regenerating...' : 'Regenerate Estimate'}
+                {regenerating ? 'Updating...' : 'Apply New Price'}
               </button>
             {/if}
           </div>
@@ -672,7 +672,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
                 <div class="flex-1 min-w-0">
-                  <p class="text-xs font-medium text-yellow-800">Document generation failed or hasn't completed.</p>
+                  <p class="text-xs font-medium text-yellow-800">Some estimate files are missing.</p>
                   <p class="text-xs text-yellow-700 mt-0.5">
                     Missing: {[!sub.estimate_pdf_url ? 'PDF' : '', (data.tenant.output_format && !sub.google_doc_url) ? (data.tenant.output_format === 'google_sheets' ? 'Google Sheet' : 'Google Doc') : ''].filter(Boolean).join(', ')}
                   </p>
@@ -691,9 +691,9 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Regenerating...
+                  Working...
                 {:else}
-                  Regenerate Documents
+                  Try Again
                 {/if}
               </button>
             </div>
@@ -706,7 +706,7 @@
               </a>
             {:else}
               <button onclick={regenerateDocuments} disabled={regeneratingDoc} class="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-yellow-300 bg-yellow-50 px-3 py-2 text-xs font-medium text-yellow-700 hover:bg-yellow-100 disabled:opacity-50">
-                {regeneratingDoc ? 'Generating...' : 'Generate Doc'}
+                {regeneratingDoc ? 'Creating...' : 'Create Doc'}
               </button>
             {/if}
             {#if sub.estimate_pdf_url}
@@ -715,11 +715,11 @@
               </a>
             {:else}
               <button onclick={regenerateDocuments} disabled={regeneratingDoc} class="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-yellow-300 bg-yellow-50 px-3 py-2 text-xs font-medium text-yellow-700 hover:bg-yellow-100 disabled:opacity-50">
-                {regeneratingDoc ? 'Generating...' : 'Generate PDF'}
+                {regeneratingDoc ? 'Creating...' : 'Create PDF'}
               </button>
             {/if}
             <button onclick={duplicateEstimate} class="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50">
-              Duplicate
+              Copy
             </button>
             <button onclick={() => showDeleteConfirm = true} class="flex items-center justify-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50">
               Delete
@@ -731,9 +731,9 @@
         <div bind:this={snapshotPanel} class="rounded-xl bg-white border p-5 transition-all duration-500 {sub.estimate_status === 'accepted' && justMarkedWon ? 'border-green-400 ring-2 ring-green-200' : 'border-gray-200'}">
           <h3 class="text-sm font-semibold text-gray-900 mb-1">Project Snapshot</h3>
           {#if sub.estimate_status === 'accepted' && !snapshotUrl}
-            <p class="text-xs text-green-700 font-medium mb-3">Next step: Generate a Project Snapshot to share with your crew via text, WhatsApp, or print.</p>
+            <p class="text-xs text-green-700 font-medium mb-3">Next step: Create a Project Snapshot to share with your crew by text, WhatsApp, or print.</p>
           {:else}
-            <p class="text-xs text-gray-500 mb-3">Crew-facing document with scope, materials, and hours. No pricing.</p>
+            <p class="text-xs text-gray-500 mb-3">For your crew — the work, materials, and hours. No prices shown.</p>
           {/if}
           <div class="flex gap-2 mb-3">
             <select bind:value={snapshotLang} class="flex-1 rounded-lg border border-gray-300 px-2 py-1.5 text-xs">
@@ -742,7 +742,7 @@
               {/each}
             </select>
             <button onclick={generateSnapshot} disabled={generatingSnapshot} class="rounded-lg {sub.estimate_status === 'accepted' && !snapshotUrl ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-900 hover:bg-gray-800'} px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">
-              {generatingSnapshot ? 'Generating...' : 'Generate'}
+              {generatingSnapshot ? 'Creating...' : 'Create'}
             </button>
           </div>
           {#if snapshotUrl || snapshotDocUrl}
@@ -810,7 +810,7 @@
               }} class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-xs outline-none focus:border-blue-500" />
             </div>
           {:else}
-            <p class="text-xs text-gray-400 mb-3">Set a start date, assign crew, and sync to your calendar.</p>
+            <p class="text-xs text-gray-400 mb-3">Set a start date, assign a crew, and add it to your calendar.</p>
             <a href="/upgrade" class="block w-full rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 text-center">Learn about GQ Pro</a>
           {/if}
         </div>
@@ -847,7 +847,7 @@
         <h3 class="font-semibold text-gray-900 mb-2">Mark as Won</h3>
         <p class="text-sm text-gray-500 mb-4">Did the client accept at the estimated price, or a different amount?</p>
         <div class="mb-4">
-          <label for="close-price" class="block text-sm font-medium text-gray-700 mb-1">Close Price ($)</label>
+          <label for="close-price" class="block text-sm font-medium text-gray-700 mb-1">Final price ($)</label>
           <input id="close-price" type="number" bind:value={closePrice} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
           <p class="text-xs text-gray-400 mt-1">Leave as-is if they accepted the estimate price.</p>
         </div>

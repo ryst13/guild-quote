@@ -6,6 +6,20 @@ import { invalidateTenantCache } from '$lib/server/tenant.js';
 import { calibrateFromAnchors, calibrateFromCosts, type CalibrationAnswers, type CostInputs } from '$lib/server/calibrate.js';
 import type { RequestHandler } from './$types.js';
 
+// Calibrating counts as reviewing your prices (clears the New Estimate banner)
+function markPricingReviewed(tenantId: string): string {
+  const current = db.select({ prompts_shown: tenants.prompts_shown }).from(tenants)
+    .where(eq(tenants.id, tenantId)).get();
+  let prompts: Record<string, unknown> = {};
+  try {
+    prompts = current?.prompts_shown ? JSON.parse(current.prompts_shown) : {};
+  } catch {
+    prompts = {};
+  }
+  prompts.pricing_reviewed = true;
+  return JSON.stringify(prompts);
+}
+
 export const POST: RequestHandler = async ({ request, locals }) => {
   if (!locals.user) throw error(401, 'Unauthorized');
   if (!locals.user.tenant_id) throw error(400, 'No tenant');
@@ -25,6 +39,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       crew_hourly_wage: costInputs.crew_hourly_wage,
       target_gross_margin: costInputs.target_gross_margin,
       pricing_mode: 'bottom_up',
+      prompts_shown: markPricingReviewed(locals.user.tenant_id),
       updated_at: new Date().toISOString(),
     }).where(eq(tenants.id, locals.user.tenant_id)).run();
 
@@ -92,6 +107,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   db.update(tenants).set({
     pricing_config: JSON.stringify(pricingConfig),
     labor_price_multiplier: rates.labor_multiplier,
+    prompts_shown: markPricingReviewed(locals.user.tenant_id),
     updated_at: new Date().toISOString(),
   }).where(eq(tenants.id, locals.user.tenant_id)).run();
 

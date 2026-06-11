@@ -11,7 +11,7 @@
   };
 
   const statusLabels: Record<string, string> = {
-    none: 'No subscription',
+    none: 'No plan yet',
     trialing: 'Free trial',
     active: 'Active',
     past_due: 'Past due',
@@ -90,7 +90,7 @@
         </div>
         {#if data.hasStripeCustomer}
           <button onclick={openPortal} disabled={loading === 'portal'} class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
-            {loading === 'portal' ? 'Loading...' : 'Manage Subscription'}
+            {loading === 'portal' ? 'Opening...' : 'Manage Plan & Payment'}
           </button>
         {/if}
       </div>
@@ -106,11 +106,11 @@
             <div class="text-lg font-bold text-gray-900">GQ</div>
             <div class="text-2xl font-bold text-gray-900 mt-1">$49<span class="text-sm font-normal text-gray-500">/mo</span></div>
             <ul class="mt-4 space-y-2 text-sm text-gray-600">
-              <li>Scope entry (3 trades)</li>
-              <li>Pricing engine + catalog</li>
+              <li>Estimates for all 3 trades</li>
+              <li>Automatic pricing + Price Book</li>
               <li>PDF output</li>
               <li>Win/loss tracking</li>
-              <li>1 user seat</li>
+              <li>1 user</li>
             </ul>
             <button
               onclick={() => checkout('gq')}
@@ -128,12 +128,12 @@
             <div class="text-2xl font-bold text-gray-900 mt-1">$129<span class="text-sm font-normal text-gray-500">/mo</span></div>
             <ul class="mt-4 space-y-2 text-sm text-gray-600">
               <li>Everything in GQ, plus:</li>
-              <li>Google Docs/Sheets output</li>
-              <li>Email delivery</li>
-              <li>White-label branding</li>
-              <li>Multilingual output</li>
-              <li>Analytics dashboard</li>
-              <li>3 user seats</li>
+              <li>Estimates as Google Docs or Sheets</li>
+              <li>Send estimates by email</li>
+              <li>Your logo and branding</li>
+              <li>Estimates in other languages</li>
+              <li>Your numbers dashboard</li>
+              <li>3 users</li>
             </ul>
             <button
               onclick={() => checkout('gq_pro')}
