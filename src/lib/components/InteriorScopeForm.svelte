@@ -24,26 +24,11 @@
   let transportation = $state(false);
   let projectNotes = $state('');
 
-  const ROOM_TYPES = [
-    'Kitchen', 'Living Room', 'Bedroom', 'Master Bedroom', 'Dining Room',
-    'Bathroom', 'Full Bathroom', 'Foyer/Hallway', 'Closet', 'Den', 'Office',
-    'Media Room', 'Eating Area', 'Pantry', 'Laundry Room', 'Utility/Mud Room',
-    'Recreation Room', 'Family Room', 'Staircase Hallway',
-  ];
+  import { INTERIOR_ROOM_TYPES, INTERIOR_ITEMS, INTERIOR_SPECIALTIES } from '$lib/scope-options.js';
 
-  const ITEMS = [
-    'Window - Standard Frame', 'Window - Small Frame',
-    'Door - Frame Standard', 'Door - Frame Double', 'Door - Flat',
-    'Door - w/ Panels', 'Door - w/ Glass',
-    'Trim - Baseboard/Crown', 'Trim - Wainscotting', 'Trim - Spindles/Balusters',
-    'Trim - Radiator', 'Trim - Handrail',
-    'Repair - Drywall Repair',
-  ];
-
-  const SPECIALTIES = [
-    'Drywall Install', 'Floor Refinishing', 'Plaster Wall/Ceiling',
-    'Wallpaper', 'Window Cleaning', 'Room Cleaning',
-  ];
+  const ROOM_TYPES = INTERIOR_ROOM_TYPES;
+  const ITEMS = INTERIOR_ITEMS;
+  const SPECIALTIES = INTERIOR_SPECIALTIES;
 
   function createRoom(): InteriorRoom {
     return {

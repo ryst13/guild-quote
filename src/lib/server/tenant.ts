@@ -41,7 +41,14 @@ function parsePricingConfig(raw: string | null): PricingConfig | null {
 }
 
 function buildTenantConfig(row: typeof tenants.$inferSelect): TenantConfig {
-  const catalog: CatalogConfig = row.catalog_json ? JSON.parse(row.catalog_json) : defaultCatalog;
+  let catalog: CatalogConfig = defaultCatalog;
+  if (row.catalog_json) {
+    try {
+      catalog = JSON.parse(row.catalog_json);
+    } catch {
+      catalog = defaultCatalog;
+    }
+  }
   let enabledTrades: TradeType[] = ['interior'];
   try {
     enabledTrades = JSON.parse(row.enabled_trades);

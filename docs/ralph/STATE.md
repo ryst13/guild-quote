@@ -11,7 +11,7 @@
 - [x] P0-1 Surcharges: wire `pricing_config.surcharges` into both engines (enable flags + amounts; defaults preserve byte-parity). Resolves SET-021..029. **DONE iter 1.**
 - [x] P0-2 Materials: wire `pricing_config.materials` (products, coverage, $/gal) into both engines. Resolves SET-031..038. **DONE iter 2.**
 - [x] P0-3 Payment terms: wire `deposit_pct` + `progress_threshold` into estimate output (templates/PDF/doc/sheets). Resolves SET-039/040, OUT-006. **DONE iter 3.**
-- [ ] P0-4 Catalog editor verdict: the 360-cell matrix is unread by engines (SET-041). Critic decides: wire a simplified ServiceTitan-style "price book" to the top-down engine, or remove the matrix in favor of calibration. Implement the verdict. Also resolve room-type list drift (catalog 15 names vs form/engine 19).
+- [x] P0-4 Catalog editor verdict — Critic adjudicated **Option B**: dead editor retired, replaced with a read-only Price Book computed live by the real engines; room-list drift resolved via shared `scope-options.ts`. **DONE iter 4.**
 - [ ] P0-5 Interior specialty checkboxes (drywall install, floor refinishing, plaster, wallpaper, window cleaning, room cleaning) are collected but never priced (ITEM-018..023). Critic decides per item: price it, convert to a flagged note on the estimate ("quoted separately"), or remove. Silent no-ops are forbidden.
 - [ ] P0-6 Secure `/api/estimate-pdf/[id]` — currently serves any PDF to anyone with the ID (MOD-033). Signed URLs or session auth; emailed links must still work for clients.
 - [ ] P0-7 Snapshot language mismatch: API supports en/es/fr, UI offers EN/ES/PT/RO/YUE (MOD-031, OUT-012). Make them agree (PT matters for the user base; UI labels stay English).
@@ -82,8 +82,33 @@ every divergence from old amounts is a case the old code failed to sum to total.
 **Pattern reinforced:** wiring config to output means the settings preview is part of the
 contract — check it every time (same class as iter-1 finding 3).
 
+### Iteration 4 — P0-4 catalog verdict + Price Book — Critic: adjudicated B, build REJECT → fixed
+**Adjudication:** Critic independently verified the evidence (catalog_json read by nothing;
+matrix rooms ≠ form rooms; modifiers have no scope inputs) and ruled Option B with 10
+constraints: real-engine computation only, frozen engines untouched, shared room/item
+module, plain-language baseline first, no fake affordances, phone-first cards, catalog_json
+kept-but-unread + neutral note for tenants who had customized it, nav/docs hygiene,
+server-side compute with per-row fallback, both engines honored and labeled.
+**Builder:** `scope-options.ts` (single source for 19 rooms / 13 items / 6 specialties,
+imported by form + price book); `price-book.ts` (~70 real engine invocations/page, ≈5ms);
+page rebuilt in place; nav renamed "Price Book"; CLAUDE.md/README updated. 4 new tests
+incl. the row-equals-real-quote-section invariant and the engine-switch lever proof.
+**Build-review Critic: REJECT** → fixed in-iteration: [HIGH] type lie (`as
+InteriorScopeData` hiding missing client.notes; RoomSize union) → properly typed, casts
+deleted; [MEDIUM] malformed catalog_json 500'd every page via unguarded JSON.parse in
+tenant.ts → guarded to defaultCatalog; [LOW] vacuous engine-switch assertion hardened;
+[LOW] dead payload field dropped. Zero type errors in touched files after fix.
+
 ## Discovered items
 
 - [ ] D-1 (from iter 2 Critic, MEDIUM): Materials/Surcharges inputs need inline
   validation + "using default: X" feedback when the engine falls back (coverage <= 0,
   cleared product/price). Fold into P1-1 plain-language pass or P1-6 error sweep.
+- [ ] D-2 (from iter 4 adjudication): editable per-item rate overrides — the true
+  ServiceTitan price book. Requires wiring rate overrides into both engines with a
+  byte-parity lock at defaults (else it re-creates Option A's validation problem
+  through the back door). Substantial; schedule after P1-3.
+- [ ] D-3 (from iter 4): Price Book covers interior only; add exterior/epoxy sections
+  (same real-engine computation pattern) when P1-3 consolidates settings.
+- [ ] D-4 (from iter 4, LOW): onboarding +page.server.ts still serializes `catalog`
+  into a page that never reads it — drop during P1-5 onboarding pass.

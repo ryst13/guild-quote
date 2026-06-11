@@ -71,7 +71,7 @@
       <div class="flex items-center gap-1">
         <a href="/dashboard/settings/profile" class="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">Profile</a>
         <a href="/dashboard/settings/pricing" class="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">Pricing</a>
-        <a href="/dashboard/settings/catalog" class="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">Catalog</a>
+        <a href="/dashboard/settings/catalog" class="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">Price Book</a>
         <a href="/dashboard/settings/billing" class="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">Billing</a>
         <span class="text-gray-200 mx-1">|</span>
         <a href="mailto:support@guildquote.com" class="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">Need help?</a>

@@ -65,7 +65,7 @@
       <div class="flex items-center gap-3">
         <a href="/dashboard/settings/profile" class="text-sm text-gray-500 hover:text-gray-700">Profile</a>
         <a href="/dashboard/settings/pricing" class="text-sm text-gray-500 hover:text-gray-700">Pricing</a>
-        <a href="/dashboard/settings/catalog" class="text-sm text-gray-500 hover:text-gray-700">Catalog</a>
+        <a href="/dashboard/settings/catalog" class="text-sm text-gray-500 hover:text-gray-700">Price Book</a>
         <a href="/dashboard/settings/billing" class="text-sm text-gray-500 hover:text-gray-700">Billing</a>
       </div>
     </div>

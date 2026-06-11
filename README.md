@@ -27,7 +27,7 @@ Multi-tenant SaaS platform that lets painting contractors offer self-service onl
 ### Multi-Tenancy
 Single database with `tenant_id` column on all data tables. Each contractor is a tenant with their own:
 - Company profile, branding (colors, logo)
-- Pricing catalog (room types, sizes, surface prices, modifiers)
+- Price Book (live prices computed from each tenant's engine settings)
 - Stage pipeline configuration
 - Quote wizard at `/{slug}/quote`
 
@@ -46,7 +46,7 @@ smart-quote-pro/
 │   │   ├── (auth)/auth/        # Login, register, verify
 │   │   ├── onboarding/         # 4-step contractor setup wizard
 │   │   ├── dashboard/          # Contractor dashboard + detail view
-│   │   │   ├── settings/catalog/  # Pricing catalog editor
+│   │   │   ├── settings/catalog/  # Price Book (read-only computed prices)
 │   │   │   └── [id]/           # Submission detail + actions
 │   │   ├── client/             # Homeowner portal
 │   │   ├── [slug]/quote/       # Embeddable quote wizard
