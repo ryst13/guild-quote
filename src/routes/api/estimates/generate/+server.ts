@@ -4,7 +4,7 @@ import { submissions, tenants } from '$lib/server/schema.js';
 import { eq } from 'drizzle-orm';
 import { getTenantById } from '$lib/server/tenant.js';
 import { calculateInteriorQuote, calculateExteriorQuote, calculateEpoxyQuote } from '$lib/server/pricing.js';
-import { resolveSurcharges, resolveMaterials } from '$lib/server/pricing-config.js';
+import { resolveSurcharges, resolveMaterials, resolvePaymentTerms } from '$lib/server/pricing-config.js';
 import { calculateInteriorBottomUp, calculateExteriorBottomUp, calculateEpoxyBottomUp } from '$lib/server/pricing-v2.js';
 import { generateEstimatePDF, generateEstimatePDFLegacy } from '$lib/server/pdf.js';
 import { assembleInteriorEstimate, assembleExteriorEstimate } from '$lib/server/estimate-templates.js';
@@ -105,8 +105,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   if (tenant.google_refresh_token && (trade_type === 'interior' || trade_type === 'exterior')) {
     // Use template engine for interior/exterior
     const estimateDoc = trade_type === 'interior'
-      ? assembleInteriorEstimate(scope as InteriorScopeData, quote, tenantInfo, submissionId)
-      : assembleExteriorEstimate(scope as ExteriorScopeData, quote, tenantInfo, submissionId);
+      ? assembleInteriorEstimate(scope as InteriorScopeData, quote, tenantInfo, submissionId, resolvePaymentTerms(tenant))
+      : assembleExteriorEstimate(scope as ExteriorScopeData, quote, tenantInfo, submissionId, resolvePaymentTerms(tenant));
 
     if (tenant.output_format === 'google_sheets') {
       try {
@@ -145,10 +145,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     let pdfBuffer: Buffer;
 
     if (trade_type === 'interior') {
-      const estimateDoc = assembleInteriorEstimate(scope as InteriorScopeData, quote, tenantInfo, submissionId);
+      const estimateDoc = assembleInteriorEstimate(scope as InteriorScopeData, quote, tenantInfo, submissionId, resolvePaymentTerms(tenant));
       pdfBuffer = await generateEstimatePDF(estimateDoc, tenant);
     } else if (trade_type === 'exterior') {
-      const estimateDoc = assembleExteriorEstimate(scope as ExteriorScopeData, quote, tenantInfo, submissionId);
+      const estimateDoc = assembleExteriorEstimate(scope as ExteriorScopeData, quote, tenantInfo, submissionId, resolvePaymentTerms(tenant));
       pdfBuffer = await generateEstimatePDF(estimateDoc, tenant);
     } else {
       // Epoxy uses legacy format for now

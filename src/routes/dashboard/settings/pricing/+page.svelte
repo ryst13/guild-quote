@@ -577,8 +577,8 @@
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Deposit (%)</label>
-            <input type="number" step="5" min="0" max="100" bind:value={config.payment_terms.deposit_pct} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none" />
-            <p class="text-xs text-gray-400 mt-1">Due at signing. Remaining balance due at completion.</p>
+            <input type="number" step="5" min="0" max="90" bind:value={config.payment_terms.deposit_pct} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none" />
+            <p class="text-xs text-gray-400 mt-1">Due at signing. Maximum 90%. The rest is due at completion.</p>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Progress Payment Threshold ($)</label>
@@ -589,8 +589,15 @@
 
         <div class="rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
           <p class="font-medium mb-2">Preview:</p>
-          <p>Under ${config.payment_terms.progress_threshold.toLocaleString()}: {config.payment_terms.deposit_pct}% deposit, {100 - config.payment_terms.deposit_pct}% at completion</p>
-          <p>Over ${config.payment_terms.progress_threshold.toLocaleString()}: {config.payment_terms.deposit_pct}% deposit, {config.payment_terms.deposit_pct}% at 50%, {100 - config.payment_terms.deposit_pct * 2}% at completion</p>
+          {#if config.payment_terms}
+            {@const dep = Math.min(90, Math.max(0, config.payment_terms.deposit_pct))}
+            <p>Under ${config.payment_terms.progress_threshold.toLocaleString()}: {dep}% deposit, {100 - dep}% at completion</p>
+            {#if dep <= 60}
+              <p>Over ${config.payment_terms.progress_threshold.toLocaleString()}: {dep}% deposit, 30% halfway through the job, {100 - dep - 30}% at completion</p>
+            {:else}
+              <p>Over ${config.payment_terms.progress_threshold.toLocaleString()}: {dep}% deposit, {100 - dep}% at completion (no halfway payment when the deposit is over 60%)</p>
+            {/if}
+          {/if}
         </div>
       </div>
     {/if}

@@ -10,7 +10,7 @@
 ### P0 — Trust & correctness
 - [x] P0-1 Surcharges: wire `pricing_config.surcharges` into both engines (enable flags + amounts; defaults preserve byte-parity). Resolves SET-021..029. **DONE iter 1.**
 - [x] P0-2 Materials: wire `pricing_config.materials` (products, coverage, $/gal) into both engines. Resolves SET-031..038. **DONE iter 2.**
-- [ ] P0-3 Payment terms: wire `deposit_pct` + `progress_threshold` into estimate output (templates/PDF/doc/sheets). Resolves SET-039/040, OUT-006.
+- [x] P0-3 Payment terms: wire `deposit_pct` + `progress_threshold` into estimate output (templates/PDF/doc/sheets). Resolves SET-039/040, OUT-006. **DONE iter 3.**
 - [ ] P0-4 Catalog editor verdict: the 360-cell matrix is unread by engines (SET-041). Critic decides: wire a simplified ServiceTitan-style "price book" to the top-down engine, or remove the matrix in favor of calibration. Implement the verdict. Also resolve room-type list drift (catalog 15 names vs form/engine 19).
 - [ ] P0-5 Interior specialty checkboxes (drywall install, floor refinishing, plaster, wallpaper, window cleaning, room cleaning) are collected but never priced (ITEM-018..023). Critic decides per item: price it, convert to a flagged note on the estimate ("quoted separately"), or remove. Silent no-ops are forbidden.
 - [ ] P0-6 Secure `/api/estimate-pdf/[id]` — currently serves any PDF to anyone with the ID (MOD-033). Signed URLs or session auth; emailed links must still work for clients.
@@ -65,6 +65,22 @@ functions read tenant materials; legacy engine's 4th param refactored to an
 (coverage 0, cleared product) is silently replaced by a default → logged as D-1.
 [LOW] partial-config crash landmine on settings page → FIXED (per-section merge over
 defaults). [LOW] no top-down materials test → FIXED (added).
+
+### Iteration 3 — P0-3 payment terms — Critic: REJECT → fixed → re-verified ACCEPT
+**Builder:** `resolvePaymentTerms()` (deposit % clamped 0–90, threshold ≥ 0, NaN-safe);
+both assemble functions take optional payment param; generate/regenerate/epoxy-legacy-PDF
+callers pass tenant terms. Progress payment stays a fixed 30% slice, skipped when
+deposit > 60%.
+**Critic round 1 (REJECT):** [HIGH] settings preview modeled progress=deposit% and could
+show negative completion → preview rewritten to match the engine (incl. >60% rule, 90%
+cap). [HIGH] `1 − 0.3 − 0.3` float math broke $-parity on ~0.2% of totals → completion is
+now remainder-based so deposit+progress+completion === round(total) ALWAYS (sweep-tested);
+Critic's own recommendation, strictly more correct than the old independent rounding.
+[MEDIUM] epoxy legacy PDF ignored terms → wired. [MEDIUM] UI max 100 vs clamp 90 → max=90
++ helper text. [LOW] NaN via raw API → sanitized. Re-verify Critic ran a 1M-cent sweep:
+every divergence from old amounts is a case the old code failed to sum to total. ACCEPT.
+**Pattern reinforced:** wiring config to output means the settings preview is part of the
+contract — check it every time (same class as iter-1 finding 3).
 
 ## Discovered items
 

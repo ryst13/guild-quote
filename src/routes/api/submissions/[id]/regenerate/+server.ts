@@ -7,6 +7,7 @@ import { eq, and } from 'drizzle-orm';
 import { getTenantById } from '$lib/server/tenant.js';
 import { generateEstimatePDF, generateEstimatePDFLegacy } from '$lib/server/pdf.js';
 import { assembleInteriorEstimate, assembleExteriorEstimate } from '$lib/server/estimate-templates.js';
+import { resolvePaymentTerms } from '$lib/server/pricing-config.js';
 import { createEstimateDoc } from '$lib/server/google-docs.js';
 import { createEstimateSheet } from '$lib/server/google-sheets.js';
 import { ensureFolderStructure, ensureProjectFolder, moveFileToArchive, extractFileId } from '$lib/server/google-drive.js';
@@ -98,10 +99,10 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
   try {
     let pdfBuffer: Buffer;
     if (sub.trade_type === 'interior') {
-      const doc = assembleInteriorEstimate(scope as InteriorScopeData, quote, tenantInfo, params.id);
+      const doc = assembleInteriorEstimate(scope as InteriorScopeData, quote, tenantInfo, params.id, resolvePaymentTerms(tenant));
       pdfBuffer = await generateEstimatePDF(doc, tenant);
     } else if (sub.trade_type === 'exterior') {
-      const doc = assembleExteriorEstimate(scope as ExteriorScopeData, quote, tenantInfo, params.id);
+      const doc = assembleExteriorEstimate(scope as ExteriorScopeData, quote, tenantInfo, params.id, resolvePaymentTerms(tenant));
       pdfBuffer = await generateEstimatePDF(doc, tenant);
     } else {
       pdfBuffer = await generateEstimatePDFLegacy(scope.client, quote, params.id, tenant);
@@ -153,8 +154,8 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
       // Create new file in project folder
       if (tenant.output_format === 'google_sheets' && (sub.trade_type === 'interior' || sub.trade_type === 'exterior')) {
         const estimateDoc = sub.trade_type === 'interior'
-          ? assembleInteriorEstimate(scope as InteriorScopeData, quote, tenantInfo, params.id)
-          : assembleExteriorEstimate(scope as ExteriorScopeData, quote, tenantInfo, params.id);
+          ? assembleInteriorEstimate(scope as InteriorScopeData, quote, tenantInfo, params.id, resolvePaymentTerms(tenant))
+          : assembleExteriorEstimate(scope as ExteriorScopeData, quote, tenantInfo, params.id, resolvePaymentTerms(tenant));
         googleDocUrl = await createEstimateSheet(tenant, estimateDoc, projectFolderId);
       } else {
         googleDocUrl = await createEstimateDoc(tenant, scope.client, quote, params.id, projectFolderId);

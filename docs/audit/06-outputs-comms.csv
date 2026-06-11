@@ -2,9 +2,9 @@ ID,Artifact,Element,Driven By,Current Behavior,Flags,Decision,Target,Notes
 OUT-001,Estimate doc,1. Header,Tenant profile + client info,"Company name/phone/email/website, client details, date, 8-char reference, trade label",,,,
 OUT-002,Estimate doc,2. Surface Grade,scope.project.surface_grade,All 4 grades listed (A-D) with selected indicator + descriptions,,,,
 OUT-003,Estimate doc,3. Work Description,Rooms/surfaces + prep level,Per-room bullet narratives from template lookup by item + prep tier,,,,
-OUT-004,Estimate doc,4. Prep Level,scope.project.prep_level,"All 4 tiers with price adjustment labels (-7.5% / Included / +25% / +37.5%)",Adjustment labels are hardcoded; gated by show_losp toggle,,,
+OUT-004,Estimate doc,4. Prep Level,scope.project.prep_level,All 4 tiers with price adjustment labels (-7.5% / Included / +25% / +37.5%),Adjustment labels are hardcoded; gated by show_losp toggle,,,
 OUT-005,Estimate doc,5. Project Recap Table,quote.sections,Per-room/surface row with price + item counts,Setup & Mobilization section appears here when enabled,,,
-OUT-006,Estimate doc,6. Payment Terms,quote.grand_total,30% deposit; >$10k adds 30% progress + 40% completion; else 70% completion,HARDCODED — ignores pricing_config.payment_terms (SET-039/040),,,
+OUT-006,Estimate doc,6. Payment Terms,quote.grand_total,30% deposit; >$10k adds 30% progress + 40% completion; else 70% completion,WIRED (ralph iter 3),CHANGE,Honor pricing_config.payment_terms,Done: tenant deposit/threshold honored; fixed 30% progress slice documented in settings preview
 OUT-007,Estimate doc,7. Production,quote.production,Hours and days shown as +/-20% ranges + crew size,,,,
 OUT-008,Estimate doc,8. Signature Block,—,Client + contractor signature lines,,,,
 OUT-009,Output format,Full PDF,pdf.ts generateEstimatePDF,8 sections; stored ./data/pdfs/{id}.pdf,Served unauthenticated at /api/estimate-pdf/[id],,,
@@ -15,5 +15,5 @@ OUT-013,Email,Magic link,POST /api/auth/send-magic-link,15-min expiry; brandable
 OUT-014,Email,Welcome,POST /api/auth/register,Onboarding checklist + dashboard button,,,,
 OUT-015,Email,Estimate delivery,POST /api/submissions/[id]/send,Contractor-composed; optional PDF attach + Doc link; Gmail API w/ SMTP fallback,,,,
 OUT-016,Email,Reminder,POST /api/submissions/[id]/notify,"Generic ""your estimate is ready""",Very thin — consider proper template,,,
-OUT-017,Benchmark message,Price percentile note,price-benchmarks.json (rebuilt 2026-06-10),"Quote labeled below-average / competitive / mid-range / premium vs overall distribution + win-rate note","Brand rule says never say ""percentile"" — copy uses labels not numbers; verify wording",,,
+OUT-017,Benchmark message,Price percentile note,price-benchmarks.json (rebuilt 2026-06-10),Quote labeled below-average / competitive / mid-range / premium vs overall distribution + win-rate note,"Brand rule says never say ""percentile"" — copy uses labels not numbers; verify wording",,,
 OUT-018,Scope warnings,Completeness checks,scope-checker-rules.json,"Warns when trim/doors/windows/ceiling missing on multi-room jobs (e.g. ""X% of interior jobs include trim"")","Brand rule: no ""based on X projects"" claims — verify copy",,,

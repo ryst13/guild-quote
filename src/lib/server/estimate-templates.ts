@@ -8,6 +8,7 @@
  * Source: RP Interior Generator PROD v3.1, Catalog tab rows 120-143
  */
 
+import { DEFAULT_PAYMENT_TERMS, type ResolvedPaymentTerms } from './pricing-config.js';
 import type {
   InteriorScopeData,
   ExteriorScopeData,
@@ -303,6 +304,7 @@ export function assembleInteriorEstimate(
   quote: QuoteResult,
   tenant: { company_name: string; contact_phone: string; contact_email: string; website_url: string },
   submissionId: string,
+  payment: ResolvedPaymentTerms = DEFAULT_PAYMENT_TERMS,
 ): EstimateDocument {
   const prepLevel = scope.project.prep_level as keyof DescriptionTemplate;
   const tradeLabel = 'Interior Painting';
@@ -372,12 +374,19 @@ export function assembleInteriorEstimate(
     };
   });
 
-  // Payment terms
+  // Payment terms (tenant-configurable deposit % and progress threshold;
+  // progress payment is a fixed 30% slice, skipped when the deposit is large
+  // enough that the schedule would go negative)
   const total = quote.grand_total;
-  const needsProgress = total > 10000;
-  const depositPct = 0.30;
+  const depositPct = payment.deposit_pct;
+  const needsProgress = total > payment.progress_threshold && depositPct <= 0.6;
   const progressPct = needsProgress ? 0.30 : null;
-  const completionPct = needsProgress ? 0.40 : 0.70;
+  const completionPct = 1 - depositPct - (progressPct ?? 0);
+  // Dollar rows are rounded so they sum EXACTLY to the rounded total — a
+  // schedule that's a dollar off invites kitchen-table mistrust.
+  const depositAmount = Math.round(total * depositPct);
+  const progressAmount = progressPct ? Math.round(total * progressPct) : null;
+  const completionAmount = Math.round(total) - depositAmount - (progressAmount ?? 0);
 
   // Production ranges (±20%)
   const hours = quote.production.painting_hours;
@@ -432,11 +441,11 @@ export function assembleInteriorEstimate(
     payment_terms: {
       total,
       deposit_pct: depositPct,
-      deposit_amount: Math.round(total * depositPct),
+      deposit_amount: depositAmount,
       progress_pct: progressPct,
-      progress_amount: progressPct ? Math.round(total * progressPct) : null,
+      progress_amount: progressAmount,
       completion_pct: completionPct,
-      completion_amount: Math.round(total * completionPct),
+      completion_amount: completionAmount,
     },
     production: {
       hours_low: hrsLow,
@@ -453,6 +462,7 @@ export function assembleExteriorEstimate(
   quote: QuoteResult,
   tenant: { company_name: string; contact_phone: string; contact_email: string; website_url: string },
   submissionId: string,
+  payment: ResolvedPaymentTerms = DEFAULT_PAYMENT_TERMS,
 ): EstimateDocument {
   const prepLevel = scope.project.prep_level as keyof DescriptionTemplate;
   const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -515,7 +525,15 @@ export function assembleExteriorEstimate(
   });
 
   const total = quote.grand_total;
-  const needsProgress = total > 10000;
+  const depositPct = payment.deposit_pct;
+  const needsProgress = total > payment.progress_threshold && depositPct <= 0.6;
+  const progressPct = needsProgress ? 0.30 : null;
+  const completionPct = 1 - depositPct - (progressPct ?? 0);
+  // Dollar rows are rounded so they sum EXACTLY to the rounded total — a
+  // schedule that's a dollar off invites kitchen-table mistrust.
+  const depositAmount = Math.round(total * depositPct);
+  const progressAmount = progressPct ? Math.round(total * progressPct) : null;
+  const completionAmount = Math.round(total) - depositAmount - (progressAmount ?? 0);
   const hours = quote.production.painting_hours;
   const days = quote.production.duration_days;
 
@@ -554,12 +572,12 @@ export function assembleExteriorEstimate(
     recap_table: { rows: recapRows, materials_total: quote.materials_total, grand_total: quote.grand_total },
     payment_terms: {
       total,
-      deposit_pct: 0.30,
-      deposit_amount: Math.round(total * 0.30),
-      progress_pct: needsProgress ? 0.30 : null,
-      progress_amount: needsProgress ? Math.round(total * 0.30) : null,
-      completion_pct: needsProgress ? 0.40 : 0.70,
-      completion_amount: Math.round(total * (needsProgress ? 0.40 : 0.70)),
+      deposit_pct: depositPct,
+      deposit_amount: depositAmount,
+      progress_pct: progressPct,
+      progress_amount: progressAmount,
+      completion_pct: completionPct,
+      completion_amount: completionAmount,
     },
     production: {
       hours_low: Math.max(1, Math.round(hours * 0.80)),

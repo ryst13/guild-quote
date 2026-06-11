@@ -94,6 +94,36 @@ export function resolveMaterials(
   };
 }
 
+// ── Payment terms (estimate output, not engine math) ────────────
+export interface ResolvedPaymentTerms {
+  deposit_pct: number; // fraction, e.g. 0.30
+  progress_threshold: number; // dollars; totals above this add a mid-project payment
+}
+
+export const DEFAULT_PAYMENT_TERMS: ResolvedPaymentTerms = {
+  deposit_pct: 0.30,
+  progress_threshold: 10000,
+};
+
+export function resolvePaymentTerms(
+  tenant?: Pick<TenantConfig, 'pricing_config'> | null,
+): ResolvedPaymentTerms {
+  const p = tenant?.pricing_config?.payment_terms;
+  if (!p) return DEFAULT_PAYMENT_TERMS;
+  // Settings UI stores percent (30). Clamp to a sane 0–90% so the payment
+  // schedule can never go negative.
+  const pctNum = Number(p.deposit_pct);
+  const rawPct = p.deposit_pct != null && Number.isFinite(pctNum) ? pctNum / 100 : DEFAULT_PAYMENT_TERMS.deposit_pct;
+  const thrNum = Number(p.progress_threshold);
+  return {
+    deposit_pct: Math.min(0.9, Math.max(0, rawPct)),
+    progress_threshold:
+      p.progress_threshold != null && Number.isFinite(thrNum) && thrNum >= 0
+        ? thrNum
+        : DEFAULT_PAYMENT_TERMS.progress_threshold,
+  };
+}
+
 // Bundle for the legacy (top-down) engine, which has no tenant object —
 // callers resolve once and pass the bundle; absent fields fall back to defaults.
 export interface EngineConfig {

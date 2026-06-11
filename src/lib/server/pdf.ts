@@ -1,4 +1,5 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { resolvePaymentTerms } from './pricing-config.js';
 import type { TenantConfig } from '$lib/types/index.js';
 import type { EstimateDocument } from './estimate-templates.js';
 
@@ -375,7 +376,7 @@ export async function generateEstimatePDFLegacy(
     contact_phone: tenant.contact_phone,
     contact_email: tenant.contact_email,
     website_url: tenant.website_url,
-  }, submissionId);
+  }, submissionId, resolvePaymentTerms(tenant));
 
   // Override header with actual client data
   doc.header.client_name = client.name;
