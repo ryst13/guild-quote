@@ -61,7 +61,7 @@
           <li>Client-facing estimate view</li>
         </ul>
 
-        <p>Set up your branding in <strong>Settings &gt; Branding</strong>. Changes apply to all future estimates. Existing estimates keep the branding they were generated with.</p>
+        <p>Set up your branding in <strong>Settings &gt; Profile</strong>. Changes apply to all future estimates. Existing estimates keep the branding they were generated with.</p>
       </div>
     </div>
   </section>
@@ -75,7 +75,7 @@
 
         <h3>How it works</h3>
         <ol>
-          <li>Connect your Gmail account in <strong>Settings &gt; Integrations</strong> (one-time setup via Google OAuth).</li>
+          <li>Connect your Google account during onboarding (one-time setup via Google OAuth).</li>
           <li>When you are ready to send an estimate, click <strong>Send to Client</strong>.</li>
           <li>GuildQuote composes the email with the PDF attached and a link to the Google Doc (if generated).</li>
           <li>The email sends from your Gmail address. It shows up in your Sent folder.</li>
@@ -120,6 +120,8 @@
           <li><strong>English (EN)</strong></li>
           <li><strong>Spanish (ES)</strong></li>
           <li><strong>Portuguese (PT)</strong></li>
+          <li><strong>Romanian (RO)</strong></li>
+          <li><strong>Cantonese (粵語)</strong></li>
         </ul>
         <p>Select the language when generating the snapshot. The scope content is translated; your company name and branding stay in English.</p>
 

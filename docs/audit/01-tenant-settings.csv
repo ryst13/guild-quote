@@ -62,9 +62,9 @@ SET-060,Admin (platform),Payment status,Inline select,tenants.payment_status,non
 SET-061,Admin (platform),Trial days remaining,Number,tenants.trial_ends_at,14 days at signup,Platform-admin only,,,
 SET-062,Admin (platform),Lifetime access,Toggle,tenants.lifetime_access,false,Platform-admin only,,,
 SET-063,Admin (platform),Referral credits,Number,tenants.referral_credits,0,Platform-admin only,,,
-SET-064,DB only (no UI),stages_json,—,tenants.stages_json,null,UNUSED — column exists; nothing reads or writes it,,,
-SET-065,DB only (no UI),thresholds_json,—,tenants.thresholds_json,null,UNUSED — defaults file exists (config/defaults/thresholds.json) but enforcement unverified,,,
-SET-066,DB only (no UI),subscription_tier,—,tenants.subscription_tier,free,DEPRECATED — superseded by plan,,,
+SET-064,DB only (no UI),stages_json,—,tenants.stages_json,null,DEPRECATED (ralph iter 19),KEEP,"Deprecate, never drop",Marked DEPRECATED in schema (never wired); column kept additive-only
+SET-065,DB only (no UI),thresholds_json,—,tenants.thresholds_json,null,DEPRECATED (ralph iter 19),KEEP,"Deprecate, never drop",Marked DEPRECATED in schema (defaults file unenforced); column kept additive-only
+SET-066,DB only (no UI),subscription_tier,—,tenants.subscription_tier,free,DEPRECATED (ralph iter 19),KEEP,"Deprecate, never drop",Marked DEPRECATED in schema (superseded by plan); column kept additive-only
 SET-067,DB only (no UI),prompts_shown,—,tenants.prompts_shown,{},Internal UX tracking,,,
 SET-068,DB only (no UI),Google Drive folder IDs (4),—,google_drive_*_folder_id,null,System-managed,,,
 SET-069,DB only (no UI),Stripe IDs,—,stripe_customer_id; stripe_subscription_id,null,System-managed,,,

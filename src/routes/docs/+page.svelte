@@ -31,7 +31,7 @@
 
     <a href="/docs/pricing" class="rounded-xl border border-gray-200 bg-white p-5 hover:border-blue-300 hover:shadow-sm transition-all">
       <h3 class="font-semibold text-gray-900 mb-1">Pricing</h3>
-      <p class="text-sm text-gray-500">Rate-based and cost-based pricing engines. Quick Calibrate onboarding. Catalog editor and surcharges.</p>
+      <p class="text-sm text-gray-500">Rate-based and cost-based pricing. Quick Calibrate onboarding. Your live Price Book and surcharges.</p>
     </a>
 
     <a href="/docs/output" class="rounded-xl border border-gray-200 bg-white p-5 hover:border-blue-300 hover:shadow-sm transition-all">
@@ -70,7 +70,7 @@
         <ul class="space-y-1 text-gray-500">
           <li>Branded PDF estimates</li>
           <li>Google Docs & Sheets</li>
-          <li>Crew snapshots (EN/ES/PT)</li>
+          <li>Crew snapshots (EN / ES / PT / RO / Cantonese)</li>
         </ul>
       </div>
     </div>

@@ -11,9 +11,14 @@ export const tenants = sqliteTable('tenants', {
   contact_phone: text('contact_phone').notNull().default(''),
   website_url: text('website_url').notNull().default(''),
   service_areas: text('service_areas').notNull().default(''),
+  // DEPRECATED (kept additive-only): nothing writes catalog_json anymore; legacy
+  // rows may still hold data, parsed by tenant.ts but ignored by every engine
+  // since the Price Book replaced the catalog editor (ralph iter 4).
   catalog_json: text('catalog_json'),
+  // DEPRECATED (never wired): stages_json/thresholds_json have no readers or writers.
   stages_json: text('stages_json'),
   thresholds_json: text('thresholds_json'),
+  // DEPRECATED: superseded by `plan` — do not read.
   subscription_tier: text('subscription_tier').notNull().default('free'),
   onboarding_completed: integer('onboarding_completed', { mode: 'boolean' }).notNull().default(false),
   enabled_trades: text('enabled_trades').notNull().default('["interior"]'),

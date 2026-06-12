@@ -113,8 +113,13 @@
   would "reach out" — now a real form straight into trial registration with the email
   prefilled (works on Enter and without JS); header CTA aligned; stale docs fixed.
   **DONE iter 18, Critic ACCEPT.**
-- [ ] P2-3 Docs pages (`/docs/*`) updated to match post-overhaul reality.
-- [ ] P2-4 Dead schema cleanup decision: `stages_json`, `thresholds_json`, `subscription_tier` (SET-064..066) — document or deprecate (additive-only: mark deprecated, don't drop).
+- [x] P2-3 Docs refresh: every catalog-editor reference → Price Book/My Prices; Won/Lost
+  vocabulary; all five snapshot languages; real settings page names; the phantom
+  "viewed is tracked" claim replaced with the truth. **DONE iter 19.**
+- [x] P2-4 Dead schema: DEPRECATED comments on catalog_json (nothing writes it; legacy
+  rows parsed but ignored by engines), stages_json/thresholds_json (never wired),
+  subscription_tier (superseded by plan); register rows updated; columns kept
+  additive-only. **DONE iter 19.**
 - [ ] P2-5 Tier gating review: which knobs are Pro-only per spec (complexity factors, economy-of-scale hours)? Implement gating consistent with $49/$129 positioning.
 
 ### LR — Launch readiness (added 2026-06-11 from Ryan's launch decisions)
@@ -351,6 +356,15 @@ reach out when your trial is ready." Now it starts the actual 14-day trial. Crit
 verified $app/state usage, SSR safety, XSS-escaping of the reflected param, and that
 no backend capture ever existed (strictly-better change). P3s applied: GET form for
 Enter/no-JS, import hoist, trim, header CTA consistency, CLAUDE.md staleness.
+
+### Iteration 19 — P2-3 + P2-4 docs/schema hygiene — Critic: REJECT → fixed → green
+**Critic earned it on a "trivial" iteration:** my catalog_json deprecation comment
+asserted a phantom writer (grep: onboarding writes no catalog), and the sweep missed
+three catalog references in the body of the very page the diff touched. It also surfaced
+docs claiming features that don't exist ("viewed is tracked when they open the email" —
+nothing sets viewed), wrong settings page names, and three-language claims vs five.
+All fixed. Standing rule reaffirmed: deprecation comments are claims — grep before
+asserting writers/readers.
 
 ## Discovered items
 

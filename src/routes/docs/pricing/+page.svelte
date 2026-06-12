@@ -1,6 +1,6 @@
 <svelte:head>
   <title>Pricing — GuildQuote Docs</title>
-  <meta name="description" content="How GuildQuote pricing works. Two engines: rate-based (top-down $/sqft) and cost-based (bottom-up hours x wage). Quick Calibrate onboarding, catalog editor, and surcharges." />
+  <meta name="description" content="How GuildQuote pricing works. Two methods: rate-based ($/sqft) and cost-based (hours x wage). Quick Calibrate onboarding, the live Price Book, and surcharges." />
 </svelte:head>
 
 <div class="space-y-8">
@@ -25,7 +25,7 @@
             <p><strong>Best for:</strong> contractors who have been in business a while and already know what they charge. "I charge $3.50/sqft for walls" -- that is rate-based pricing.</p>
             <p><strong>How it works:</strong></p>
             <ul>
-              <li>You set rates per surface type in your pricing catalog</li>
+              <li>Your rates per surface type drive the math — see them live in your Price Book</li>
               <li>Scope entry captures measurements</li>
               <li>Price = rate x measured area (adjusted for condition grade and LOSP tier)</li>
               <li>GuildQuote back-calculates estimated production hours and margins</li>
@@ -67,7 +67,7 @@
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
         <div class="rounded-lg border border-gray-200 p-4">
           <div class="font-semibold text-gray-900 text-sm mb-2">"I know what I charge"</div>
-          <p class="text-sm text-gray-500 mb-2">Enter a few key rates (like your price per sqft for walls and trim). GuildQuote populates your entire catalog from those anchor points.</p>
+          <p class="text-sm text-gray-500 mb-2">Enter a few key rates (like your price per sqft for walls and trim). GuildQuote works out all your other prices from those anchor points — check the result in your Price Book.</p>
           <p class="text-xs text-gray-400">Sets up the rate-based engine.</p>
         </div>
         <div class="rounded-lg border border-gray-200 p-4">
@@ -113,7 +113,7 @@
         <h3>Material Tracking</h3>
         <p>GuildQuote tracks materials for each estimate:</p>
         <ul>
-          <li><strong>Products</strong> -- paint, primer, caulk, epoxy, flake. Pulled from your catalog or entered per-estimate.</li>
+          <li><strong>Products</strong> -- paint, primer, caulk, epoxy, flake. Set under My Prices &gt; Materials.</li>
           <li><strong>Coverage rates</strong> -- sqft per gallon, which determines how many gallons the job needs.</li>
           <li><strong>Costs</strong> -- per-gallon pricing. GuildQuote calculates total material cost including a 10% wastage factor.</li>
         </ul>

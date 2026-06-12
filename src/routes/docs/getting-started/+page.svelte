@@ -50,7 +50,7 @@
         </div>
         <p><strong>Know your prices?</strong> Enter your rate per square foot for each surface type. GuildQuote works backward to calculate costs and margins. This is the rate-based engine.</p>
         <p><strong>Know your costs?</strong> Enter your crew's wage, production rates, and target margin. GuildQuote builds prices from the bottom up. This is the cost-based engine.</p>
-        <p>You can fine-tune everything later in the pricing catalog. Quick Calibrate just gets you a working baseline fast. See <a href="/docs/pricing" class="text-blue-600 hover:text-blue-700">Pricing</a> for full details.</p>
+        <p>You can fine-tune everything later under My Prices — your Price Book shows what you charge, live. Quick Calibrate just gets you a working baseline fast. See <a href="/docs/pricing" class="text-blue-600 hover:text-blue-700">Pricing</a> for full details.</p>
       </div>
     </div>
   </div>
@@ -85,7 +85,7 @@
           <li><strong>Google Sheets</strong> -- full line-item breakdown in spreadsheet format</li>
         </ul>
         <p>If you have connected Gmail, you can email the estimate directly from GuildQuote. The email includes your branding and the PDF as an attachment.</p>
-        <p>Once sent, the estimate moves to "Sent" in your pipeline. Track it through viewed, accepted, or declined. See <a href="/docs/tracking" class="text-blue-600 hover:text-blue-700">Tracking & Analytics</a> for details.</p>
+        <p>Once sent, the estimate moves to "Sent" in your pipeline. Mark it Won or Lost when you hear back. See <a href="/docs/tracking" class="text-blue-600 hover:text-blue-700">Tracking & Analytics</a> for details.</p>
       </div>
     </div>
   </div>

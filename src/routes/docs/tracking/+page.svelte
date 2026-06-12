@@ -41,7 +41,7 @@
         </div>
         <div class="rounded-lg border border-gray-200 p-4">
           <div class="font-semibold text-gray-900 text-sm mb-1">Viewed</div>
-          <p class="text-sm text-gray-500">The client has opened the estimate. This is tracked when they view the Google Doc link or open the email.</p>
+          <p class="text-sm text-gray-500">Reserved for read tracking — today, statuses move when you mark them (Sent when you send, Won or Lost when you hear back).</p>
         </div>
         <div class="rounded-lg border border-gray-200 p-4">
           <div class="font-semibold text-gray-900 text-sm mb-1">Won</div>
@@ -60,7 +60,7 @@
     <div class="rounded-xl border border-gray-200 bg-white p-6">
       <div class="prose prose-sm prose-gray max-w-none">
         <h2 class="text-xl font-bold text-gray-900 mt-0 mb-3">Self-Benchmarking</h2>
-        <p>After you have tracked <strong>10 or more estimates</strong> through to accepted or declined, GuildQuote unlocks your benchmarking dashboard. This is your data about your business -- not industry averages.</p>
+        <p>After you have tracked <strong>10 or more estimates</strong> through to Won or Lost, GuildQuote unlocks your benchmarking dashboard. This is your data about your business -- not industry averages.</p>
 
         <h3>What benchmarking shows you</h3>
         <ul>
