@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { assembleInteriorEstimate, assembleExteriorEstimate } from './estimate-templates.js';
-import { calculateInteriorBottomUp, calculateExteriorBottomUp } from './pricing-v2.js';
-import { catalog, tenant, tenantWith, tenantLite, interiorScope, exteriorScope } from './test-fixtures.js';
+import { assembleInteriorEstimate, assembleExteriorEstimate, assembleEpoxyEstimate } from './estimate-templates.js';
+import { calculateInteriorBottomUp, calculateExteriorBottomUp, calculateEpoxyBottomUp } from './pricing-v2.js';
+import { catalog, tenant, tenantWith, tenantLite, interiorScope, exteriorScope, epoxyScope } from './test-fixtures.js';
 
 describe('assembleInteriorEstimate', () => {
 	const quote = calculateInteriorBottomUp(interiorScope, catalog, tenant);
@@ -173,5 +173,49 @@ describe('payment terms — tenant config wiring', () => {
 		});
 		expect(doc.payment_terms.deposit_pct).toBe(0.4);
 		expect(doc.payment_terms.completion_pct).toBeCloseTo(0.6, 10);
+	});
+});
+
+describe('assembleEpoxyEstimate — epoxy gets the full 8-section document', () => {
+	const quote = calculateEpoxyBottomUp(epoxyScope, catalog, tenant);
+	const doc = assembleEpoxyEstimate(epoxyScope, quote, tenantLite, 'SUB-EP-1');
+
+	it('one work-description block per floor with real scope content', () => {
+		expect(doc.work_description.length).toBeGreaterThanOrEqual(epoxyScope.floors.length);
+		const first = doc.work_description[0];
+		expect(first.bullets.join(' | ')).toContain(epoxyScope.floors[0].coating_type);
+		expect(first.bullets.join(' | ')).toContain('Floor condition');
+	});
+
+	it('recap rows carry each floor section price (never empty)', () => {
+		expect(doc.recap_table.rows).toHaveLength(epoxyScope.floors.length);
+		for (const row of doc.recap_table.rows) {
+			expect(row.price).toBeGreaterThan(0);
+		}
+		expect(doc.recap_table.grand_total).toBeCloseTo(quote.grand_total, 6);
+	});
+
+	it('timeline and notes reach the output when present', () => {
+		const scope = JSON.parse(JSON.stringify(epoxyScope)) as typeof epoxyScope;
+		scope.project.timeline = 'before Thanksgiving';
+		scope.project.notes = 'Gate code 4321';
+		const q = calculateEpoxyBottomUp(scope, catalog, tenant);
+		const d = assembleEpoxyEstimate(scope, q, tenantLite, 'SUB-EP-2');
+		const all = d.work_description.map((w) => w.bullets.join(' ') + (w.notes ?? '')).join(' ');
+		expect(all).toContain('before Thanksgiving');
+		expect(all).toContain('Gate code 4321');
+	});
+
+	it('worst floor condition drives the displayed grade', () => {
+		const scope = JSON.parse(JSON.stringify(epoxyScope)) as typeof epoxyScope;
+		scope.floors[0].floor_condition = 'Poor';
+		const q = calculateEpoxyBottomUp(scope, catalog, tenant);
+		const d = assembleEpoxyEstimate(scope, q, tenantLite, 'SUB-EP-3');
+		expect(d.surface_grade.selected).toBe('D');
+	});
+
+	it('payment schedule sums exactly to the rounded total', () => {
+		const pt = doc.payment_terms;
+		expect(pt.deposit_amount + (pt.progress_amount ?? 0) + pt.completion_amount).toBe(Math.round(pt.total));
 	});
 });

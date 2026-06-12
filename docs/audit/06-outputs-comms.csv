@@ -8,7 +8,7 @@ OUT-006,Estimate doc,6. Payment Terms,quote.grand_total,30% deposit; >$10k adds 
 OUT-007,Estimate doc,7. Production,quote.production,Hours and days shown as +/-20% ranges + crew size,,,,
 OUT-008,Estimate doc,8. Signature Block,—,Client + contractor signature lines,,,,
 OUT-009,Output format,Full PDF,pdf.ts generateEstimatePDF,8 sections; stored ./data/pdfs/{id}.pdf,SECURED (ralph iter 6),CHANGE,Owner-only PDF serving,Done: see MOD-033
-OUT-010,Output format,Google Doc,google-docs.ts,Same content; shared editable doc; URL on submission,Requires Google OAuth token,,,
+OUT-010,Output format,Google Doc,google-docs.ts,Same content; shared editable doc; URL on submission,REBUILT (ralph iter 15),CHANGE,Full 8-section parity with PDF,Done: structured renderer; epoxy included; regenerate path unified
 OUT-011,Output format,Google Sheet,google-sheets.ts,Tabular line items,Default output_format is google_docs; Sheets marked Recommended in UI — reconcile,,,
 OUT-012,Output format,Snapshot PDF/Sheet,snapshot-pdf.ts / snapshot-sheets.ts,Condensed multilingual version,AUDIT CLAIM STALE (verified iter 7),KEEP,No change needed,UI and API both speak en/es/pt/ro/zh-yue; mismatch claim was an audit error
 OUT-013,Email,Magic link,POST /api/auth/send-magic-link,15-min expiry; brandable color,,,,

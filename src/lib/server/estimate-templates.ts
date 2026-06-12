@@ -600,3 +600,142 @@ export function assembleExteriorEstimate(
     },
   };
 }
+
+
+// ═══════════════════════════════════════════════════════════════
+// EPOXY — full 8-section estimate (kills the empty-rooms legacy hack)
+// ═══════════════════════════════════════════════════════════════
+
+const FLAKE_LABELS: Record<string, string | null> = {
+  none: null,
+  standard: 'Standard flake broadcast finish',
+  full: 'Full flake broadcast finish',
+  metallic: 'Metallic flake finish',
+};
+
+// Floor condition maps onto the grade scale honestly: Good reads as A
+// ("New / Slightly Deteriorated"), Fair as C, Poor as D.
+const EPOXY_CONDITION_GRADE: Record<string, 'A' | 'C' | 'D'> = {
+  Good: 'A',
+  Fair: 'C',
+  Poor: 'D',
+};
+
+export function assembleEpoxyEstimate(
+  scope: EpoxyScopeData,
+  quote: QuoteResult,
+  tenant: { company_name: string; contact_phone: string; contact_email: string; website_url: string },
+  submissionId: string,
+  payment: ResolvedPaymentTerms = DEFAULT_PAYMENT_TERMS,
+): EstimateDocument {
+  const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Work description: one block per floor + one project-level block
+  const workDesc = scope.floors.map((floor) => {
+    const bullets: string[] = [
+      `${floor.coating_type}: surface preparation and coating over ${floor.sqft} sqft`,
+      `Floor condition: ${floor.floor_condition}`,
+    ];
+    if (floor.existing_coating_removal) bullets.push('Remove the old coating before application');
+    if (floor.moisture_issues) bullets.push('Moisture mitigation before coating');
+    const flake = FLAKE_LABELS[floor.color_flake];
+    if (flake) bullets.push(flake);
+    if (floor.cove_base && floor.cove_base_linear_feet > 0) {
+      bullets.push(`Cove base: ${floor.cove_base_linear_feet} linear ft`);
+    }
+    return { area: `${floor.area_type} (${floor.sqft} sqft)`, bullets, notes: null as string | null };
+  });
+
+  const projectBullets: string[] = [];
+  if (scope.project.concrete_grinding) projectBullets.push('Concrete grinding before coating');
+  if (scope.project.crack_repair !== 'none') projectBullets.push(`Crack repair (${scope.project.crack_repair})`);
+  if (scope.project.timeline) projectBullets.push(`When the client wants it done: ${scope.project.timeline}`);
+  if (projectBullets.length > 0 || scope.project.notes) {
+    workDesc.push({ area: 'Whole project', bullets: projectBullets, notes: scope.project.notes || null });
+  }
+
+  // Recap: one row per floor, indexed against floor sections only
+  const floorSections = quote.sections.filter((s) => s.label !== 'Setup & Mobilization');
+  const recapRows = scope.floors.map((floor, i) => ({
+    area: `${floor.area_type} (${floor.sqft} sqft)`,
+    price: floorSections[i]?.sales_price || 0,
+    walls: floor.coating_type,
+    ceilings: '—',
+    closets: '—',
+    doors: '—',
+    windows: '—',
+    trim: floor.cove_base && floor.cove_base_linear_feet > 0 ? `${floor.cove_base_linear_feet} lf cove` : '—',
+    repairs: scope.project.crack_repair !== 'none' ? scope.project.crack_repair : '—',
+  }));
+
+  // Worst floor condition drives the displayed grade
+  const worst = scope.floors.reduce<'A' | 'C' | 'D'>((acc, f) => {
+    const g = EPOXY_CONDITION_GRADE[f.floor_condition] ?? 'A';
+    return g > acc ? g : acc;
+  }, 'A');
+
+  // Payment terms — identical math to the painting trades
+  const total = quote.grand_total;
+  const depositPct = payment.deposit_pct;
+  const needsProgress = total > payment.progress_threshold && depositPct <= 0.6;
+  const progressPct = needsProgress ? 0.30 : null;
+  const completionPct = 1 - depositPct - (progressPct ?? 0);
+  const depositAmount = Math.round(total * depositPct);
+  const progressAmount = progressPct ? Math.round(total * progressPct) : null;
+  const completionAmount = Math.round(total) - depositAmount - (progressAmount ?? 0);
+
+  const hours = quote.production.painting_hours;
+  const days = quote.production.duration_days;
+
+  return {
+    header: {
+      company_name: tenant.company_name,
+      phone: tenant.contact_phone,
+      email: tenant.contact_email,
+      website: tenant.website_url,
+      client_name: scope.client.name,
+      client_address: scope.client.address,
+      client_email: scope.client.email,
+      client_phone: scope.client.phone,
+      date: dateStr,
+      reference: submissionId.slice(0, 8).toUpperCase(),
+      trade_label: 'Epoxy & Garage Coatings',
+    },
+    surface_grade: {
+      selected: worst,
+      label: SURFACE_GRADE_DESCRIPTIONS[worst].label,
+      description: SURFACE_GRADE_DESCRIPTIONS[worst].description,
+      all_grades: Object.entries(SURFACE_GRADE_DESCRIPTIONS).map(([grade, info]) => ({
+        grade, label: info.label, selected: grade === worst,
+      })),
+    },
+    work_description: workDesc,
+    prep_level: {
+      selected: 'Standard',
+      label: 'Standard',
+      description:
+        'Surface preparation appropriate for concrete coating: cleaning and degreasing, mechanical profiling where included, and repair items listed in the work description. Proper preparation is what makes the coating last.',
+      adjustment_label: 'Included',
+      all_levels: [
+        { level: 'Standard', label: 'Standard', selected: true, adjustment: 'Included' },
+      ],
+    },
+    recap_table: { rows: recapRows, materials_total: quote.materials_total, grand_total: quote.grand_total },
+    payment_terms: {
+      total,
+      deposit_pct: depositPct,
+      deposit_amount: depositAmount,
+      progress_pct: progressPct,
+      progress_amount: progressAmount,
+      completion_pct: completionPct,
+      completion_amount: completionAmount,
+    },
+    production: {
+      hours_low: Math.max(1, Math.round(hours * 0.80)),
+      hours_high: Math.max(Math.max(1, Math.round(hours * 0.80)) + 1, Math.round(hours * 1.20)),
+      crew_size: quote.production.crew_size,
+      days_low: Math.max(0.5, Math.round(days * 0.80 * 2) / 2),
+      days_high: Math.max(Math.max(0.5, Math.round(days * 0.80 * 2) / 2) + 0.5, Math.round(days * 1.20 * 2) / 2),
+    },
+  };
+}

@@ -6,8 +6,8 @@ import { getTenantById } from '$lib/server/tenant.js';
 import { calculateInteriorQuote, calculateExteriorQuote, calculateEpoxyQuote } from '$lib/server/pricing.js';
 import { resolveSurcharges, resolveMaterials, resolvePaymentTerms } from '$lib/server/pricing-config.js';
 import { calculateInteriorBottomUp, calculateExteriorBottomUp, calculateEpoxyBottomUp } from '$lib/server/pricing-v2.js';
-import { generateEstimatePDF, generateEstimatePDFLegacy } from '$lib/server/pdf.js';
-import { assembleInteriorEstimate, assembleExteriorEstimate } from '$lib/server/estimate-templates.js';
+import { generateEstimatePDF } from '$lib/server/pdf.js';
+import { assembleInteriorEstimate, assembleExteriorEstimate, assembleEpoxyEstimate } from '$lib/server/estimate-templates.js';
 import { createEstimateDoc } from '$lib/server/google-docs.js';
 import { createEstimateSheet } from '$lib/server/google-sheets.js';
 import { v4 as uuidv4 } from 'uuid';
@@ -102,12 +102,15 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     website_url: tenant.website_url,
   };
 
-  if (tenant.google_refresh_token && (trade_type === 'interior' || trade_type === 'exterior')) {
-    // Use template engine for interior/exterior
-    const estimateDoc = trade_type === 'interior'
-      ? assembleInteriorEstimate(scope as InteriorScopeData, quote, tenantInfo, submissionId, resolvePaymentTerms(tenant))
-      : assembleExteriorEstimate(scope as ExteriorScopeData, quote, tenantInfo, submissionId, resolvePaymentTerms(tenant));
+  // One assembled document drives every output format, all three trades
+  const paymentTerms = resolvePaymentTerms(tenant);
+  const estimateDoc = trade_type === 'interior'
+    ? assembleInteriorEstimate(scope as InteriorScopeData, quote, tenantInfo, submissionId, paymentTerms)
+    : trade_type === 'exterior'
+      ? assembleExteriorEstimate(scope as ExteriorScopeData, quote, tenantInfo, submissionId, paymentTerms)
+      : assembleEpoxyEstimate(scope as EpoxyScopeData, quote, tenantInfo, submissionId, paymentTerms);
 
+  if (tenant.google_refresh_token) {
     if (tenant.output_format === 'google_sheets') {
       try {
         googleDocUrl = await createEstimateSheet(tenant, estimateDoc);
@@ -120,7 +123,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     } else {
       // Default: google_docs
       try {
-        googleDocUrl = await createEstimateDoc(tenant, client, quote, submissionId);
+        googleDocUrl = await createEstimateDoc(tenant, client, quote, submissionId, null, estimateDoc);
         if (googleDocUrl) {
           db.update(submissions).set({ google_doc_url: googleDocUrl }).where(eq(submissions.id, submissionId)).run();
         }
@@ -128,32 +131,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         console.error('[google-docs] Failed to create doc:', err);
       }
     }
-  } else if (tenant.google_refresh_token) {
-    // Epoxy — use legacy Google Docs for now
-    try {
-      googleDocUrl = await createEstimateDoc(tenant, client, quote, submissionId);
-      if (googleDocUrl) {
-        db.update(submissions).set({ google_doc_url: googleDocUrl }).where(eq(submissions.id, submissionId)).run();
-      }
-    } catch (err) {
-      console.error('[google-docs] Failed to create doc:', err);
-    }
   }
 
   // Generate professional PDF using template engine
   try {
-    let pdfBuffer: Buffer;
-
-    if (trade_type === 'interior') {
-      const estimateDoc = assembleInteriorEstimate(scope as InteriorScopeData, quote, tenantInfo, submissionId, resolvePaymentTerms(tenant));
-      pdfBuffer = await generateEstimatePDF(estimateDoc, tenant);
-    } else if (trade_type === 'exterior') {
-      const estimateDoc = assembleExteriorEstimate(scope as ExteriorScopeData, quote, tenantInfo, submissionId, resolvePaymentTerms(tenant));
-      pdfBuffer = await generateEstimatePDF(estimateDoc, tenant);
-    } else {
-      // Epoxy uses legacy format for now
-      pdfBuffer = await generateEstimatePDFLegacy(client, quote, submissionId, tenant);
-    }
+    const pdfBuffer = await generateEstimatePDF(estimateDoc, tenant);
 
     mkdirSync('./data/pdfs', { recursive: true });
     const pdfPath = `./data/pdfs/${submissionId}.pdf`;

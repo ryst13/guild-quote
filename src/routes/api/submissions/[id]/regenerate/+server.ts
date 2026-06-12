@@ -5,8 +5,8 @@ import { db } from '$lib/server/db.js';
 import { submissions } from '$lib/server/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { getTenantById } from '$lib/server/tenant.js';
-import { generateEstimatePDF, generateEstimatePDFLegacy } from '$lib/server/pdf.js';
-import { assembleInteriorEstimate, assembleExteriorEstimate } from '$lib/server/estimate-templates.js';
+import { generateEstimatePDF } from '$lib/server/pdf.js';
+import { assembleInteriorEstimate, assembleExteriorEstimate, assembleEpoxyEstimate } from '$lib/server/estimate-templates.js';
 import { resolvePaymentTerms } from '$lib/server/pricing-config.js';
 import { createEstimateDoc } from '$lib/server/google-docs.js';
 import { createEstimateSheet } from '$lib/server/google-sheets.js';
@@ -95,18 +95,17 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
   let pdfUrl: string | null = null;
   let googleDocUrl: string | null = null;
 
+  // One assembled document drives every output format, all three trades
+  const paymentTerms = resolvePaymentTerms(tenant);
+  const estimateDoc = sub.trade_type === 'interior'
+    ? assembleInteriorEstimate(scope as InteriorScopeData, quote, tenantInfo, params.id, paymentTerms)
+    : sub.trade_type === 'exterior'
+      ? assembleExteriorEstimate(scope as ExteriorScopeData, quote, tenantInfo, params.id, paymentTerms)
+      : assembleEpoxyEstimate(scope, quote, tenantInfo, params.id, paymentTerms);
+
   // Regenerate PDF
   try {
-    let pdfBuffer: Buffer;
-    if (sub.trade_type === 'interior') {
-      const doc = assembleInteriorEstimate(scope as InteriorScopeData, quote, tenantInfo, params.id, resolvePaymentTerms(tenant));
-      pdfBuffer = await generateEstimatePDF(doc, tenant);
-    } else if (sub.trade_type === 'exterior') {
-      const doc = assembleExteriorEstimate(scope as ExteriorScopeData, quote, tenantInfo, params.id, resolvePaymentTerms(tenant));
-      pdfBuffer = await generateEstimatePDF(doc, tenant);
-    } else {
-      pdfBuffer = await generateEstimatePDFLegacy(scope.client, quote, params.id, tenant);
-    }
+    const pdfBuffer = await generateEstimatePDF(estimateDoc, tenant);
 
     mkdirSync('./data/pdfs', { recursive: true });
     writeFileSync(`./data/pdfs/${params.id}.pdf`, pdfBuffer);
@@ -152,13 +151,10 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
       }
 
       // Create new file in project folder
-      if (tenant.output_format === 'google_sheets' && (sub.trade_type === 'interior' || sub.trade_type === 'exterior')) {
-        const estimateDoc = sub.trade_type === 'interior'
-          ? assembleInteriorEstimate(scope as InteriorScopeData, quote, tenantInfo, params.id, resolvePaymentTerms(tenant))
-          : assembleExteriorEstimate(scope as ExteriorScopeData, quote, tenantInfo, params.id, resolvePaymentTerms(tenant));
+      if (tenant.output_format === 'google_sheets') {
         googleDocUrl = await createEstimateSheet(tenant, estimateDoc, projectFolderId);
       } else {
-        googleDocUrl = await createEstimateDoc(tenant, scope.client, quote, params.id, projectFolderId);
+        googleDocUrl = await createEstimateDoc(tenant, scope.client, quote, params.id, projectFolderId, estimateDoc);
       }
       if (googleDocUrl) {
         db.update(submissions).set({ google_doc_url: googleDocUrl }).where(eq(submissions.id, params.id)).run();

@@ -1,4 +1,5 @@
 import { google } from 'googleapis';
+import type { EstimateDocument } from './estimate-templates.js';
 import { env } from '$env/dynamic/private';
 import type { TenantConfig, QuoteResult, ClientInfo } from '$lib/types/index.js';
 
@@ -8,6 +9,7 @@ export async function createEstimateDoc(
   quote: QuoteResult,
   submissionId: string,
   projectFolderId?: string | null,
+  estimateDoc?: EstimateDocument | null,
 ): Promise<string | null> {
   if (!tenant.google_refresh_token) return null;
 
@@ -73,6 +75,67 @@ export async function createEstimateDoc(
     idx += text.length + 1;
   }
 
+  // ── Structured 8-section rendering (matches the PDF) ──
+  if (estimateDoc) {
+    const d = estimateDoc;
+    insertText(d.header.company_name, true, 18);
+    insertText(`${d.header.trade_label} Estimate`, false, 14);
+    insertText('');
+    insertText('Prepared for:', true);
+    insertText(d.header.client_name);
+    if (d.header.client_address) insertText(d.header.client_address);
+    if (d.header.client_email) insertText(d.header.client_email);
+    if (d.header.client_phone) insertText(d.header.client_phone);
+    insertText('');
+    insertText(`Date: ${d.header.date}  |  Ref: ${d.header.reference}`);
+    insertText('');
+
+    insertText('Existing Surface Condition', true, 13);
+    insertText(`${d.surface_grade.label}`);
+    insertText(d.surface_grade.description);
+    insertText('');
+
+    insertText('Work Description', true, 13);
+    for (const block of d.work_description) {
+      insertText(block.area, true, 12);
+      for (const b of block.bullets) insertText(`  • ${b}`);
+      if (block.notes) insertText(`  Note: ${block.notes}`);
+      insertText('');
+    }
+
+    insertText('Surface Preparation', true, 13);
+    insertText(`${d.prep_level.label} (${d.prep_level.adjustment_label})`);
+    insertText(d.prep_level.description);
+    insertText('');
+
+    insertText('Project Summary', true, 13);
+    for (const row of d.recap_table.rows) {
+      insertText(`  ${row.area}  —  $${Math.round(row.price).toLocaleString()}`);
+    }
+    insertText(`  Materials  —  $${Math.round(d.recap_table.materials_total).toLocaleString()}`);
+    insertText('');
+    insertText(`GRAND TOTAL: $${d.recap_table.grand_total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, true, 16);
+    insertText('');
+
+    insertText('Your Home Investment', true, 13);
+    const pt = d.payment_terms;
+    insertText(`  Deposit (${Math.round(pt.deposit_pct * 100)}%), due at signing: $${pt.deposit_amount.toLocaleString()}`);
+    if (pt.progress_pct && pt.progress_amount) {
+      insertText(`  Progress (${Math.round(pt.progress_pct * 100)}%), due halfway through: $${pt.progress_amount.toLocaleString()}`);
+    }
+    insertText(`  Completion (${Math.round(pt.completion_pct * 100)}%), due when the work is done: $${pt.completion_amount.toLocaleString()}`);
+    insertText('');
+
+    insertText(`Estimated: ${d.production.hours_low}-${d.production.hours_high} hours, ${d.production.crew_size}-person crew, ${d.production.days_low}-${d.production.days_high} days`);
+    insertText('');
+
+    insertText('Accepted by: ______________________________    Date: ______________');
+    insertText('');
+    insertText('---');
+    const fp = [d.header.company_name, d.header.phone, d.header.email].filter(Boolean);
+    insertText(fp.join(' | '));
+  } else {
+  // ── Legacy line-item rendering (no assembled document available) ──
   // Header
   insertText(tenant.company_name, true, 18);
   insertText(`${tradeLabel} Estimate`, false, 14);
@@ -141,6 +204,8 @@ export async function createEstimateDoc(
   insertText('---');
   const footerParts = [tenant.company_name, tenant.contact_phone, tenant.contact_email].filter(Boolean);
   insertText(footerParts.join(' | '));
+
+  }
 
   // Apply all requests
   if (requests.length > 0) {

@@ -1,5 +1,4 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import { resolvePaymentTerms } from './pricing-config.js';
 import type { TenantConfig } from '$lib/types/index.js';
 import type { EstimateDocument } from './estimate-templates.js';
 
@@ -355,37 +354,6 @@ export async function generateEstimatePDF(
 }
 
 // Legacy wrapper for backward compatibility with existing generate endpoint
-export async function generateEstimatePDFLegacy(
-  client: any,
-  quote: any,
-  submissionId: string,
-  tenant: TenantConfig,
-): Promise<Buffer> {
-  // For non-interior/exterior trades or when template engine isn't wired up yet,
-  // fall back to a simple format
-  const { assembleInteriorEstimate } = await import('./estimate-templates.js');
-
-  const scope = {
-    client,
-    rooms: [],
-    project: { surface_grade: 'B' as const, prep_level: 'Standard' as const, color_samples: false, transportation: false, notes: '' },
-  };
-
-  const doc = assembleInteriorEstimate(scope, quote, {
-    company_name: tenant.company_name,
-    contact_phone: tenant.contact_phone,
-    contact_email: tenant.contact_email,
-    website_url: tenant.website_url,
-  }, submissionId, resolvePaymentTerms(tenant));
-
-  // Override header with actual client data
-  doc.header.client_name = client.name;
-  doc.header.client_address = client.address;
-  doc.header.client_email = client.email || '';
-  doc.header.client_phone = client.phone || '';
-
-  return generateEstimatePDF(doc, tenant);
-}
 
 function wrapText(str: string, fontObj: any, fontSize: number, maxWidth: number): string[] {
   const words = str.split(' ');
