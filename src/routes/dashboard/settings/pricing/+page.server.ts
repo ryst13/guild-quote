@@ -1,6 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import { getTenantById, defaultCatalog } from '$lib/server/tenant.js';
 import { buildPriceBook } from '$lib/server/price-book.js';
+import { getAccessState } from '$lib/server/features.js';
 import type { PageServerLoad } from './$types.js';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -63,6 +64,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     tenant.catalog !== defaultCatalog &&
     JSON.stringify(tenant.catalog) !== JSON.stringify(defaultCatalog);
 
+  const googleDocsAllowed = getAccessState(tenant).canUseGoogleDocs;
+
   const VALID_TABS = ['pricebook', 'labor', 'surcharges', 'materials', 'payment', 'output'];
   const requestedTab = url.searchParams.get('tab') ?? 'pricebook';
 
@@ -73,7 +76,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     config,
     defaults,
     enabledTrades: tenant.enabled_trades,
-    outputFormat: tenant.output_format || 'google_docs',
+    canUseGoogleDocs: googleDocsAllowed,
+    // Non-Pro users only ever get PDF — show that as their active selection
+    // instead of a stored google_docs they can't actually produce
+    outputFormat: googleDocsAllowed ? (tenant.output_format || 'google_docs') : 'pdf',
     showLosp: tenant.show_losp ?? true,
     crewHourlyWage: tenant.crew_hourly_wage,
     defaultCrewSize: tenant.default_crew_size ?? 2,

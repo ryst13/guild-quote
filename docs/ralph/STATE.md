@@ -542,6 +542,32 @@ client, never reflected into the app, so not exploitable, but now clean). 93 tes
 the constitution's two-consecutive-clean requirement, then the GAN overhaul is complete
 (only LR-2 deploy, gated on Ryan's banking, would remain).
 
+### Iteration 27 — Full-app Critic sweep #5 — CLEAN on the completion bar ✓ (second of two) → OVERHAUL COMPLETE
+**Security: CLEAN** (zero critical/high; full re-audit; "shippable from a security standpoint";
+one advisory LOW — send-endpoint inline email HTML not using the esc() helper). **Correctness:
+CLEAN** (zero critical/high, 93 tests; "shippable on correctness grounds: YES"; full lifecycle
++ engine-parity + tier-gating verified). **Marcos/truth: zero critical/high** with one MODERATE
+— the Output settings tab offered Google Sheets/Docs to GQ users un-badged, then generate
+silently produced PDF only (the one settings surface that should explain the upgrade path
+didn't). Not a hard dead-end (PDF still generates; detail page shows the gate), hence MODERATE.
+
+Sweeps #4 and #5 both returned **zero critical/high across all three lenses** — the
+constitution's completion bar ("a full-app Critic sweep returns zero critical/high twice").
+Cleared the residual sub-threshold items as final polish: Output tab now badges Google
+Sheets/Docs "GQ Pro" for non-Pro users, disables them, shows PDF as their active format, and
+links to billing (MODERATE); send-endpoint email HTML now escapes company_name/contact_phone
+and tenant update validates primary_color/accent_color as hex literals (security LOW, defense
+in depth + consistency with the iter-26 email.ts hardening). Accepted NIT (logged, not fixed):
+the dead `viewed` status string lingers in label maps — unreachable (no code writes it), and
+removing the type-union member risks more than the cosmetic gain. 93 tests, build ✓.
+
+**=== GAN OVERHAUL COMPLETE ===**
+Backlog: P0 8/8, P1 7/7, P2-1..5 done, LR-1 done. Two consecutive clean sweeps (zero
+critical/high) achieved. Remaining work is OUT of the overhaul's scope: LR-2 (Fly.io + Stripe
+live deploy) is gated on Ryan's entity/banking step; D-2 (per-item rate overrides) is
+deferred pending byte-parity locks. The product itself is audited ship-ready across security,
+correctness, and truth/UX. Ryan to audit.
+
 ## Discovered items
 
 - [ ] D-1 (from iter 2 Critic, MEDIUM): Materials/Surcharges inputs need inline

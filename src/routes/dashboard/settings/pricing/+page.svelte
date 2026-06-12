@@ -589,20 +589,26 @@
       <!-- Output Format -->
       <div class="rounded-xl bg-white border border-gray-200 p-6 mb-6">
         <h2 class="font-semibold text-gray-900 mb-1">Estimate Output Format</h2>
-        <p class="text-sm text-gray-500 mb-4">Choose how estimates are saved to your Google Drive.</p>
-        <div class="flex gap-3">
+        {#if data.canUseGoogleDocs}
+          <p class="text-sm text-gray-500 mb-4">Every estimate is made as a PDF. You can also save it to your Google Drive as a Sheet or Doc.</p>
+        {:else}
+          <p class="text-sm text-gray-500 mb-4">Every estimate is made as a professional PDF. Saving to Google Drive as a Sheet or Doc is part of GQ Pro.</p>
+        {/if}
+        <div class="flex flex-col sm:flex-row gap-3">
           <button
-            onclick={() => outputFormat = 'google_sheets'}
-            class="flex-1 rounded-xl border p-4 text-left {outputFormat === 'google_sheets' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}"
+            onclick={() => { if (data.canUseGoogleDocs) outputFormat = 'google_sheets'; }}
+            disabled={!data.canUseGoogleDocs}
+            class="flex-1 rounded-xl border p-4 text-left {outputFormat === 'google_sheets' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'} {!data.canUseGoogleDocs ? 'opacity-60 cursor-not-allowed' : ''}"
           >
-            <div class="font-semibold text-gray-900 text-sm">Google Sheets</div>
-            <div class="text-xs text-gray-500 mt-1">Formatted spreadsheet. Easy to edit, prints well. Recommended.</div>
+            <div class="font-semibold text-gray-900 text-sm">Google Sheets {#if !data.canUseGoogleDocs}<span class="text-xs font-medium text-blue-600">GQ Pro</span>{/if}</div>
+            <div class="text-xs text-gray-500 mt-1">Formatted spreadsheet. Easy to edit, prints well.</div>
           </button>
           <button
-            onclick={() => outputFormat = 'google_docs'}
-            class="flex-1 rounded-xl border p-4 text-left {outputFormat === 'google_docs' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}"
+            onclick={() => { if (data.canUseGoogleDocs) outputFormat = 'google_docs'; }}
+            disabled={!data.canUseGoogleDocs}
+            class="flex-1 rounded-xl border p-4 text-left {outputFormat === 'google_docs' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'} {!data.canUseGoogleDocs ? 'opacity-60 cursor-not-allowed' : ''}"
           >
-            <div class="font-semibold text-gray-900 text-sm">Google Docs</div>
+            <div class="font-semibold text-gray-900 text-sm">Google Docs {#if !data.canUseGoogleDocs}<span class="text-xs font-medium text-blue-600">GQ Pro</span>{/if}</div>
             <div class="text-xs text-gray-500 mt-1">Document format. Good for narrative-heavy estimates.</div>
           </button>
           <button
@@ -610,9 +616,12 @@
             class="flex-1 rounded-xl border p-4 text-left {outputFormat === 'pdf' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}"
           >
             <div class="font-semibold text-gray-900 text-sm">PDF Only</div>
-            <div class="text-xs text-gray-500 mt-1">Works without Google. The estimate becomes a PDF and is attached to your emails.</div>
+            <div class="text-xs text-gray-500 mt-1">The estimate is a PDF you can download and attach to your emails. Included on every plan.</div>
           </button>
         </div>
+        {#if !data.canUseGoogleDocs}
+          <a href="/dashboard/settings/billing" class="inline-block mt-3 text-xs font-medium text-blue-600 hover:text-blue-700">See GQ Pro →</a>
+        {/if}
       </div>
 
       <!-- LOSP Toggle -->

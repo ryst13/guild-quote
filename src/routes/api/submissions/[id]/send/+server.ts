@@ -42,12 +42,12 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
 
   const htmlBody = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h2 style="color: ${tenant.primary_color}; margin-bottom: 4px;">${tenant.company_name}</h2>
+      <h2 style="color: ${tenant.primary_color}; margin-bottom: 4px;">${escapeHtml(tenant.company_name)}</h2>
       <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 16px 0;" />
       <div style="color: #374151; line-height: 1.6;">${htmlMessage}</div>
       <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
       <p style="font-size: 12px; color: #9ca3af;">
-        Ref: ${params.id.slice(0, 8).toUpperCase()} | ${tenant.company_name}${tenant.contact_phone ? ` | ${tenant.contact_phone}` : ''}
+        Ref: ${params.id.slice(0, 8).toUpperCase()} | ${escapeHtml(tenant.company_name)}${tenant.contact_phone ? ` | ${escapeHtml(tenant.contact_phone)}` : ''}
       </p>
     </div>
   `;

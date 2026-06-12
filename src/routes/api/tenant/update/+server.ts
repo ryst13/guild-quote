@@ -24,6 +24,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     'economy_of_scale_enabled', 'mobilization_hours', 'setup_hours_per_area',
   ];
 
+  // Brand colors land in inline style attributes in emails/PDFs — keep them to
+  // a hex literal so nothing can break out of the attribute.
+  for (const field of ['primary_color', 'accent_color']) {
+    if (field in body && body[field] && !/^#[0-9a-f]{3,8}$/i.test(String(body[field]))) {
+      throw error(400, `${field} must be a hex color like #2563eb`);
+    }
+  }
+
   // logo_url is read back into filesystem paths by the PDF renderer — only the
   // exact shape upload-logo produces (or empty to clear) is allowed.
   if ('logo_url' in body && body.logo_url) {
