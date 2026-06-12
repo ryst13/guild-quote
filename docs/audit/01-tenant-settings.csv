@@ -57,7 +57,7 @@ SET-055,Onboarding step 3,Connect Google,OAuth button,google_refresh_token,(none
 SET-056,Estimate editor (per estimate),Adjusted price,Number + regenerate,submissions.sales_price (+ doc regen),(quote total),Per-estimate; proportionally rescales line items,,,
 SET-057,Estimate editor (per estimate),Estimator notes,Textarea,submissions.estimator_notes,(empty),,,,
 SET-058,Estimate editor (per estimate),Snapshot language,Select: EN / ES / PT / RO / YUE,(snapshot generation),EN,,,,
-SET-059,Admin (platform),Plan,Inline select: trial / gq / gq_pro,tenants.plan,trial,Platform-admin only,,,
+SET-059,Admin (platform),Plan,Inline select: trial / gq / gq_pro,tenants.plan,trial,ENFORCED (ralph iter 20),,,plan now drives real server-side gates via FEATURE_MATRIX (was decoration)
 SET-060,Admin (platform),Payment status,Inline select,tenants.payment_status,none,Platform-admin only,,,
 SET-061,Admin (platform),Trial days remaining,Number,tenants.trial_ends_at,14 days at signup,Platform-admin only,,,
 SET-062,Admin (platform),Lifetime access,Toggle,tenants.lifetime_access,false,Platform-admin only,,,
