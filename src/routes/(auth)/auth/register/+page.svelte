@@ -11,7 +11,7 @@
     </div>
     <div class="rounded-2xl bg-white p-8 shadow-sm border border-gray-200">
       <h1 class="text-xl font-bold text-gray-900 mb-2">Create your account</h1>
-      <p class="text-sm text-gray-500 mb-6">Generate professional estimates for your clients.</p>
+      <p class="text-sm text-gray-500 mb-6">Generate professional estimates for your clients. Free for 14 days, every feature unlocked, no credit card.</p>
 
       {#if error}
         <div class="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</div>

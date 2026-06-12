@@ -139,7 +139,7 @@
         <!-- Profitability (internal) -->
         <div class="rounded-xl bg-white border border-gray-200 p-6">
           <h3 class="font-semibold text-gray-900 mb-3">Your Profit — the client never sees this</h3>
-          <div class="grid grid-cols-3 gap-4 text-sm">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
             <div>
               <span class="text-gray-500">Gross Profit</span>
               <div class="font-bold text-gray-900">${Math.round(result.quote.profitability.gross_profit).toLocaleString()}</div>

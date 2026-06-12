@@ -611,7 +611,7 @@
             {@const daysHigh = Math.max(daysLow + 0.5, Math.round(days * 1.20 * 2) * 0.5)}
             <div class="rounded-xl bg-white border border-gray-200 p-6">
               <h2 class="font-semibold text-gray-900 mb-3">Production Estimate</h2>
-              <div class="grid grid-cols-3 gap-4 text-sm">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                 <div><span class="text-gray-500">Hours:</span> <span class="font-medium">{hrsLow}-{hrsHigh}</span></div>
                 <div><span class="text-gray-500">Crew:</span> <span class="font-medium">{sub.quote.production.crew_size}-person</span></div>
                 <div><span class="text-gray-500">Duration:</span> <span class="font-medium">{daysLow}-{daysHigh} days</span></div>
@@ -638,30 +638,7 @@
       <div class="space-y-4">
         <!-- Primary Action -->
         <div class="rounded-xl bg-white border border-gray-200 p-5 space-y-2">
-          {#if sub.estimate_status === 'draft'}
-            {#if data.canSendEmail}
-              <button onclick={sendToClient} class="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">
-                Send to Client
-              </button>
-            {:else if sub.estimate_pdf_url}
-              <a href={sub.estimate_pdf_url} target="_blank" class="block w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 text-center">
-                Download PDF to send
-              </a>
-              <p class="text-xs text-gray-400 text-center">Emailing from GuildQuote is part of GQ Pro.</p>
-            {/if}
-          {:else if (sub.estimate_status === 'sent' || sub.estimate_status === 'viewed') && data.canSendEmail}
-            <button onclick={sendToClient} class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-              Resend / Follow Up
-            </button>
-            <div class="grid grid-cols-2 gap-2 pt-1">
-              <button onclick={() => showAcceptModal = true} class="rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-700">
-                Won
-              </button>
-              <button onclick={() => showDeclineModal = true} class="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100">
-                Lost
-              </button>
-            </div>
-          {:else if sub.estimate_status === 'accepted'}
+          {#if sub.estimate_status === 'accepted'}
             <div class="text-center py-2">
               <div class="text-sm font-semibold text-green-700">Won</div>
               {#if sub.close_price && sub.close_price !== sub.sales_price}
@@ -676,9 +653,26 @@
               {/if}
             </div>
           {:else}
-            <button onclick={sendToClient} class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-              Resend Estimate
-            </button>
+            <!-- Send/deliver: emailing is Pro; GQ downloads and sends the PDF themselves -->
+            {#if data.canSendEmail}
+              <button onclick={sendToClient} class="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">
+                {sub.estimate_status === 'draft' ? 'Send to Client' : 'Resend / Follow Up'}
+              </button>
+            {:else if sub.estimate_pdf_url}
+              <a href={sub.estimate_pdf_url} target="_blank" class="block w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 text-center">
+                Download PDF to send
+              </a>
+              <p class="text-xs text-gray-400 text-center">Emailing from GuildQuote is part of GQ Pro.</p>
+            {/if}
+            <!-- Outcome marking is available on every plan, from any open status -->
+            <div class="grid grid-cols-2 gap-2 pt-1">
+              <button onclick={() => showAcceptModal = true} class="rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-700">
+                Won
+              </button>
+              <button onclick={() => showDeclineModal = true} class="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100">
+                Lost
+              </button>
+            </div>
           {/if}
         </div>
 

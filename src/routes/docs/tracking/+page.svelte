@@ -23,8 +23,6 @@
         <span class="text-gray-300">&rarr;</span>
         <span class="px-3 py-1.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Sent</span>
         <span class="text-gray-300">&rarr;</span>
-        <span class="px-3 py-1.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">Viewed</span>
-        <span class="text-gray-300">&rarr;</span>
         <span class="px-3 py-1.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Won</span>
         <span class="text-sm text-gray-400 ml-1">or</span>
         <span class="px-3 py-1.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Lost</span>
@@ -38,10 +36,6 @@
         <div class="rounded-lg border border-gray-200 p-4">
           <div class="font-semibold text-gray-900 text-sm mb-1">Sent</div>
           <p class="text-sm text-gray-500">The estimate has been emailed or delivered to the client. The clock starts on your follow-up timeline.</p>
-        </div>
-        <div class="rounded-lg border border-gray-200 p-4">
-          <div class="font-semibold text-gray-900 text-sm mb-1">Viewed</div>
-          <p class="text-sm text-gray-500">Reserved for read tracking — today, statuses move when you mark them (Sent when you send, Won or Lost when you hear back).</p>
         </div>
         <div class="rounded-lg border border-gray-200 p-4">
           <div class="font-semibold text-gray-900 text-sm mb-1">Won</div>

@@ -72,6 +72,7 @@ export const load: PageServerLoad = async ({ locals }) => {
     },
     benchmarks,
     isPro: access.canUseAnalytics,
+    canSendEmail: access.canSendEmail,
     isTrialing: access.isTrialing,
     trialDaysLeft: access.trialDaysLeft,
     needsUpgrade: access.needsUpgrade,

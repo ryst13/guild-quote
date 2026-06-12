@@ -311,7 +311,7 @@
               </select>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <!-- Wage -->
               <div>
                 <label for="wage" class="block text-sm font-medium text-gray-700 mb-1">Crew hourly wage</label>
@@ -363,7 +363,7 @@
           <div class="space-y-4">
             <p class="text-sm text-gray-500">What do you typically charge for these items? Leave blank for our defaults.</p>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label for="anchor-bedroom" class="block text-xs font-medium text-gray-700 mb-1">Medium bedroom — walls only</label>
                 <div class="relative">
@@ -426,7 +426,7 @@
         <h2 class="text-xl font-bold text-gray-900 mb-1">Connect Google Account</h2>
         <p class="text-sm text-gray-500 mb-6">Connect your Google account to save estimates as Google Docs in your Drive. You own the files.</p>
 
-        {#if data.tenant.google_refresh_token}
+        {#if data.tenant.googleConnected}
           <div class="rounded-lg bg-green-50 border border-green-200 p-4 flex items-center gap-3 mb-6">
             <svg class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
             <span class="text-sm font-medium text-green-800">Google account connected</span>

@@ -492,6 +492,35 @@ PDF/Docs ("Setup & surcharges" / "Adjustments & discounts").
 Sweep found HIGHs → **two-clean-sweeps counter stays at ZERO.** Next: sweep #3 must come back
 fully clean, then sweep #4 clean, to pass the completion check.
 
+### Iteration 25 — Full-app Critic sweep #3 — FINDINGS → fixed → green
+**Correctness lens: CLEAN** (zero critical/high; verified all sweep-2 edits hold; only a
+pre-existing LOW output_format type-cast + a NIT Infinity-guard, both fixed anyway).
+**Security lens: 1 HIGH + 1 LOW** — HIGH: onboarding/+page.server.ts serialized the raw
+google_refresh_token (a long-lived OAuth credential) into the browser's SSR payload; it
+only ever needed a boolean. Now `googleConnected: !!token`; verified no other server load
+leaks it. LOW: update handler's declined-branch re-read wasn't tenant-scoped (no data
+crossed — attacker's OAuth client can't touch a victim folder — but fixed for consistency).
+**Marcos lens: 2 HIGH** — both were TWINS of sweep-2 fixes that landed on one surface but
+not its pair: (1) docs/tracking still showed the "Viewed" open-tracking pill + "reserved for
+read tracking" copy (demo got fixed, docs didn't) → removed, pipeline now Draft→Sent→Won/Lost;
+(2) the dashboard-LIST "Send" button still linked GQ users into the send page that redirects
+them right back (detail-page button got fixed, list didn't). Fixing the list surfaced a real
+pre-existing gap: GQ users send manually so estimates stay 'draft', but Won/Lost only showed
+for sent/viewed — GQ users could never record an outcome. Restructured BOTH the detail-page
+primary-action block and the list quick-actions so Won/Lost is available from any open status
+on every plan, while emailing stays Pro. Plus moderates: docs/output now Pro-badges Google
+Docs/Sheets and clarifies English snapshots are base / other languages Pro (caught my own
+near-miss: don't badge the whole snapshot feature Pro — English is included); onboarding
+wage/anchor grids stack on phones; dashboard Pro-tease reworded to the genuinely-Pro thing
+(win rate + averages by trade, not "see your numbers" sitting under visible numbers); readout
+grids responsive; register page restates the 14-day no-card trial.
+
+**Process lesson (logged):** when a fix removes a claim or gates a feature, grep for EVERY
+surface that makes the same claim — the twin (demo↔docs, detail-page↔list) is where it hides.
+Sweep #3 found two HIGHs that were purely un-twinned sweep-2 fixes.
+
+Sweep found HIGHs → **counter stays at 0/2.** Next: sweep #4 must come back fully clean.
+
 ## Discovered items
 
 - [ ] D-1 (from iter 2 Critic, MEDIUM): Materials/Surcharges inputs need inline

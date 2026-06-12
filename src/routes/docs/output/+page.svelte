@@ -14,7 +14,7 @@
     <div class="rounded-xl border border-gray-200 bg-white p-6">
       <div class="prose prose-sm prose-gray max-w-none">
         <h2 class="text-xl font-bold text-gray-900 mt-0 mb-3">Document Formats</h2>
-        <p>Every estimate can be output in three formats. You can generate all three from the same estimate -- they stay in sync.</p>
+        <p>Every plan generates a professional, branded <strong>PDF</strong>. <strong>Google Docs and Google Sheets</strong> output is part of GQ Pro (and your free trial). The formats stay in sync from the same estimate.</p>
       </div>
 
       <div class="mt-4 space-y-3">
@@ -99,7 +99,7 @@
   <section id="crew-snapshots">
     <div class="rounded-xl border border-gray-200 bg-white p-6">
       <div class="prose prose-sm prose-gray max-w-none">
-        <h2 class="text-xl font-bold text-gray-900 mt-0 mb-3">Multilingual Crew Snapshots</h2>
+        <h2 class="text-xl font-bold text-gray-900 mt-0 mb-3">Crew Snapshots</h2>
         <p>A crew snapshot is a scope-only document designed for your painting crew. It tells them <strong>what to do</strong> -- rooms, surfaces, prep, coats, colors -- without showing any pricing.</p>
 
         <h3>What is included</h3>
@@ -113,13 +113,13 @@
         </ul>
 
         <h3>Language support</h3>
-        <p>Crew snapshots can be generated in multiple languages:</p>
+        <p><strong>English snapshots are included on every plan.</strong> Snapshots in other languages are part of GQ Pro:</p>
         <ul>
-          <li><strong>English (EN)</strong></li>
-          <li><strong>Spanish (ES)</strong></li>
-          <li><strong>Portuguese (PT)</strong></li>
-          <li><strong>Romanian (RO)</strong></li>
-          <li><strong>Cantonese (粵語)</strong></li>
+          <li><strong>English (EN)</strong> — every plan</li>
+          <li><strong>Spanish (ES)</strong> — GQ Pro</li>
+          <li><strong>Portuguese (PT)</strong> — GQ Pro</li>
+          <li><strong>Romanian (RO)</strong> — GQ Pro</li>
+          <li><strong>Cantonese (粵語)</strong> — GQ Pro</li>
         </ul>
         <p>Select the language when generating the snapshot. The scope content is translated; your company name and branding stay in English.</p>
 

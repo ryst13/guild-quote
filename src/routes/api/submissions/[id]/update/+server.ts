@@ -45,7 +45,9 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
   if (body.estimate_status === 'declined' || leavingDeclined) {
     try {
       const tenant = getTenantById(locals.user.tenant_id);
-      const sub = db.select().from(submissions).where(eq(submissions.id, params.id)).get();
+      const sub = db.select().from(submissions)
+        .where(and(eq(submissions.id, params.id), eq(submissions.tenant_id, locals.user.tenant_id)))
+        .get();
       if (tenant?.google_refresh_token && sub?.google_drive_project_folder_id &&
           tenant.google_drive_active_folder_id && tenant.google_drive_inactive_folder_id) {
         const clientId = env.GOOGLE_CLIENT_ID;

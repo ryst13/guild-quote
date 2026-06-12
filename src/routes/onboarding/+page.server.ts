@@ -61,7 +61,8 @@ export const load: PageServerLoad = async ({ locals }) => {
       logo_url: tenant.logo_url,
       onboarding_completed: tenant.onboarding_completed,
       enabled_trades: enabledTrades,
-      google_refresh_token: tenant.google_refresh_token,
+      // Boolean only — the raw refresh token must never reach the browser
+      googleConnected: !!tenant.google_refresh_token,
     },
     sampleEstimateTotal: sampleEstimateTotal,
   };

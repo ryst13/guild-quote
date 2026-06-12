@@ -221,7 +221,7 @@
     {#if !data.benchmarks && !data.isPro}
       <div class="rounded-xl border border-dashed border-gray-200 bg-white p-4 mb-6 flex items-center justify-between opacity-80">
         <div>
-          <span class="text-sm text-gray-500">With <span class="font-semibold text-blue-600">GQ Pro</span>: email estimates with one tap, get Google Docs with your logo, and see your numbers.</span>
+          <span class="text-sm text-gray-500">With <span class="font-semibold text-blue-600">GQ Pro</span>: email estimates with one tap, get Google Docs and Sheets, and see your win rate and averages by trade.</span>
         </div>
         <a href="/upgrade" class="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 whitespace-nowrap ml-4 hover:bg-blue-200">Learn More</a>
       </div>
@@ -344,9 +344,9 @@
                   <td class="px-4 py-3 text-gray-500 text-xs">{timeAgo(sub.created_at)}</td>
                   <td class="px-4 py-3">
                     <div class="flex items-center justify-end gap-1.5" role="group" aria-label="Quick actions">
-                      {#if sub.estimate_status === 'draft'}
+                      {#if sub.estimate_status === 'draft' && data.canSendEmail}
                         <a href="/dashboard/{sub.id}/send" onclick={(e) => e.stopPropagation()} class="rounded-lg bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">Send</a>
-                      {:else if sub.estimate_status === 'sent' || sub.estimate_status === 'viewed'}
+                      {:else if sub.estimate_status !== 'accepted' && sub.estimate_status !== 'declined'}
                         <button onclick={(e) => quickMark(sub.id, 'accepted', sub.sales_price, e)} disabled={busyId !== ''} class="rounded-lg border border-green-200 bg-green-50 px-2.5 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-100 disabled:opacity-50">Won</button>
                         <button onclick={(e) => quickMark(sub.id, 'declined', null, e)} disabled={busyId !== ''} class="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-50">Lost</button>
                       {/if}

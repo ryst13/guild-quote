@@ -178,7 +178,7 @@ export interface TenantConfig {
   service_areas: string;
   enabled_trades: TradeType[];
   labor_price_multiplier: number;
-  output_format: 'google_docs' | 'pdf';
+  output_format: 'google_docs' | 'google_sheets' | 'pdf';
   google_refresh_token: string | null;
   google_drive_folder_id: string | null;
   google_drive_root_folder_id: string | null;

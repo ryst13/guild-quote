@@ -67,7 +67,7 @@ function buildTenantConfig(row: typeof tenants.$inferSelect): TenantConfig {
     service_areas: row.service_areas,
     enabled_trades: enabledTrades,
     labor_price_multiplier: row.labor_price_multiplier,
-    output_format: row.output_format as 'google_docs' | 'pdf',
+    output_format: row.output_format as 'google_docs' | 'google_sheets' | 'pdf',
     google_refresh_token: row.google_refresh_token,
     google_drive_folder_id: row.google_drive_folder_id,
     google_drive_root_folder_id: row.google_drive_root_folder_id,
