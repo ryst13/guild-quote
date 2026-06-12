@@ -94,10 +94,14 @@
   (Google Docs finally matches the PDF). Both endpoints unified: one assembled doc
   drives Sheets/Docs/PDF for all three trades incl. regenerate; epoxy+Sheets works;
   dead legacy PDF path deleted. **DONE iter 15.**
-- [ ] P1-7b Visual polish slice: PDF/Docs typography + tenant branding (logo/colors)
-  applied consistently; D-7 job-level Exclusions block; recap lines vs surcharges
-  reconciliation note (visible rows don't sum to total — surcharges/mobilization
-  have no row; proportionally larger gap for epoxy).
+- [x] P1-7b Output polish: tenant logo embedded in the PDF header (PNG/JPEG,
+  fit-or-shrink-or-skip so it can never collide with the contact block; happy-path
+  tested with a real PNG; profile copy now states the format rule); D-7 closed —
+  job-level "Not Included in This Estimate" rollup in PDF/Docs/Sheets alongside the
+  per-room bullets; recap reconciliation line in all three renderers (SIGNED residual:
+  "Setup & surcharges" or "Adjustments & discounts" — the Critic proved a clamped
+  version hid real negative residuals for rate-based Basic-prep tenants); Docs renderer
+  now prints cents consistently. **DONE iter 16.**
 
 ### P2 — Robustness & polish
 - [ ] P2-1 Repeat-work speedups: duplicate-estimate flow prominence; recent clients; per-room "copy last room".
@@ -316,6 +320,18 @@ dump, and epoxy+Sheets still fell through on regenerate; plus the epoxy copy lie
 (Good floor shown as "Moderately Deteriorated"; prep section promised spackle and nail
 holes on a garage floor, advertising unpriced tiers). All fixed: one doc per request in
 BOTH endpoints, Good→A, epoxy-true prep copy, dead legacy path deleted.
+
+### Iteration 16 — P1-7b output polish — Critic: REJECT → fixed → green
+**Critic's two HIGHs were both empirical:** it reproduced a top-down Basic-prep quote
+whose recap rows exceeded the grand total by $74.62 — my Math.max(0,…) clamp silently
+hid the mismatch the feature claimed to eliminate (the rate-based engine's Basic prep
+is a NEGATIVE surcharge) → residual is now signed and labeled honestly. And it computed
+pdf-lib text metrics to show long company names drive the logo into the contact column
+→ logo now fits-shrinks-or-skips within the available slot. Also fixed: untested logo
+happy path (real-PNG test, self-sufficient fixture), SVG/WebP honesty in profile copy,
+Sheets exclusions placement + label clipping, Docs cents consistency.
+**Ledger lesson reinforced: clamps that "can't happen" are how reconciliation bugs
+hide — render signed truth instead.**
 
 ## Discovered items
 

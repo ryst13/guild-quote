@@ -219,3 +219,31 @@ describe('assembleEpoxyEstimate — epoxy gets the full 8-section document', () 
 		expect(pt.deposit_amount + (pt.progress_amount ?? 0) + pt.completion_amount).toBe(Math.round(pt.total));
 	});
 });
+
+describe('recap reconciliation — visible lines always sum to the grand total', () => {
+	it('rows + setup&surcharges + materials equals grand total, all trades', () => {
+		const eosTenant = tenantWith({ economy_of_scale_enabled: true });
+		const docs = [
+			assembleInteriorEstimate(interiorScope, calculateInteriorBottomUp(interiorScope, catalog, eosTenant), tenantLite, 'REC-1'),
+			assembleExteriorEstimate(exteriorScope, calculateExteriorBottomUp(exteriorScope, catalog, eosTenant), tenantLite, 'REC-2'),
+			assembleEpoxyEstimate(epoxyScope, calculateEpoxyBottomUp(epoxyScope, catalog, eosTenant), tenantLite, 'REC-3'),
+		];
+		for (const d of docs) {
+			const rowSum = d.recap_table.rows.reduce((a, r) => a + r.price, 0);
+			expect(rowSum + d.recap_table.other_total + d.recap_table.materials_total).toBeCloseTo(
+				d.recap_table.grand_total,
+				4,
+			);
+		}
+	});
+
+	it('interior exclusions roll up deduped specialties', () => {
+		const scope = JSON.parse(JSON.stringify(interiorScope)) as typeof interiorScope;
+		scope.rooms[0].specialty = ['Wallpaper', 'Window Cleaning'];
+		if (scope.rooms[1]) scope.rooms[1].specialty = ['Wallpaper'];
+		const d = assembleInteriorEstimate(scope, calculateInteriorBottomUp(scope, catalog, tenant), tenantLite, 'REC-4');
+		expect(d.exclusions).toContain('Wallpaper');
+		expect(d.exclusions).toContain('Window Cleaning');
+		expect(d.exclusions.filter((e) => e === 'Wallpaper')).toHaveLength(1);
+	});
+});

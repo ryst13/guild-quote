@@ -1,4 +1,6 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { readFileSync, existsSync } from 'fs';
+import { resolve as resolvePath } from 'path';
 import type { TenantConfig } from '$lib/types/index.js';
 import type { EstimateDocument } from './estimate-templates.js';
 
@@ -86,6 +88,41 @@ export async function generateEstimatePDF(
   }
 
   // ─── SECTION 1: HEADER ────────────────────────────────────────
+
+  // Tenant logo (PNG/JPEG only — anything else is skipped, never blocks output)
+  if (tenant.logo_url && tenant.logo_url.startsWith('/api/logo/')) {
+    try {
+      const logoFile = resolvePath(`./data/logos/${tenant.logo_url.split('/').pop()}`);
+      if (existsSync(logoFile)) {
+        const bytes = readFileSync(logoFile);
+        const lower = logoFile.toLowerCase();
+        const img = lower.endsWith('.png')
+          ? await pdfDoc.embedPng(bytes)
+          : lower.endsWith('.jpg') || lower.endsWith('.jpeg')
+            ? await pdfDoc.embedJpg(bytes)
+            : null;
+        if (img) {
+          // Fit between the company name and the right-aligned contact block;
+          // shrink to fit, skip entirely if the slot is too small.
+          const nameEnd = margin + fontBold.widthOfTextAtSize(doc.header.company_name, 20) + 14;
+          const contactColStart = pageWidth - margin - 190;
+          const slot = contactColStart - nameEnd;
+          if (slot >= 28) {
+            const maxH = 34;
+            let h = maxH;
+            let w = img.width * (h / img.height);
+            if (w > slot) {
+              w = slot;
+              h = img.height * (w / img.width);
+            }
+            page.drawImage(img, { x: nameEnd, y: y - 8 + (maxH - h), width: w, height: h });
+          }
+        }
+      }
+    } catch {
+      // never let a bad logo block an estimate
+    }
+  }
 
   page.drawText(doc.header.company_name, { x: margin, y, font: fontBold, size: 20, color: accentColor });
   y -= 22;
@@ -263,6 +300,16 @@ export async function generateEstimatePDF(
   checkPage(50);
 
   const totalsX = cols[1].x;
+  if (Math.abs(doc.recap_table.other_total) > 0.005) {
+    checkPage(16);
+    const otherLabel = doc.recap_table.other_total >= 0 ? 'Setup & surcharges' : 'Adjustments & discounts';
+    const otherAmt = doc.recap_table.other_total;
+    const otherStr = `${otherAmt < 0 ? '-' : ''}$${Math.abs(otherAmt).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    page.drawText(otherLabel, { x: cols[0].x, y, font, size: 9, color: medGray });
+    page.drawText(otherStr, { x: totalsX, y, font, size: 9, color: darkGray });
+    y -= 14;
+  }
+
   page.drawText('Materials', { x: cols[0].x, y, font, size: 9, color: medGray });
   page.drawText(`$${doc.recap_table.materials_total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, { x: totalsX, y, font, size: 9, color: darkGray });
   y -= 16;
@@ -283,6 +330,13 @@ export async function generateEstimatePDF(
   }
 
   // ─── SECTION 6: PAYMENT TERMS ─────────────────────────────────
+
+  // ─── EXCLUSIONS (job-level rollup) ───────────────────────────
+  if (doc.exclusions.length > 0) {
+    sectionHeader('Not Included in This Estimate');
+    y = text(`Available separately on request: ${doc.exclusions.join(', ')}. Ask us for a separate quote.`, margin, y, { size: 9, color: medGray });
+    y -= 10;
+  }
 
   sectionHeader('Your Home Investment');
 

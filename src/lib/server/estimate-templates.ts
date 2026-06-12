@@ -276,10 +276,16 @@ export interface EstimateDocument {
     adjustment_label: string;
     all_levels: { level: string; label: string; selected: boolean; adjustment: string }[];
   };
+  // Job-level exclusions ("quoted separately") rolled up near payment terms
+  exclusions: string[];
   recap_table: {
     rows: { area: string; price: number; walls: string; ceilings: string; closets: string; doors: string; windows: string; trim: string; repairs: string }[];
     materials_total: number;
     grand_total: number;
+    // Signed residual: everything priced outside the rows (surcharges, CC fee,
+    // setup — or prep DISCOUNTS, which go negative in the rate-based engine).
+    // Rendered so the visible lines always sum to the grand total.
+    other_total: number;
   };
   payment_terms: {
     total: number;
@@ -442,10 +448,12 @@ export function assembleInteriorEstimate(
         adjustment: info.adjustment_label,
       })),
     },
+    exclusions: Array.from(new Set(scope.rooms.flatMap((r) => r.specialty ?? []))),
     recap_table: {
       rows: recapRows,
       materials_total: quote.materials_total,
       grand_total: quote.grand_total,
+      other_total: quote.grand_total - quote.materials_total - recapRows.reduce((a, r) => a + r.price, 0),
     },
     payment_terms: {
       total,
@@ -581,7 +589,13 @@ export function assembleExteriorEstimate(
         level, label: info.label, selected: level === scope.project.prep_level, adjustment: info.adjustment_label,
       })),
     },
-    recap_table: { rows: recapRows, materials_total: quote.materials_total, grand_total: quote.grand_total },
+    exclusions: [],
+    recap_table: {
+      rows: recapRows,
+      materials_total: quote.materials_total,
+      grand_total: quote.grand_total,
+      other_total: quote.grand_total - quote.materials_total - recapRows.reduce((a, r) => a + r.price, 0),
+    },
     payment_terms: {
       total,
       deposit_pct: depositPct,
@@ -720,7 +734,13 @@ export function assembleEpoxyEstimate(
         { level: 'Standard', label: 'Standard', selected: true, adjustment: 'Included' },
       ],
     },
-    recap_table: { rows: recapRows, materials_total: quote.materials_total, grand_total: quote.grand_total },
+    exclusions: [],
+    recap_table: {
+      rows: recapRows,
+      materials_total: quote.materials_total,
+      grand_total: quote.grand_total,
+      other_total: quote.grand_total - quote.materials_total - recapRows.reduce((a, r) => a + r.price, 0),
+    },
     payment_terms: {
       total,
       deposit_pct: depositPct,

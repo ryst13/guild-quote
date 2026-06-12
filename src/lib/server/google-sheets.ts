@@ -157,6 +157,10 @@ export async function createEstimateSheet(
   }
   addBlank();
 
+  if (Math.abs(doc.recap_table.other_total) > 0.005) {
+    const otherAmt = doc.recap_table.other_total;
+    addRow(['', '', '', '', '', '', '', otherAmt >= 0 ? 'Setup & fees' : 'Discounts', `${otherAmt < 0 ? '-' : ''}$${Math.abs(otherAmt).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`], { bold: true });
+  }
   addRow(['', '', '', '', '', '', '', 'Materials', `$${doc.recap_table.materials_total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`], { bold: true });
   addBlank();
 
@@ -173,6 +177,12 @@ export async function createEstimateSheet(
   // ═══════════════════════════════════════════════════════
   // PAYMENT TERMS
   // ═══════════════════════════════════════════════════════
+  if (doc.exclusions.length > 0) {
+    addRow(['NOT INCLUDED IN THIS ESTIMATE'], { section: true });
+    addRow(['Available separately on request:', doc.exclusions.join(', ')]);
+    addRow(['']);
+  }
+
   addRow(['YOUR HOME INVESTMENT'], { section: true });
   mergeRow(rows.length - 1);
   addBlank();

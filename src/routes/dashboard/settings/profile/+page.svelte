@@ -113,7 +113,7 @@
     <!-- Logo -->
     <div class="rounded-xl bg-white border border-gray-200 p-6">
       <h2 class="font-semibold text-gray-900 mb-1">Logo</h2>
-      <p class="text-sm text-gray-500 mb-4">Appears on your estimates, emails, and documents.</p>
+      <p class="text-sm text-gray-500 mb-4">Appears on your estimates, emails, and documents. Use PNG or JPEG — those show on your PDF estimates too.</p>
       <div class="flex items-center gap-6">
         {#if logoUrl}
           <div class="h-20 w-20 rounded-lg border border-gray-200 overflow-hidden flex items-center justify-center bg-white">

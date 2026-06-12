@@ -109,13 +109,23 @@ export async function createEstimateDoc(
     insertText('');
 
     insertText('Project Summary', true, 13);
+    const money = (n: number) => `${n < 0 ? '-' : ''}$${Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     for (const row of d.recap_table.rows) {
-      insertText(`  ${row.area}  —  $${Math.round(row.price).toLocaleString()}`);
+      insertText(`  ${row.area}  —  ${money(row.price)}`);
     }
-    insertText(`  Materials  —  $${Math.round(d.recap_table.materials_total).toLocaleString()}`);
+    if (Math.abs(d.recap_table.other_total) > 0.005) {
+      insertText(`  ${d.recap_table.other_total >= 0 ? 'Setup & surcharges' : 'Adjustments & discounts'}  —  ${money(d.recap_table.other_total)}`);
+    }
+    insertText(`  Materials  —  ${money(d.recap_table.materials_total)}`);
     insertText('');
     insertText(`GRAND TOTAL: $${d.recap_table.grand_total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, true, 16);
     insertText('');
+
+    if (d.exclusions.length > 0) {
+      insertText('Not Included in This Estimate', true, 13);
+      insertText(`Available separately on request: ${d.exclusions.join(', ')}. Ask us for a separate quote.`);
+      insertText('');
+    }
 
     insertText('Your Home Investment', true, 13);
     const pt = d.payment_terms;
