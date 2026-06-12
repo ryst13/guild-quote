@@ -22,7 +22,7 @@
     </div>
 
     <!-- Tier comparison -->
-    <div class="grid grid-cols-2 gap-6 mb-10">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
       <!-- GQ -->
       <div class="rounded-2xl border border-gray-200 bg-white p-8">
         <h3 class="text-2xl font-bold text-gray-900 mb-1">GQ</h3>
@@ -74,7 +74,7 @@
       </div>
       <div class="rounded-lg bg-white border border-gray-200 p-5">
         <div class="font-medium text-gray-900 text-sm mb-1">Can I add more team members?</div>
-        <p class="text-sm text-gray-500">GQ Pro includes 3 seats. Need more? Contact us and we'll work something out.</p>
+        <p class="text-sm text-gray-500">GQ Pro includes 3 seats. Need more? Email <a href="mailto:support@guildquote.com" class="text-blue-600 hover:text-blue-700">support@guildquote.com</a> and we'll work something out.</p>
       </div>
     </div>
   </div>

@@ -43,7 +43,7 @@ export async function createEstimateSheet(
   const spreadsheet = await sheets.spreadsheets.create({
     requestBody: {
       properties: { title },
-      sheets: [{ properties: { title: 'Estimate', gridProperties: { columnCount: 10, rowCount: 300 } } }],
+      sheets: [{ properties: { title: 'Estimate', gridProperties: { columnCount: 10, rowCount: 1000 } } }],
     },
   });
 
@@ -134,6 +134,26 @@ export async function createEstimateSheet(
     if (room.notes) {
       const noteRow = addRow([`  Note: ${room.notes}`], { wrap: true });
       mergeRow(noteRow, 9);
+    }
+    addBlank();
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // PREP LEVEL (section 4 — PDF and Docs render it; Sheets must too)
+  // ═══════════════════════════════════════════════════════
+  addRow(['PREP LEVEL'], { section: true });
+  mergeRow(rows.length - 1);
+  addBlank();
+
+  addRow([`${doc.prep_level.label} (${doc.prep_level.adjustment_label})`], { bold: true });
+  const prepDescRow = addRow([doc.prep_level.description], { wrap: true });
+  mergeRow(prepDescRow, 9);
+  addBlank();
+
+  if (tenant.show_losp !== false) {
+    for (const lvl of doc.prep_level.all_levels) {
+      const indicator = lvl.selected ? '☛ ' : '   ';
+      addRow([`${indicator}${lvl.level}`, lvl.label, '', '', '', '', '', lvl.adjustment], lvl.selected ? { bold: true } : { grayBg: true });
     }
     addBlank();
   }

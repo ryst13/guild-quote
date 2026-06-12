@@ -49,8 +49,56 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     return json({ success: true, implied, mode: 'costs' });
   }
 
-  // Default: anchor-based calibration (existing behavior)
-  const rates = calibrateFromAnchors(body as CalibrationAnswers);
+  // Default: anchor-based calibration.
+  //
+  // The contractor's interior anchors set their overall PRICE LEVEL via
+  // labor_price_multiplier — the one knob the frozen engines already scale by.
+  // (Per-item rate overrides are a separate, deferred feature: D-2.) Each
+  // implied multiplier compares the anchor to what the engine produces for
+  // that anchor at a given multiplier:
+  //   bedroom walls-only = 384 sqft × $0.30 × m   → m = anchor / 115.2
+  //   item anchors       = rate × (m / 1.1)       → m = 1.1 × anchor / rate
+  // Only anchors the user actually typed (non-null) count; missing ones fall
+  // back to defaults for rate derivation and don't move the multiplier.
+  const IMPLIED_MULTIPLIER: Record<string, (a: number) => number> = {
+    medium_bedroom_walls_only: (a) => a / 115.2,
+    per_door_rate: (a) => (a / 61.88) * 1.1,   // Door - Flat
+    per_window_rate: (a) => (a / 82.5) * 1.1,  // Window - Standard Frame
+    per_trim_lf_rate: (a) => (a / 61.88) * 1.1, // Trim - Baseboard/Crown
+  };
+  const implied: number[] = [];
+  for (const [field, fn] of Object.entries(IMPLIED_MULTIPLIER)) {
+    const v = body[field];
+    if (typeof v === 'number' && v > 0) implied.push(fn(v));
+  }
+  const priceMultiplier = implied.length
+    ? Math.min(2.5, Math.max(0.7, implied.reduce((s, m) => s + m, 0) / implied.length))
+    : (typeof body.labor_multiplier === 'number' ? body.labor_multiplier : 1.1);
+
+  const ANCHOR_DEFAULTS: Record<string, number> = {
+    medium_bedroom_walls_only: 115,
+    medium_bedroom_walls_ceiling: 158,
+    per_door_rate: 62,
+    per_window_rate: 83,
+    per_trim_lf_rate: 62,
+    exterior_siding_per_side: 800,
+    exterior_door_rate: 120,
+    exterior_window_rate: 90,
+    exterior_trim_rate: 80,
+    epoxy_per_sqft: 6,
+    labor_multiplier: 1.1,
+    cc_fee_pct: 3.2,
+    deposit_pct: 30,
+    transportation_fee: 50,
+    trash_fee: 50,
+  };
+  const answers: Record<string, number> = { ...ANCHOR_DEFAULTS };
+  for (const key of Object.keys(ANCHOR_DEFAULTS)) {
+    if (typeof body[key] === 'number' && body[key] > 0) answers[key] = body[key];
+  }
+
+  const rates = calibrateFromAnchors(answers as unknown as CalibrationAnswers);
+  rates.labor_multiplier = priceMultiplier;
 
   // Merge calibrated values into any existing config — calibration derives
   // amounts, but the tenant's enable/disable choices and unrelated settings

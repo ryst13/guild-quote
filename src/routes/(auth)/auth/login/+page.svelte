@@ -85,7 +85,7 @@
           disabled={loading}
           class="mt-4 w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
         >
-          {loading ? 'Sending...' : 'Send magic link'}
+          {loading ? 'Sending...' : 'Email me a sign-in link'}
         </button>
       </form>
 

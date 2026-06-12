@@ -24,7 +24,7 @@
       <p>You must provide accurate, complete registration information. You are responsible for all activity under your account. You must be at least 18 years old and have the legal authority to bind your company to these terms.</p>
 
       <h2>4. Subscription & Billing</h2>
-      <p>Paid plans are billed monthly or annually via Stripe. Your subscription renews automatically unless canceled. You may cancel anytime through your billing settings. Refunds are not provided for partial billing periods. A 14-day free trial of all features is included with new accounts.</p>
+      <p>Paid plans are billed monthly via Stripe. Your subscription renews automatically unless canceled. You may cancel anytime through your billing settings. Refunds are not provided for partial billing periods. A 14-day free trial of all features is included with new accounts.</p>
       <p>We reserve the right to change pricing with 30 days' notice. Price changes do not affect your current billing period.</p>
 
       <h2>5. Your Data</h2>

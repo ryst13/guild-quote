@@ -160,14 +160,27 @@
         <a href="/dashboard/settings/profile" class="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">Profile</a>
         <a href="/dashboard/settings/pricing" class="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">My Prices</a>
                 <a href="/dashboard/settings/billing" class="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">Billing</a>
-        <span class="text-gray-200 mx-1">|</span>
-        <a href="mailto:support@guildquote.com" class="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">Need help?</a>
+        <span class="hidden sm:inline text-gray-200 mx-1">|</span>
+        <a href="mailto:support@guildquote.com" class="hidden sm:inline px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">Need help?</a>
         <button onclick={logout} class="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">Log out</button>
       </div>
     </div>
   </div>
 
   <div class="mx-auto max-w-7xl px-4 py-6">
+    <!-- Trial countdown / expiry — no silent dead ends at the 402 -->
+    {#if data.needsUpgrade}
+      <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 mb-6 flex items-center justify-between gap-3 text-sm">
+        <span class="text-red-800">Your trial has ended. Your estimates are safe — pick a plan to keep creating new ones.</span>
+        <a href="/dashboard/settings/billing" class="shrink-0 rounded-lg bg-red-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-red-700">Choose a Plan</a>
+      </div>
+    {:else if data.isTrialing && data.trialDaysLeft <= 3}
+      <div class="rounded-lg border border-orange-200 bg-orange-50 px-4 py-3 mb-6 flex items-center justify-between gap-3 text-sm">
+        <span class="text-orange-800">{data.trialDaysLeft <= 1 ? 'Last day of your free trial.' : `${data.trialDaysLeft} days left in your free trial.`} Pick a plan so your work doesn't stop.</span>
+        <a href="/dashboard/settings/billing" class="shrink-0 rounded-lg bg-orange-500 px-4 py-1.5 text-xs font-semibold text-white hover:bg-orange-600">See Plans</a>
+      </div>
+    {/if}
+
     <!-- Action-needed banner (only shows when there are drafts or unsent) -->
     {#if draftsCount > 0 || sentCount > 0}
       <div class="flex gap-3 mb-6">
@@ -189,7 +202,7 @@
     {/if}
 
     <!-- Analytics -->
-    <div class="grid grid-cols-3 gap-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
       <div class="rounded-xl bg-white border border-gray-200 p-5">
         <div class="text-sm text-gray-500">Estimates this month</div>
         <div class="text-2xl font-bold text-gray-900 mt-1">{data.analytics.quotesThisMonth}</div>
@@ -204,8 +217,8 @@
       </div>
     </div>
 
-    <!-- Pro Tease: Pipeline + Analytics (subtle, between analytics and table) -->
-    {#if !data.benchmarks}
+    <!-- Pro Tease (never shown to paying Pro users) -->
+    {#if !data.benchmarks && !data.isPro}
       <div class="rounded-xl border border-dashed border-gray-200 bg-white p-4 mb-6 flex items-center justify-between opacity-80">
         <div>
           <span class="text-sm text-gray-500">With <span class="font-semibold text-blue-600">GQ Pro</span>: email estimates with one tap, get Google Docs with your logo, and see your numbers.</span>

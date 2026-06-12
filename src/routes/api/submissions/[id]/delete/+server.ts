@@ -2,7 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import { db } from '$lib/server/db.js';
 import { submissions } from '$lib/server/schema.js';
 import { eq, and } from 'drizzle-orm';
-import { unlinkSync } from 'fs';
+import { unlinkSync, readdirSync } from 'fs';
 import type { RequestHandler } from './$types.js';
 
 export const POST: RequestHandler = async ({ locals, params }) => {
@@ -14,11 +14,15 @@ export const POST: RequestHandler = async ({ locals, params }) => {
     .get();
   if (!sub) throw error(404, 'Submission not found');
 
-  // Delete PDF file if it exists
+  // Delete the PDF and any language snapshots ({id}-snapshot-{lang}.pdf)
   try {
-    unlinkSync(`./data/pdfs/${params.id}.pdf`);
+    for (const f of readdirSync('./data/pdfs')) {
+      if (f === `${params.id}.pdf` || f.startsWith(`${params.id}-snapshot-`)) {
+        try { unlinkSync(`./data/pdfs/${f}`); } catch { /* already gone */ }
+      }
+    }
   } catch {
-    // File may not exist, that's fine
+    // Directory may not exist, that's fine
   }
 
   // Delete the record

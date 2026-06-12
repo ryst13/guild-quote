@@ -13,6 +13,14 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
   const code = url.searchParams.get('code');
   if (!code) throw error(400, 'Missing authorization code');
 
+  // CSRF check: state must match the cookie set when the flow started
+  const state = url.searchParams.get('state');
+  const expectedState = cookies.get('oauth_state');
+  cookies.delete('oauth_state', { path: '/auth' });
+  if (!state || !expectedState || state !== expectedState) {
+    throw redirect(303, '/auth/login?error=oauth_state_mismatch');
+  }
+
   const clientId = env.GOOGLE_CLIENT_ID;
   const clientSecret = env.GOOGLE_CLIENT_SECRET;
   const redirectUri = env.GOOGLE_REDIRECT_URI || 'http://localhost:5173/auth/google/callback';
@@ -58,12 +66,21 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
     const tenantId = uuidv4();
     const slug = generateSlug(firstName ? `${firstName} ${lastName}` : email.split('@')[0]);
 
+    // Same 14-day trial the email register path grants — without it the new
+    // tenant lands in payment_status 'none' and can't generate anything
+    const trialStart = new Date();
+    const trialEnd = new Date(trialStart.getTime() + 14 * 24 * 60 * 60 * 1000);
+
     db.insert(tenants).values({
       id: tenantId,
       slug,
       company_name: `${firstName} ${lastName}`.trim() || email.split('@')[0],
       contact_email: email,
       google_refresh_token: tokens.refresh_token || null,
+      trial_started_at: trialStart.toISOString(),
+      trial_ends_at: trialEnd.toISOString(),
+      payment_status: 'trialing',
+      plan: 'trial',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }).run();

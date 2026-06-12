@@ -106,6 +106,11 @@ export async function createEstimateDoc(
     insertText('Surface Preparation', true, 13);
     insertText(`${d.prep_level.label} (${d.prep_level.adjustment_label})`);
     insertText(d.prep_level.description);
+    if (tenant.show_losp !== false) {
+      for (const lvl of d.prep_level.all_levels) {
+        insertText(`  ${lvl.selected ? '» ' : '   '}${lvl.label}${lvl.adjustment === 'Included' ? '' : ` (${lvl.adjustment})`}`);
+      }
+    }
     insertText('');
 
     insertText('Project Summary', true, 13);

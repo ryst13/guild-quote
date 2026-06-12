@@ -28,6 +28,12 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
     .get();
   if (!sub) throw error(404, 'Submission not found');
 
+  // Plan check FIRST — nothing may be written for a read-only tenant
+  const access = getAccessState(tenant);
+  if (!access.canGenerate) {
+    throw error(402, 'Your trial has ended. Choose a plan in Billing to keep working with estimates.');
+  }
+
   const body = await request.json();
   const adjustedPrice = body.adjusted_price as number | null;
 
@@ -35,20 +41,24 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
   const quote = sub.quote_json ? JSON.parse(sub.quote_json) : null;
   if (!scope || !quote) throw error(400, 'Missing scope or quote data');
 
-  // Save previous version before overwriting
+  // Version history records PRICE changes. Document-only regens (Try Again,
+  // client-info fixes) don't bump the version or grow the history.
+  const priceChanged = !!adjustedPrice && quote.grand_total > 0 && adjustedPrice !== quote.grand_total;
   const currentVersion = sub.version || 1;
   const previousVersions: { version: number; quote_json: string; sales_price: number | null; date: string }[] =
     sub.previous_versions_json ? JSON.parse(sub.previous_versions_json) : [];
 
-  previousVersions.push({
-    version: currentVersion,
-    quote_json: sub.quote_json || '',
-    sales_price: sub.sales_price,
-    date: new Date().toISOString(),
-  });
+  if (priceChanged) {
+    previousVersions.push({
+      version: currentVersion,
+      quote_json: sub.quote_json || '',
+      sales_price: sub.sales_price,
+      date: new Date().toISOString(),
+    });
+  }
 
   // Proportionally adjust all line items if price changed
-  if (adjustedPrice && adjustedPrice !== quote.grand_total) {
+  if (priceChanged) {
     const ratio = adjustedPrice / quote.grand_total;
 
     // Scale every section and its items
@@ -81,8 +91,9 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
   db.update(submissions).set({
     sales_price: adjustedPrice || quote.grand_total,
     quote_json: JSON.stringify(quote),
-    version: currentVersion + 1,
-    previous_versions_json: JSON.stringify(previousVersions),
+    ...(priceChanged
+      ? { version: currentVersion + 1, previous_versions_json: JSON.stringify(previousVersions) }
+      : {}),
     updated_at: new Date().toISOString(),
   }).where(eq(submissions.id, params.id)).run();
 
@@ -96,10 +107,6 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
   let pdfUrl: string | null = null;
   let googleDocUrl: string | null = null;
 
-  const access = getAccessState(tenant);
-  if (!access.canGenerate) {
-    throw error(402, 'Your trial has ended. Choose a plan in Billing to keep working with estimates.');
-  }
   const brandTenant = access.canUseWhiteLabel
     ? tenant
     : { ...tenant, primary_color: '#2563eb', logo_url: null };
@@ -125,8 +132,8 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
     console.error('[regenerate] PDF failed:', err);
   }
 
-  // Regenerate Google Doc/Sheet if connected
-  if (tenant.google_refresh_token && access.canUseGoogleDocs) {
+  // Regenerate Google Doc/Sheet if connected ("PDF Only" tenants opted out)
+  if (tenant.google_refresh_token && access.canUseGoogleDocs && tenant.output_format !== 'pdf') {
     try {
       const clientId = env.GOOGLE_CLIENT_ID;
       const clientSecret = env.GOOGLE_CLIENT_SECRET;
@@ -141,9 +148,14 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
         // Ensure GQ > Deals > Active / Inactive folder structure
         const folders = await ensureFolderStructure(drive, tenant);
 
-        // Ensure project folder exists under Active
+        // Ensure project folder exists under Active, and remember it so
+        // status-change Drive moves work on this submission from now on
         if (!projectFolderId) {
           projectFolderId = await ensureProjectFolder(drive, folders.activeId, sub.address, params.id);
+          if (projectFolderId) {
+            db.update(submissions).set({ google_drive_project_folder_id: projectFolderId })
+              .where(eq(submissions.id, params.id)).run();
+          }
         }
 
         // Archive old Google file if it exists

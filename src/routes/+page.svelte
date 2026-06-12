@@ -1,6 +1,6 @@
 <svelte:head>
   <title>GuildQuote — Professional Estimates That Close More Jobs</title>
-  <meta name="description" content="GuildQuote helps painting contractors generate professional, branded estimates in minutes. Built on data from 470+ real projects. Close more jobs with estimates that sell." />
+  <meta name="description" content="GuildQuote helps painting contractors generate professional, branded estimates in minutes. Interior, exterior, and epoxy. Close more jobs with estimates that sell." />
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50">
@@ -9,9 +9,9 @@
     <div class="mx-auto max-w-5xl px-4 py-4 flex items-center justify-between">
       <h1 class="text-xl font-bold text-gray-900">GuildQuote</h1>
       <div class="flex items-center gap-3">
-        <a href="/demo" class="text-sm font-medium text-gray-600 hover:text-gray-900">Demo</a>
-        <a href="/docs" class="text-sm font-medium text-gray-600 hover:text-gray-900">Docs</a>
-        <a href="/upgrade" class="text-sm font-medium text-gray-600 hover:text-gray-900">Pricing</a>
+        <a href="/demo" class="hidden sm:inline text-sm font-medium text-gray-600 hover:text-gray-900">Demo</a>
+        <a href="/docs" class="hidden sm:inline text-sm font-medium text-gray-600 hover:text-gray-900">Docs</a>
+        <a href="/upgrade" class="hidden sm:inline text-sm font-medium text-gray-600 hover:text-gray-900">Pricing</a>
         <a href="/auth/login" class="text-sm font-medium text-gray-600 hover:text-gray-900">Log In</a>
         <a href="/auth/register" class="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700">
           Start Free Trial
@@ -45,7 +45,7 @@
   <div class="border-y border-gray-200 bg-white">
     <div class="mx-auto max-w-5xl px-4 py-5">
       <div class="flex items-center justify-center gap-8 text-sm text-gray-500">
-        <span>Built on data from <strong class="text-gray-900">470+ real projects</strong></span>
+        <span>Walkthrough to estimate in <strong class="text-gray-900">minutes</strong></span>
         <span class="text-gray-300">|</span>
         <span>3 trades: <strong class="text-gray-900">Interior, Exterior, Epoxy</strong></span>
         <span class="text-gray-300">|</span>
@@ -59,11 +59,11 @@
     <div class="text-center max-w-2xl mx-auto mb-12">
       <h3 class="text-2xl font-bold text-gray-900 mb-3">Your estimate is your first interview</h3>
       <p class="text-gray-500">
-        Contractors with professional, detailed estimates close at 48% — vs. 30-35% industry average. It's not about being the cheapest. It's about looking like the obvious choice.
+        A clean, detailed estimate wins jobs a handwritten number can't. It's not about being the cheapest. It's about looking like the obvious choice.
       </p>
     </div>
 
-    <div class="grid grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
       <div class="rounded-xl bg-white border border-gray-200 p-6">
         <div class="text-2xl mb-3">&#9201;</div>
         <h4 class="font-semibold text-gray-900 mb-2">Same-day estimates</h4>
@@ -71,13 +71,13 @@
       </div>
       <div class="rounded-xl bg-white border border-gray-200 p-6">
         <div class="text-2xl mb-3">&#128200;</div>
-        <h4 class="font-semibold text-gray-900 mb-2">Data-backed pricing</h4>
-        <p class="text-sm text-gray-500">Production rates, material costs, and labor hours built from real project data — not guesswork. Your prices, validated by math.</p>
+        <h4 class="font-semibold text-gray-900 mb-2">A real pricing engine</h4>
+        <p class="text-sm text-gray-500">Production rates, material costs, and labor hours — your prices, worked out by math instead of guesswork.</p>
       </div>
       <div class="rounded-xl bg-white border border-gray-200 p-6">
         <div class="text-2xl mb-3">&#128196;</div>
         <h4 class="font-semibold text-gray-900 mb-2">Branded documents</h4>
-        <p class="text-sm text-gray-500">Your logo, your colors, your name. Professional PDFs, Google Docs, or Sheets — saved to your Drive, sent from your email.</p>
+        <p class="text-sm text-gray-500">Your logo, your colors, your name. Professional PDFs, Google Docs, or Sheets — with your company name on every email, and replies straight to your inbox.</p>
       </div>
     </div>
   </div>
@@ -86,7 +86,7 @@
   <div class="bg-white border-y border-gray-200">
     <div class="mx-auto max-w-5xl px-4 py-16">
       <h3 class="text-2xl font-bold text-gray-900 text-center mb-12">How it works</h3>
-      <div class="grid grid-cols-4 gap-8">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-8">
         <div class="text-center">
           <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-bold text-sm mb-3">1</div>
           <h4 class="font-semibold text-gray-900 text-sm mb-1">Walk the job</h4>
@@ -113,7 +113,7 @@
 
   <!-- Feature highlights -->
   <div class="mx-auto max-w-5xl px-4 py-16">
-    <div class="grid grid-cols-2 gap-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
       <div class="rounded-xl bg-white border border-gray-200 p-8">
         <h4 class="font-bold text-gray-900 mb-2">Pricing engine, not a calculator</h4>
         <p class="text-sm text-gray-500 mb-4">GuildQuote doesn't just multiply square footage. It factors in room size, surface condition, prep level, production rates, material coverage, and your crew's actual wage. Two engines — rate-based and cost-based — so you can price the way that makes sense for your business.</p>
@@ -155,7 +155,7 @@
       <h3 class="text-2xl font-bold text-gray-900 mb-3">Simple pricing</h3>
       <p class="text-gray-500">One extra closed job pays for months of GuildQuote.</p>
     </div>
-    <div class="grid grid-cols-2 gap-6 max-w-3xl mx-auto">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
       <div class="rounded-2xl border border-gray-200 bg-white p-8 text-center">
         <h4 class="text-xl font-bold text-gray-900 mb-1">GQ</h4>
         <div class="text-3xl font-bold text-gray-900 mb-6">$49<span class="text-base font-normal text-gray-400">/mo</span></div>

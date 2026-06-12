@@ -1,6 +1,6 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { readFileSync, existsSync } from 'fs';
-import { resolve as resolvePath } from 'path';
+import { resolve as resolvePath, sep as pathSep } from 'path';
 import type { TenantConfig } from '$lib/types/index.js';
 import type { EstimateDocument } from './estimate-templates.js';
 
@@ -92,8 +92,11 @@ export async function generateEstimatePDF(
   // Tenant logo (PNG/JPEG only — anything else is skipped, never blocks output)
   if (tenant.logo_url && tenant.logo_url.startsWith('/api/logo/')) {
     try {
-      const logoFile = resolvePath(`./data/logos/${tenant.logo_url.split('/').pop()}`);
-      if (existsSync(logoFile)) {
+      // split('/').pop() strips /-traversal but not Windows \ — confine to the
+      // logos dir explicitly (legacy logo_url values predate write validation)
+      const logosRoot = resolvePath('./data/logos');
+      const logoFile = resolvePath(logosRoot, tenant.logo_url.split('/').pop() || '');
+      if (logoFile.startsWith(logosRoot + pathSep) && existsSync(logoFile)) {
         const bytes = readFileSync(logoFile);
         const lower = logoFile.toLowerCase();
         const img = lower.endsWith('.png')
@@ -243,17 +246,22 @@ export async function generateEstimatePDF(
   }
   y -= 8;
 
-  for (const level of doc.prep_level.all_levels) {
-    checkPage(14);
-    const indicator = level.selected ? '  \u00BB ' : '    ';
-    const adjText = level.adjustment === 'Included' ? '' : `  (${level.adjustment})`;
-    page.drawText(`${indicator}${level.label}${adjText}`, {
-      x: margin + 10, y,
-      font: level.selected ? fontBold : font,
-      size: 8.5,
-      color: level.selected ? darkGray : lightGray,
-    });
-    y -= 13;
+  // The prep menu (all levels with price adjustments) honors the tenant's
+  // "show levels of surface preparation" toggle; the selected level above
+  // always renders.
+  if (tenant.show_losp !== false) {
+    for (const level of doc.prep_level.all_levels) {
+      checkPage(14);
+      const indicator = level.selected ? '  \u00BB ' : '    ';
+      const adjText = level.adjustment === 'Included' ? '' : `  (${level.adjustment})`;
+      page.drawText(`${indicator}${level.label}${adjText}`, {
+        x: margin + 10, y,
+        font: level.selected ? fontBold : font,
+        size: 8.5,
+        color: level.selected ? darkGray : lightGray,
+      });
+      y -= 13;
+    }
   }
   y -= 6;
 
@@ -283,7 +291,12 @@ export async function generateEstimatePDF(
   // Table rows
   for (const row of doc.recap_table.rows) {
     checkPage(16);
-    page.drawText(row.area, { x: cols[0].x, y, font: fontBold, size: 8.5, color: darkGray });
+    // Free-text area names must not overlap the Price column at +145pt
+    let areaText = row.area;
+    while (areaText.length > 4 && fontBold.widthOfTextAtSize(areaText, 8.5) > cols[0].w) {
+      areaText = areaText.slice(0, -2).trimEnd() + '…';
+    }
+    page.drawText(areaText, { x: cols[0].x, y, font: fontBold, size: 8.5, color: darkGray });
     page.drawText(`$${row.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, { x: cols[1].x, y, font, size: 8.5, color: darkGray });
     page.drawText(row.walls, { x: cols[2].x, y, font, size: 7.5, color: medGray });
     page.drawText(row.ceilings, { x: cols[3].x, y, font, size: 7.5, color: medGray });

@@ -101,10 +101,9 @@ export function buildWelcomeEmail(companyName: string, loginUrl: string): string
       <p>Hi there,</p>
       <p>Your account for <strong>${companyName}</strong> has been created. Here's what to do next:</p>
       <ol style="color: #374151;">
-        <li>Select your trades</li>
-        <li>Complete your company profile</li>
-        <li>Customize your branding</li>
-        <li>Set your pricing catalog</li>
+        <li>Pick your trades</li>
+        <li>Set your prices with Quick Calibrate (about 60 seconds)</li>
+        <li>Connect Google if you want estimates saved to your Drive</li>
       </ol>
       <div style="text-align: center; margin: 30px 0;">
         <a href="${loginUrl}" style="background: #2563eb; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">

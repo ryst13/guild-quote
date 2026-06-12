@@ -419,6 +419,58 @@ the Pro column to the GQ column on billing, /upgrade, and homepage; docs already
 neutralization stays in the endpoints (still guards expired/edge states and
 future tiers). Matrix test asserts GQ canUseWhiteLabel=true.
 
+### Iteration 23 — Full-app Critic sweep #1 (3 parallel lenses) — FINDINGS → all fixed → green
+First completion-check sweep. Three adversarial critics (security / Marcos-truth /
+correctness) ran against the whole app. NOT clean — 1 CRITICAL, 9 HIGH across lenses,
+all fixed in-iteration plus the moderates and most lows:
+
+**Security:** CRITICAL unauthenticated path traversal in /api/logo/[filename]
+(`..\guildquote.db` would download the entire multi-tenant DB — the unhardened twin
+of the iter-6 PDF fix). HIGH stored-XSS via SVG logos (uploads now magic-byte
+validated, PNG/JPEG/WebP only; legacy SVGs served CSP-sandboxed). OAuth login CSRF
+(state param added). logo_url write-validation + confined read in pdf.ts. Send-message
+HTML escaped. Rate limits on demo/magic-link/register.
+
+**Marcos/truth:** homepage led with the forbidden "470+ real projects" claim (brand
+rule #1) + unsourced "48% vs 30-35%" stat — replaced. Homepage Pro card + upgrade FAQ
+annual-price claims removed earlier; this sweep killed the remaining vapor: Estimate
+Insights panel deleted (Pro branch said "Coming soon", teaser blurred FABRICATED
+numbers, "Win probability" is the Boston ML we must not ship); referral card removed
+(/r link was read by nothing, no credit ever applied); docs/tracking rewritten to the
+benchmarks that exist (was selling trend lines/pipeline value/decline breakdowns);
+Boston benchmark message no longer rendered in demo + dashboard/new (engine field
+stays, display suppressed); "Client Views" dropped from demo pipeline; Create Doc
+button Pro-gated; docs password copy fixed (no passwords exist); trial countdown
+banner (≤3 days) + expired-trial blocks BEFORE the scope form; Pro tease hidden from
+Pro users; phone grids responsive (7 grids + 2 navs); plain-language pass (sign-in
+link button, LOSP spelled out, support@ contact added).
+
+**Correctness:** HIGH Google-OAuth signups got NO trial (payment_status 'none' =
+locked out of first estimate) — now same 14-day trial as email signup. HIGH Stripe
+webhook read plan from session metadata (always empty) — every buyer activated as
+'gq' including $129 Pro purchases; now reads subscription metadata. HIGH Quick
+Calibrate anchors were write-only — now derive labor_price_multiplier (clamped
+0.7–2.5, only from anchors the user typed), so entered prices actually scale every
+estimate; per-item overrides stay deferred as D-2. HIGH Edit Prices silently dropped
+the 10% materials wastage from the grand total — wastage delta now preserved.
+MODERATEs: "PDF Only" output honored end-to-end (no Docs created, no false "missing
+files" warning); show_losp toggle actually controls the prep menu in PDF+Docs+Sheets;
+Sheets now renders Section 4 (prep level) and got 1000 grid rows; regenerate checks
+the paywall BEFORE writing; version bumps only on real price changes; send 400s on
+missing PDF instead of mailing "find attached" with nothing attached; re-send no
+longer knocks Won/Lost back to 'sent'; first generate creates + persists the Drive
+project folder (Won/Lost moves now work without a regen; regenerate persists it too);
+magic-link failure honest in prod; Drive queries escape apostrophes; delete cleans
+snapshot PDFs; PDF recap truncates long area names; server-side scope cap (40).
+
+**Known-issue log (LOW, deliberate):** bottom-up tenants see top-down prep-level
+percentage labels (-7.5/+25/+37.5) that the v2 engine doesn't honor — needs a
+template-semantics decision; Edit Prices doesn't write version history (Change the
+Price does); maxUsers unenforced (no add-user flow exists to enforce it on).
+
+Per the constitution this sweep found criticals, so the two-clean-sweeps counter is
+still at ZERO. Next iteration: sweep #2.
+
 ## Discovered items
 
 - [ ] D-1 (from iter 2 Critic, MEDIUM): Materials/Surcharges inputs need inline

@@ -71,6 +71,10 @@ export const load: PageServerLoad = async ({ locals }) => {
       conversionRate,
     },
     benchmarks,
+    isPro: access.canUseAnalytics,
+    isTrialing: access.isTrialing,
+    trialDaysLeft: access.trialDaysLeft,
+    needsUpgrade: access.needsUpgrade,
     tenant: {
       slug: tenantConfig.slug,
       company_name: tenantConfig.company_name,

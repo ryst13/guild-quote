@@ -43,6 +43,13 @@
   let justMarkedWon = $state(false);
   let snapshotPanel: HTMLDivElement | undefined = $state();
 
+  // The engines add a wastage allowance on top of the material line items
+  // (materials_total > sum of lines). Capture that delta once so editing a
+  // labor line doesn't silently drop it from the grand total.
+  const materialsWastage = sub.quote
+    ? Math.max(0, sub.quote.materials_total - sub.quote.materials.reduce((s: number, m: any) => s + m.cost, 0))
+    : 0;
+
   function recalcTotals() {
     if (!sub.quote) return;
     let laborSubtotal = 0;
@@ -54,7 +61,7 @@
     sub.quote.labor_subtotal = laborSubtotal;
     const surchargeTotal = sub.quote.surcharges.reduce((s: number, x: any) => s + x.sales_amount, 0);
     sub.quote.labor_total = laborSubtotal + surchargeTotal;
-    sub.quote.materials_total = sub.quote.materials.reduce((s: number, m: any) => s + m.cost, 0);
+    sub.quote.materials_total = sub.quote.materials.reduce((s: number, m: any) => s + m.cost, 0) + materialsWastage;
     sub.quote.grand_total = sub.quote.labor_total + sub.quote.materials_total;
   }
 
@@ -213,7 +220,7 @@
         if (result.google_doc_url) sub.google_doc_url = result.google_doc_url;
         // Check if the expected outputs were actually generated
         const pdfStillMissing = !sub.estimate_pdf_url;
-        const docStillMissing = data.tenant.output_format && !sub.google_doc_url;
+        const docStillMissing = data.tenant.output_format && data.tenant.output_format !== 'pdf' && !sub.google_doc_url;
         if (pdfStillMissing || docStillMissing) {
           docRegenError = "We couldn't make some files. Check your Google connection in Profile, then try again.";
         } else {
@@ -621,49 +628,9 @@
             </button>
           </div>
 
-          <!-- Estimate Insights (ML teaser) -->
-          <div class="rounded-xl bg-white border border-gray-200 p-6 relative overflow-hidden">
-            <div class="flex items-center justify-between mb-3">
-              <h2 class="font-semibold text-gray-900">Estimate Insights</h2>
-              {#if !data.isPro}
-                <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Pro</span>
-              {/if}
-            </div>
-            {#if data.isPro && data.estimateCount >= 10}
-              <p class="text-xs text-gray-500 mb-3">Based on your {data.estimateCount} estimates:</p>
-              <div class="space-y-2 text-sm">
-                <div class="flex justify-between">
-                  <span class="text-gray-500">Your avg {sub.trade_type} estimate</span>
-                  <span class="text-gray-400 italic">Coming soon</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-500">Win rate ({sub.trade_type})</span>
-                  <span class="text-gray-400 italic">Coming soon</span>
-                </div>
-              </div>
-            {:else if data.isPro}
-              <p class="text-xs text-gray-500">We're learning your numbers. Insights show up after 10 estimates ({data.estimateCount} so far).</p>
-            {:else}
-              <div class="space-y-2 text-sm">
-                <div class="flex justify-between">
-                  <span class="text-gray-500">Estimated range for this project</span>
-                  <span class="blur-sm select-none text-gray-700 font-medium">$14,200 – $15,800</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-500">Win probability</span>
-                  <span class="blur-sm select-none text-gray-700 font-medium">78%</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-500">Suggested crew &amp; duration</span>
-                  <span class="blur-sm select-none text-gray-700 font-medium">3-person, 4.5 days</span>
-                </div>
-              </div>
-              <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent"></div>
-              <div class="mt-4 relative z-10">
-                <a href="/upgrade" class="block w-full rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 text-center">See Full Insights</a>
-              </div>
-            {/if}
-          </div>
+          <!-- Estimate Insights: removed (sweep iter 23). The Pro branch rendered
+               "Coming soon" and the teaser blurred fabricated numbers — nothing
+               real to sell yet. Re-add only when per-tenant insights exist. -->
         {/if}
       </div>
 
@@ -752,7 +719,7 @@
           <h3 class="text-sm font-semibold text-gray-900 mb-3">Quick Actions</h3>
 
           <!-- Document generation warning -->
-          {#if data.canUseGoogleDocs && (!sub.estimate_pdf_url || (data.tenant.output_format && !sub.google_doc_url))}
+          {#if (!sub.estimate_pdf_url || (data.canUseGoogleDocs && data.tenant.output_format && data.tenant.output_format !== 'pdf' && !sub.google_doc_url))}
             <div class="mb-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3">
               <div class="flex items-start gap-2">
                 <svg class="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -761,7 +728,7 @@
                 <div class="flex-1 min-w-0">
                   <p class="text-xs font-medium text-yellow-800">Some estimate files are missing.</p>
                   <p class="text-xs text-yellow-700 mt-0.5">
-                    Missing: {[!sub.estimate_pdf_url ? 'PDF' : '', (data.tenant.output_format && !sub.google_doc_url) ? (data.tenant.output_format === 'google_sheets' ? 'Google Sheet' : 'Google Doc') : ''].filter(Boolean).join(', ')}
+                    Missing: {[!sub.estimate_pdf_url ? 'PDF' : '', (data.canUseGoogleDocs && data.tenant.output_format && data.tenant.output_format !== 'pdf' && !sub.google_doc_url) ? (data.tenant.output_format === 'google_sheets' ? 'Google Sheet' : 'Google Doc') : ''].filter(Boolean).join(', ')}
                   </p>
                   {#if docRegenError}
                     <p class="text-xs text-red-600 mt-1">{docRegenError}</p>
@@ -791,10 +758,14 @@
               <a href={sub.google_doc_url} target="_blank" class="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50">
                 {googleLinkLabel}
               </a>
-            {:else}
+            {:else if data.canUseGoogleDocs && data.tenant.output_format !== 'pdf'}
               <button onclick={regenerateDocuments} disabled={regeneratingDoc} class="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-yellow-300 bg-yellow-50 px-3 py-2 text-xs font-medium text-yellow-700 hover:bg-yellow-100 disabled:opacity-50">
                 {regeneratingDoc ? 'Creating...' : 'Create Doc'}
               </button>
+            {:else}
+              <a href="/dashboard/settings/billing" class="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-400 hover:bg-gray-50">
+                Google Docs — GQ Pro
+              </a>
             {/if}
             {#if sub.estimate_pdf_url}
               <a href={sub.estimate_pdf_url} target="_blank" class="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50">
@@ -904,7 +875,7 @@
               }} class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-xs outline-none focus:border-blue-500" />
             </div>
           {:else}
-            <p class="text-xs text-gray-400 mb-3">Set a start date, assign a crew, and add it to your calendar.</p>
+            <p class="text-xs text-gray-400 mb-3">Set a start date and assign a crew, so everyone knows the plan.</p>
             <a href="/upgrade" class="block w-full rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 text-center">Learn about GQ Pro</a>
           {/if}
         </div>

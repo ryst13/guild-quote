@@ -3,7 +3,7 @@ MOD-001,/,Page,Marketing landing page,Public,,,,
 MOD-002,/auth/login,Page,Magic link + Google OAuth login,Public,Redirects to /dashboard if logged in,,,
 MOD-003,/auth/register,Page,Account creation,Public,Creates tenant with 14-day trial + referral code; ?ref= extends trial +30d,,,
 MOD-004,/auth/verify,API GET,Magic link verification; creates session,Public,15-min token expiry; httpOnly session cookie,,,
-MOD-005,/auth/google + /callback,API GET,Google OAuth flow,Public,"Scopes: openid, email, profile, drive.file, documents (gmail.send DROPPED iter 21)",SCOPE REDUCED (ralph iter 21),,"gmail.send removed — all email via SMTP/Resend from GuildQuote domain, contractor as Reply-To"
+MOD-005,/auth/google + /callback,API GET,Google OAuth flow,Public,"Scopes: openid, email, profile, drive.file, documents (gmail.send DROPPED iter 21)",SCOPE REDUCED (ralph iter 21); STATE ADDED (iter 23),,"gmail.send removed — all email via SMTP/Resend from GuildQuote domain, contractor as Reply-To; OAuth login CSRF closed: random state in httpOnly cookie, verified in callback; new-tenant path now grants the same 14-day trial as email signup (was payment_status none = locked out)"
 MOD-006,/r/[code],API GET,Referral redirect,Public,Sets ref_code cookie -> register,,,
 MOD-007,/onboarding,Page,3-step setup (trades+name; calibration; Google),Contractor,Sets onboarding_completed,,,
 MOD-008,/dashboard,Page,Estimate list + analytics + filters,Contractor,"Statuses: draft, sent, viewed, accepted, declined",TIER-GATED (ralph iter 20),,Benchmarks render only if canUseAnalytics (Pro) and 10+ estimates; basic stats for all
@@ -16,11 +16,11 @@ MOD-014,/dashboard/settings/catalog,Page,Permanent redirect to /dashboard/settin
 MOD-015,/dashboard/settings/billing,Page,"Plan, trial countdown, Stripe portal",Contractor,Billing page advertises GQ Pro at $149/mo; strategy docs and CLAUDE.md say $129 — reconcile,RESOLVED (2026-06-11),CHANGE,Ryan decided $129; all UI displays fixed; Stripe live Price object at $129 tracked in LR-2
 MOD-016,/upgrade,Page,Plan comparison GQ vs GQ Pro,Contractor,,,,
 MOD-017,/billing/success + /billing/cancel,Pages,Stripe checkout return pages,Contractor,,,,
-MOD-018,/demo,Page,Public demo: scope -> price -> email capture,Public,No DB writes; profitability stripped,,,
+MOD-018,/demo,Page,Public demo: scope -> price -> email capture,Public,No DB writes; profitability stripped,COPY FIXED (ralph iter 23),,"Pipeline mockup no longer shows ""Client Views"" (no open tracking exists); Boston benchmark message no longer rendered"
 MOD-019,/docs (+5 subpages),Pages,"Public documentation (getting-started, scope-entry, pricing, output, tracking)",Public,,,,
 MOD-020,/terms + /privacy,Pages,Legal,Public,,,,
 MOD-021,/admin,Page,Platform admin: tenant table + stats,Platform admin,"Edit plan, status, trial, lifetime, credits",,,
-MOD-022,/api/auth/send-magic-link,API,Passwordless login email,Public,Dev fallback logs URL to terminal,,,
+MOD-022,/api/auth/send-magic-link,API,Passwordless login email,Public,Dev fallback logs URL to terminal,RATE-LIMITED (ralph iter 23),,5/10min per IP + 3/10min per email; production now returns 502 instead of fake success when the email fails
 MOD-023,/api/auth/register,API,Create tenant + admin user,Public,,,,
 MOD-024,/api/auth/logout,API,Clear session,Contractor,,,,
 MOD-025,/api/estimates/generate,API,Pricing engines + PDF + Doc/Sheet generation,Contractor,Runs BOTH engines (one primary by pricing_mode; other logged for validation),TIER-GATED (ralph iter 20),,canGenerate gate (402); Docs/Sheets only if canUseGoogleDocs (PDF always); branding neutral unless canUseWhiteLabel
@@ -32,11 +32,11 @@ MOD-030,/api/submissions/[id]/regenerate,API,Regenerate with adjusted price,Cont
 MOD-031,/api/submissions/[id]/snapshot,API,Condensed multilingual snapshot PDF/Sheet,Contractor + owner,Langs: en/es/fr in API; UI offers EN/ES/PT/RO/YUE — reconcile,TIER-GATED (ralph iter 20),KEEP,Original audit claimed API langs en/es/fr — wrong (git history confirms en/es/pt/ro/zh-yue from first commit). Language list now single-sourced in lib/languages.ts; lang input allowlisted (iter 6); canGenerate gate; non-EN langs Pro-only (402); Sheet only if canUseGoogleDocs; brandTenant
 MOD-032,/api/submissions/[id]/notify,API,Basic reminder email,Contractor + owner,DELETED iter 21 — unreachable (no UI caller); was ungated email surface,REMOVED (ralph iter 21),,canSendEmail gate (402)
 MOD-033,/api/estimate-pdf/[id],API GET,Serve PDF from disk,Public GET,Unauthenticated if ID known — security review,SECURED (ralph iter 6),CHANGE,"Done: 401 unauthenticated (HTML hits redirect to login), 404 for other tenants (no existence leak), traversal-proof filename regex (fuzz-verified by critic); snapshot lang write-traversal also closed"
-MOD-034,/api/upload-logo + /api/logo/[filename],API,Logo upload / serve,Contractor / Public,2MB cap; 24h cache,,,
+MOD-034,/api/upload-logo + /api/logo/[filename],API,Logo upload / serve,Contractor / Public,2MB cap; 24h cache,SECURED (ralph iter 23),,"CRITICAL fixed: serve endpoint had zero filename validation — ..\ traversal could exfiltrate the whole SQLite DB unauthenticated. Now strict filename regex + resolve prefix check + CSP sandbox; uploads validated by magic bytes (PNG/JPEG/WebP only, SVG dropped — script risk)"
 MOD-035,/api/tenant/update,API,Update tenant fields (allowlist),Contractor,,,,
 MOD-036,/api/tenant/update-pricing,API,Store pricing_config JSON,Contractor,Config not consumed by engines (see SET-021..040),,,
-MOD-037,/api/tenant/calibrate,API,Wage/margin or anchor-price calibration,Contractor,,,,
-MOD-038,/api/billing/create-checkout + /portal + /webhook,API,Stripe integration,Contractor / Public webhook,Signature-verified webhook,,,
-MOD-039,/api/demo/generate,API,Public demo pricing,Public,,,,
+MOD-037,/api/tenant/calibrate,API,Wage/margin or anchor-price calibration,Contractor,,WIRED (ralph iter 23),,"Anchor prices were write-only (""calibrated_rates"" had no readers). Anchors now derive labor_price_multiplier (clamped 0.7-2.5) so the contractor's price level actually drives every estimate; per-item rate overrides remain deferred (D-2)"
+MOD-038,/api/billing/create-checkout + /portal + /webhook,API,Stripe integration,Contractor / Public webhook,Signature-verified webhook,BUG FIXED (ralph iter 23),,"Webhook read plan from session metadata (always empty) — every checkout activated as gq, including $129 Pro buyers. Now reads the subscription metadata where create-checkout puts it"
+MOD-039,/api/demo/generate,API,Public demo pricing,Public,,RATE-LIMITED (ralph iter 23),,30 req/min/IP + 24-item scope cap
 MOD-040,/api/admin/tenants/[id]/update,API,Admin tenant modification,Platform admin,,,,
 MOD-041,/[slug],Page,Tenant public page,Public,Purpose unclear — verify whether used,,,

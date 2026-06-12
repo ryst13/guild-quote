@@ -4,6 +4,7 @@ import { db } from '$lib/server/db.js';
 import { submissions } from '$lib/server/schema.js';
 import { eq, desc } from 'drizzle-orm';
 import { resolveSurcharges } from '$lib/server/pricing-config.js';
+import { getAccessState } from '$lib/server/features.js';
 import type { PageServerLoad } from './$types.js';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -41,6 +42,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 
   return {
     recentClients,
+    // Tell Marcos BEFORE the 4-step form, not at the 402 after it
+    canGenerate: getAccessState(tenant).canGenerate,
     tenant: {
       company_name: tenant.company_name,
       enabled_trades: tenant.enabled_trades,

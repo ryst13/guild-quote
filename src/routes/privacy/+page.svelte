@@ -113,7 +113,7 @@
       </ul>
 
       <h2>10. Cookies</h2>
-      <p>We use a single session cookie to keep you logged in. We do not use tracking cookies, advertising cookies, or third-party analytics cookies.</p>
+      <p>We use only the cookies the Service needs to work: a session cookie that keeps you logged in, and a short-lived security cookie during Google sign-in. We do not use tracking cookies, advertising cookies, or third-party analytics cookies.</p>
 
       <h2>11. Children</h2>
       <p>GuildQuote is not intended for use by anyone under 18. We do not knowingly collect information from minors.</p>

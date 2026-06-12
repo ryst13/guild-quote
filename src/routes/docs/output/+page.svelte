@@ -47,7 +47,7 @@
         <h3>What you can customize</h3>
         <ul>
           <li><strong>Company name</strong> -- appears in the header of every estimate</li>
-          <li><strong>Logo</strong> -- upload your logo (PNG, JPG, or SVG). It appears on PDFs and documents.</li>
+          <li><strong>Logo</strong> -- upload your logo (PNG or JPG). It appears on PDFs and documents.</li>
           <li><strong>Primary color</strong> -- your brand color is used for headers, accents, and highlight elements in the PDF</li>
           <li><strong>Accent color</strong> -- secondary color for additional visual elements</li>
           <li><strong>Contact information</strong> -- phone, email, website, and license number</li>
@@ -58,7 +58,6 @@
           <li>PDF estimate header and footer</li>
           <li>Google Docs title block</li>
           <li>Email sender name and signature</li>
-          <li>Client-facing estimate view</li>
         </ul>
 
         <p>Set up your branding in <strong>Settings &gt; Profile</strong>. Changes apply to all future estimates. Existing estimates keep the branding they were generated with.</p>

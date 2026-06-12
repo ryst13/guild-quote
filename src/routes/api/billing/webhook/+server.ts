@@ -25,12 +25,15 @@ export const POST: RequestHandler = async ({ request }) => {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object;
-      const tenantId = session.subscription
-        ? (await stripe.subscriptions.retrieve(session.subscription as string)).metadata?.tenant_id
-        : session.metadata?.tenant_id;
+      // create-checkout stores tenant_id and plan on the SUBSCRIPTION metadata
+      // (subscription_data.metadata) — the session itself carries neither
+      const subscription = session.subscription
+        ? await stripe.subscriptions.retrieve(session.subscription as string)
+        : null;
+      const tenantId = subscription?.metadata?.tenant_id || session.metadata?.tenant_id;
 
       if (tenantId) {
-        const plan = session.metadata?.plan || 'gq';
+        const plan = subscription?.metadata?.plan || session.metadata?.plan || 'gq';
         db.update(tenants).set({
           stripe_customer_id: session.customer as string,
           stripe_subscription_id: session.subscription as string,

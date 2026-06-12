@@ -24,6 +24,15 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     'economy_of_scale_enabled', 'mobilization_hours', 'setup_hours_per_area',
   ];
 
+  // logo_url is read back into filesystem paths by the PDF renderer — only the
+  // exact shape upload-logo produces (or empty to clear) is allowed.
+  if ('logo_url' in body && body.logo_url) {
+    const valid = /^\/api\/logo\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-[0-9a-f]{8}\.(png|jpe?g|webp|svg)$/i;
+    if (typeof body.logo_url !== 'string' || !valid.test(body.logo_url)) {
+      throw error(400, 'logo_url must come from the logo upload');
+    }
+  }
+
   // enabled_trades drives core navigation — reject junk before it lands
   if ('enabled_trades' in body) {
     let trades: unknown;

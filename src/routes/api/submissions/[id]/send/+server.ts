@@ -30,8 +30,11 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
 
   if (!to) throw error(400, 'Recipient email required');
 
-  // Build HTML email body from the plain text message
-  let htmlMessage = message.replace(/\n/g, '<br>');
+  // Build HTML email body from the plain text message. The contractor writes
+  // plain text; escape it so markup can't ride GuildQuote's sending domain.
+  const escapeHtml = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  let htmlMessage = escapeHtml(String(message || '')).replace(/\n/g, '<br>');
 
   if (include_doc_link && sub.google_doc_url) {
     htmlMessage += `<br><br><a href="${sub.google_doc_url}" style="color: ${tenant.primary_color}; font-weight: 600;">View Estimate Document</a>`;
@@ -49,13 +52,15 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
     </div>
   `;
 
-  // Load PDF attachment if requested
+  // Load PDF attachment if requested — never send "find attached" with nothing
+  // attached (duplicated estimates have no PDF until one is created)
   let pdfBuffer: Buffer | null = null;
   if (attach_pdf) {
     const pdfPath = `./data/pdfs/${params.id}.pdf`;
-    if (existsSync(pdfPath)) {
-      pdfBuffer = readFileSync(pdfPath);
+    if (!existsSync(pdfPath)) {
+      return json({ error: "This estimate doesn't have a PDF yet. Open the estimate and tap Create PDF first." }, { status: 400 });
     }
+    pdfBuffer = readFileSync(pdfPath);
   }
 
   const attachments = pdfBuffer
@@ -72,9 +77,11 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
   });
 
   if (sent) {
-    // Update status to 'sent' and store recipient email
+    // Store recipient; only move draft/viewed forward — re-sending must not
+    // knock a Won/Lost estimate back to 'sent'
+    const keepStatus = sub.estimate_status === 'accepted' || sub.estimate_status === 'declined';
     db.update(submissions).set({
-      estimate_status: 'sent',
+      ...(keepStatus ? {} : { estimate_status: 'sent' }),
       email: to,
       updated_at: new Date().toISOString(),
     }).where(eq(submissions.id, params.id)).run();

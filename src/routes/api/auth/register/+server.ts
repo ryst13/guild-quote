@@ -6,9 +6,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { randomBytes } from 'crypto';
 import { generateSlug } from '$lib/server/tenant.js';
 import { createSession } from '$lib/server/auth.js';
+import { rateLimit } from '$lib/server/rate-limit.js';
 import type { RequestHandler } from './$types.js';
 
-export const POST: RequestHandler = async ({ request, cookies }) => {
+export const POST: RequestHandler = async ({ request, cookies, getClientAddress }) => {
+  if (!rateLimit(`register:${getClientAddress()}`, 5, 60 * 60_000)) {
+    return json({ error: 'Too many sign-ups from this connection. Wait an hour and try again.' }, { status: 429 });
+  }
+
   const body = await request.json();
   const { company_name, first_name, last_name, email } = body;
   const refCode = body.ref as string | undefined;

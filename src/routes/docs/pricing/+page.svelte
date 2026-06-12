@@ -27,7 +27,7 @@
             <ul>
               <li>Your rates per surface type drive the math — see them live in your Price Book</li>
               <li>Scope entry captures measurements</li>
-              <li>Price = rate x measured area (adjusted for condition grade and LOSP tier)</li>
+              <li>Price = rate x measured area (adjusted for condition grade and prep level)</li>
               <li>GuildQuote back-calculates estimated production hours and margins</li>
             </ul>
           </div>

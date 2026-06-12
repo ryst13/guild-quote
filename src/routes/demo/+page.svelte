@@ -107,7 +107,6 @@
               { label: 'Estimate Created', status: 'done' },
               { label: 'Branded PDF Generated', status: 'done' },
               { label: 'Send to Client', status: 'next' },
-              { label: 'Client Views', status: 'upcoming' },
               { label: 'Won / Lost', status: 'upcoming' },
               { label: 'Crew Snapshot', status: 'upcoming' },
             ] as step}
@@ -347,12 +346,9 @@
           </div>
         {/if}
 
-        {#if result.quote.benchmarks}
-          <div class="rounded-lg bg-blue-50 border border-blue-200 p-4">
-            <p class="text-sm text-blue-700">{result.quote.benchmarks.message}</p>
-          </div>
-        {/if}
-
+        <!-- Benchmark message intentionally not rendered: it compares against
+             RP's Boston dataset, which must not ship as universal market truth
+             (sweep iter 23). Universal insights come from the tenant's own data. -->
         <!-- Trial CTA — goes straight into real registration, email prefilled -->
         <div class="rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-center text-white">
           <h3 class="text-lg font-bold mb-2">Build estimates like this for your business</h3>

@@ -64,11 +64,6 @@
     loading = '';
   }
 
-  function copyReferralLink() {
-    if (data.referralCode) {
-      navigator.clipboard.writeText(`${window.location.origin}/r/${data.referralCode}`);
-    }
-  }
 </script>
 
 <svelte:head>
@@ -115,7 +110,7 @@
     {#if data.paymentStatus !== 'active' || data.plan === 'gq'}
       <div class="rounded-xl bg-white border border-gray-200 p-6">
         <h2 class="font-semibold text-gray-900 mb-4">{data.paymentStatus === 'active' ? 'Upgrade' : 'Choose a Plan'}</h2>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <!-- GQ -->
           <div class="rounded-xl border border-gray-200 p-5">
             <div class="text-lg font-bold text-gray-900">GQ</div>
@@ -161,18 +156,12 @@
       </div>
     {/if}
 
-    <!-- Referral -->
-    {#if data.referralCode}
+    <!-- Referral program card removed (sweep iter 23): the "/r/" link was never
+         read at signup and no credit ever applied to a subscription — a promise
+         wired to nothing. Re-add when attribution + Stripe credits exist. -->
+    {#if data.referralCredits > 0}
       <div class="rounded-xl bg-white border border-gray-200 p-6">
-        <h2 class="font-semibold text-gray-900 mb-2">Referral Program</h2>
-        <p class="text-sm text-gray-500 mb-4">Share your link. When someone signs up, you both get 1 month free.</p>
-        <div class="flex gap-2">
-          <input type="text" readonly value="{window.location.origin}/r/{data.referralCode}" class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm bg-gray-50" />
-          <button onclick={copyReferralLink} class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800">Copy</button>
-        </div>
-        {#if data.referralCredits > 0}
-          <p class="text-sm text-green-600 mt-3">You've earned {data.referralCredits} month{data.referralCredits === 1 ? '' : 's'} of free access from referrals.</p>
-        {/if}
+        <p class="text-sm text-green-600">You've earned {data.referralCredits} month{data.referralCredits === 1 ? '' : 's'} of free access from referrals. We'll apply it to your bill — questions, email <a href="mailto:support@guildquote.com" class="underline">support@guildquote.com</a>.</p>
       </div>
     {/if}
   </div>

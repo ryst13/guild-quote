@@ -10,6 +10,9 @@ import { generateEstimatePDF } from '$lib/server/pdf.js';
 import { assembleInteriorEstimate, assembleExteriorEstimate, assembleEpoxyEstimate } from '$lib/server/estimate-templates.js';
 import { createEstimateDoc } from '$lib/server/google-docs.js';
 import { createEstimateSheet } from '$lib/server/google-sheets.js';
+import { ensureFolderStructure, ensureProjectFolder } from '$lib/server/google-drive.js';
+import { google } from 'googleapis';
+import { env } from '$env/dynamic/private';
 import { v4 as uuidv4 } from 'uuid';
 import { getAccessState } from '$lib/server/features.js';
 import { writeFileSync, mkdirSync } from 'fs';
@@ -31,13 +34,18 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   if (!access.canGenerate) {
     throw error(402, 'Your trial has ended. Choose a plan in Billing to keep creating estimates.');
   }
-  // GQ ($49) is PDF output; Docs/Sheets and tenant branding are Pro
+  // GQ ($49) is PDF output (with the tenant's branding); Docs/Sheets are Pro
   const googleAllowed = access.canUseGoogleDocs;
   const brandTenant = access.canUseWhiteLabel
     ? tenant
     : { ...tenant, primary_color: '#2563eb', logo_url: null };
 
   if (!trade_type || !scope) throw error(400, 'Missing trade_type or scope');
+
+  // The scope forms cap at 16 rooms / 8 surfaces; hold the API to a generous
+  // multiple so a hand-crafted request can't blow up PDF/Sheets rendering
+  const itemCount = (scope.rooms?.length ?? 0) + (scope.surfaces?.length ?? 0) + (scope.floors?.length ?? 0);
+  if (itemCount > 40) throw error(400, 'Too many rooms or surfaces in one estimate. Split the job into two estimates.');
 
   // Calculate quote — run both engines, use tenant's preferred mode
   let quote;
@@ -122,26 +130,36 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       ? assembleExteriorEstimate(scope as ExteriorScopeData, quote, tenantInfo, submissionId, paymentTerms)
       : assembleEpoxyEstimate(scope as EpoxyScopeData, quote, tenantInfo, submissionId, paymentTerms);
 
-  if (tenant.google_refresh_token && googleAllowed) {
-    if (tenant.output_format === 'google_sheets') {
-      try {
-        googleDocUrl = await createEstimateSheet(tenant, estimateDoc);
-        if (googleDocUrl) {
-          db.update(submissions).set({ google_doc_url: googleDocUrl }).where(eq(submissions.id, submissionId)).run();
+  // "PDF Only" tenants asked for no Google files — honor it
+  if (tenant.google_refresh_token && googleAllowed && tenant.output_format !== 'pdf') {
+    try {
+      // Same Drive folder structure regenerate uses, so files land in the
+      // project folder from day one and Won/Lost moves work without a regen
+      let projectFolderId: string | null = null;
+      if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
+        try {
+          const oauth2Client = new google.auth.OAuth2(env.GOOGLE_CLIENT_ID, env.GOOGLE_CLIENT_SECRET);
+          oauth2Client.setCredentials({ refresh_token: tenant.google_refresh_token });
+          const drive = google.drive({ version: 'v3', auth: oauth2Client });
+          const folders = await ensureFolderStructure(drive, tenant);
+          projectFolderId = await ensureProjectFolder(drive, folders.activeId, client.address, submissionId);
+        } catch (folderErr) {
+          console.warn('[google-drive] Folder setup failed, creating file in default location:', folderErr);
         }
-      } catch (err) {
-        console.error('[google-sheets] Failed to create sheet:', err);
       }
-    } else {
-      // Default: google_docs
-      try {
-        googleDocUrl = await createEstimateDoc(tenant, client, quote, submissionId, null, estimateDoc);
-        if (googleDocUrl) {
-          db.update(submissions).set({ google_doc_url: googleDocUrl }).where(eq(submissions.id, submissionId)).run();
-        }
-      } catch (err) {
-        console.error('[google-docs] Failed to create doc:', err);
+
+      googleDocUrl = tenant.output_format === 'google_sheets'
+        ? await createEstimateSheet(tenant, estimateDoc, projectFolderId)
+        : await createEstimateDoc(tenant, client, quote, submissionId, projectFolderId, estimateDoc);
+
+      if (googleDocUrl || projectFolderId) {
+        db.update(submissions).set({
+          ...(googleDocUrl ? { google_doc_url: googleDocUrl } : {}),
+          ...(projectFolderId ? { google_drive_project_folder_id: projectFolderId } : {}),
+        }).where(eq(submissions.id, submissionId)).run();
       }
+    } catch (err) {
+      console.error('[google] Failed to create estimate file:', err);
     }
   }
 

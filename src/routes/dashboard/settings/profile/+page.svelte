@@ -122,7 +122,7 @@
           <div class="space-y-2">
             <label class="block">
               <span class="rounded-lg border border-gray-300 px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">Replace</span>
-              <input type="file" accept="image/*" onchange={uploadLogo} class="hidden" />
+              <input type="file" accept="image/png,image/jpeg,image/webp" onchange={uploadLogo} class="hidden" />
             </label>
             <button onclick={removeLogo} class="block text-xs text-red-600 hover:text-red-700">Remove logo</button>
           </div>
@@ -134,7 +134,7 @@
             <span class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 cursor-pointer">
               {uploading ? 'Uploading...' : 'Upload Logo'}
             </span>
-            <input type="file" accept="image/*" onchange={uploadLogo} class="hidden" />
+            <input type="file" accept="image/png,image/jpeg,image/webp" onchange={uploadLogo} class="hidden" />
           </label>
         {/if}
       </div>

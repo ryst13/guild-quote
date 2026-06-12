@@ -19,8 +19,10 @@ import type { TenantConfig } from '$lib/types/index.js';
  */
 
 async function findOrCreateFolder(drive: drive_v3.Drive, name: string, parentId?: string): Promise<string> {
-  // Search for existing folder
-  let query = `name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+  // Search for existing folder — escape quotes so addresses like
+  // "12 O'Brien St" don't break the Drive query syntax
+  const safeName = name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  let query = `name='${safeName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
   if (parentId) query += ` and '${parentId}' in parents`;
 
   const existing = await drive.files.list({ q: query, fields: 'files(id)', spaces: 'drive' });

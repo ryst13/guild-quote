@@ -66,7 +66,13 @@
   </div>
 
   <div class="mx-auto max-w-4xl px-4 py-6">
-    {#if generating}
+    {#if !data.canGenerate}
+      <div class="rounded-2xl bg-white border border-gray-200 p-8 text-center max-w-lg mx-auto">
+        <h2 class="text-xl font-bold text-gray-900 mb-2">Your trial has ended</h2>
+        <p class="text-sm text-gray-500 mb-6">Your estimates and prices are all still here. Pick a plan to keep creating new ones.</p>
+        <a href="/dashboard/settings/billing" class="inline-block rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700">Choose a Plan</a>
+      </div>
+    {:else if generating}
       <div class="text-center py-12">
         <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-r-transparent"></div>
         <p class="mt-4 text-sm text-gray-500">Building your estimate. This takes a few seconds.</p>
@@ -96,7 +102,7 @@
           {#if !brandingPromptDismissed}
             <div class="rounded-lg bg-yellow-50 border border-yellow-200 p-3 mb-4 text-sm">
               <span class="text-yellow-800">Want your estimates to match your brand?</span>
-              <a href="/dashboard/settings/pricing" class="text-yellow-700 font-medium ml-1 hover:underline">Set your colors</a>
+              <a href="/dashboard/settings/profile" class="text-yellow-700 font-medium ml-1 hover:underline">Set your colors</a>
               <button onclick={() => { brandingPromptDismissed = true; dismissPrompt('branding_customized'); }} class="text-xs text-yellow-500 ml-2 hover:text-yellow-700">Later</button>
             </div>
           {/if}
@@ -127,12 +133,9 @@
           </div>
         {/if}
 
-        {#if result.quote.benchmarks}
-          <div class="rounded-lg bg-blue-50 border border-blue-200 p-4">
-            <p class="text-sm text-blue-700">{result.quote.benchmarks.message}</p>
-          </div>
-        {/if}
-
+        <!-- Benchmark message intentionally not rendered: it compares against
+             RP's Boston dataset, which must not ship as universal market truth
+             (sweep iter 23). Universal insights come from the tenant's own data. -->
         <!-- Profitability (internal) -->
         <div class="rounded-xl bg-white border border-gray-200 p-6">
           <h3 class="font-semibold text-gray-900 mb-3">Your Profit — the client never sees this</h3>

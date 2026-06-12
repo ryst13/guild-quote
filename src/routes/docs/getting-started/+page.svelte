@@ -15,7 +15,7 @@
       <div class="shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">1</div>
       <div class="prose prose-sm prose-gray max-w-none">
         <h2 class="text-lg font-bold text-gray-900 mt-0 mb-2">Create your account</h2>
-        <p>Go to the registration page, enter your email, and create a password. You get a 14-day free trial with full access -- no credit card required.</p>
+        <p>Go to the registration page, and enter your email — we send you a sign-in link. No password to remember. You get a 14-day free trial with full access -- no credit card required.</p>
         <p>During registration, you will set your company name. This is what appears on every estimate you send, so use your real business name.</p>
       </div>
     </div>

@@ -59,17 +59,13 @@
   <section id="benchmarks">
     <div class="rounded-xl border border-gray-200 bg-white p-6">
       <div class="prose prose-sm prose-gray max-w-none">
-        <h2 class="text-xl font-bold text-gray-900 mt-0 mb-3">Self-Benchmarking</h2>
-        <p>After you have tracked <strong>10 or more estimates</strong> through to Won or Lost, GuildQuote unlocks your benchmarking dashboard. This is your data about your business -- not industry averages.</p>
+        <h2 class="text-xl font-bold text-gray-900 mt-0 mb-3">Self-Benchmarking <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 align-middle">GQ Pro</span></h2>
+        <p>On GQ Pro, after you have tracked <strong>10 or more estimates</strong> through to Won or Lost, your dashboard starts showing your own numbers. This is your data about your business -- not industry averages.</p>
 
-        <h3>What benchmarking shows you</h3>
+        <h3>What it shows you</h3>
         <ul>
-          <li><strong>Close rate</strong> -- what percentage of estimates you send turn into jobs. Broken down by trade, by month, and overall.</li>
-          <li><strong>Average estimate value</strong> -- what your typical estimate is worth, by trade.</li>
-          <li><strong>Average close price vs. estimate price</strong> -- how much you negotiate down (or up) from your initial estimate.</li>
-          <li><strong>Decline reasons breakdown</strong> -- the most common reasons clients say no. If 40% of declines are "too expensive," that is actionable. If 40% are "project canceled," that is out of your control.</li>
-          <li><strong>Pipeline value</strong> -- total value of estimates currently in "Sent" or "Viewed" status. This is your pending revenue.</li>
-          <li><strong>Trend lines</strong> -- how your close rate, average value, and volume are trending over time.</li>
+          <li><strong>Win rate by trade</strong> -- what share of your estimates turn into jobs, for each trade you offer.</li>
+          <li><strong>Average estimate value</strong> -- what your typical estimate is worth, overall and by trade.</li>
         </ul>
 
         <div class="rounded-lg bg-blue-50 border border-blue-200 p-4 not-prose text-sm text-blue-800 my-4">
@@ -77,11 +73,7 @@
         </div>
 
         <h3>How to use it</h3>
-        <p>Check your benchmarks monthly. Look for two things:</p>
-        <ol>
-          <li><strong>Is my close rate where I want it?</strong> Most painting contractors close between 30-50% of estimates. Below 30% might mean you are pricing too high or not following up. Above 60% might mean you are leaving money on the table.</li>
-          <li><strong>Why are people saying no?</strong> Decline reasons tell you what to fix. Price objections suggest you need to present value better (or adjust pricing). "Went with someone else" means you are competing -- and you can ask what the other guy offered.</li>
-        </ol>
+        <p>Check your numbers monthly. Most painting contractors close between 30-50% of estimates. Below 30% might mean you are pricing too high or not following up. Above 60% might mean you are leaving money on the table. Every plan keeps the basic counts on the dashboard -- estimates created, won, lost, and total value.</p>
       </div>
     </div>
   </section>
@@ -110,7 +102,7 @@
         </ul>
 
         <div class="rounded-lg bg-blue-50 border border-blue-200 p-4 not-prose text-sm text-blue-800 my-4">
-          <strong>Sub estimates are tracked separately in your benchmarks.</strong> Your close rate and margins for sub work are reported independently from your crew work, so one does not distort the other.
+          <strong>The client never knows the difference.</strong> The estimate looks the same either way -- the sub pricing is internal only.
         </div>
       </div>
     </div>

@@ -108,27 +108,18 @@
       } catch {
         errorMsg = "Couldn't connect. Check your internet and try again.";
       }
-    } else if (calibrateMode === 'prices' && anchorBedroom) {
-      // Save via anchor prices mode
+    } else if (calibrateMode === 'prices' && (anchorBedroom || anchorBedroomCeiling || anchorDoor || anchorWindow || anchorTrim)) {
+      // Save via anchor prices mode — send only what the user typed; the
+      // server fills defaults and derives the price level from real entries
       await fetch('/api/tenant/calibrate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          medium_bedroom_walls_only: anchorBedroom || 115,
-          medium_bedroom_walls_ceiling: anchorBedroomCeiling || 158,
-          per_door_rate: anchorDoor || 62,
-          per_window_rate: anchorWindow || 83,
-          per_trim_lf_rate: anchorTrim || 62,
-          exterior_siding_per_side: 800,
-          exterior_door_rate: 120,
-          exterior_window_rate: 90,
-          exterior_trim_rate: 80,
-          epoxy_per_sqft: 6,
-          labor_multiplier: 1.1,
-          cc_fee_pct: 3.2,
-          deposit_pct: 30,
-          transportation_fee: 50,
-          trash_fee: 50,
+          medium_bedroom_walls_only: anchorBedroom || null,
+          medium_bedroom_walls_ceiling: anchorBedroomCeiling || null,
+          per_door_rate: anchorDoor || null,
+          per_window_rate: anchorWindow || null,
+          per_trim_lf_rate: anchorTrim || null,
         }),
       }).then((r) => {
         if (r.ok) calibrateSaved = true;
