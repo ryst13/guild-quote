@@ -123,7 +123,7 @@
             <ul class="mt-4 space-y-2 text-sm text-gray-600">
               <li>Estimates for all 3 trades</li>
               <li>Automatic pricing + Price Book</li>
-              <li>PDF output</li>
+              <li>PDF output with your logo and branding</li>
               <li>Win/loss tracking</li>
               <li>1 user</li>
             </ul>
@@ -145,7 +145,6 @@
               <li>Everything in GQ, plus:</li>
               <li>Estimates as Google Docs or Sheets</li>
               <li>Send estimates by email</li>
-              <li>Your logo and branding</li>
               <li>Estimates in other languages</li>
               <li>Your numbers dashboard</li>
               <li>3 users</li>

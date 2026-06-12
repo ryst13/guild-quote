@@ -14,11 +14,12 @@ describe('getAccessState — the tier matrix the endpoints enforce', () => {
 		expect(a.canUseMultilingual).toBe(true);
 	});
 
-	it('active GQ ($49): generates + PDF, but no email/Docs/languages/analytics', () => {
+	it('active GQ ($49): generates branded PDFs, but no email/Docs/languages/analytics', () => {
 		const a = getAccessState(tenantWith({
 			lifetime_access: false, plan: 'gq', payment_status: 'active',
 		}));
 		expect(a.canGenerate).toBe(true);
+		expect(a.canUseWhiteLabel).toBe(true);
 		expect(a.canSendEmail).toBe(false);
 		expect(a.canUseGoogleDocs).toBe(false);
 		expect(a.canUseMultilingual).toBe(false);

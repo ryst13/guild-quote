@@ -4,7 +4,7 @@
 
 <svelte:head>
   <title>Pricing — GuildQuote</title>
-  <meta name="description" content="GuildQuote pricing: GQ $49/mo for fast professional estimates, GQ Pro $129/mo adds email delivery, Google Docs, your branding, and more languages." />
+  <meta name="description" content="GuildQuote pricing: GQ $49/mo for fast branded estimates, GQ Pro $129/mo adds email delivery, Google Docs, and more languages." />
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50">
@@ -30,7 +30,7 @@
         <ul class="space-y-3 text-sm text-gray-700">
           <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> Estimates for all 3 trades — interior, exterior, epoxy</li>
           <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> Automatic pricing + your own Price Book</li>
-          <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> Professional PDF estimates, ready to download</li>
+          <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> Professional PDF estimates with your logo and colors</li>
           <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> Win/loss tracking</li>
           <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> 1 user</li>
         </ul>
@@ -48,7 +48,6 @@
           <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> Everything in GQ, plus:</li>
           <li class="flex items-start gap-2"><span class="text-blue-600 mt-0.5 font-bold">+</span> <strong>Email estimates with one tap</strong> — PDF attached, replies go to your inbox</li>
           <li class="flex items-start gap-2"><span class="text-blue-600 mt-0.5 font-bold">+</span> <strong>Google Docs &amp; Sheets output</strong> — saved to your Drive, editable before you send</li>
-          <li class="flex items-start gap-2"><span class="text-blue-600 mt-0.5 font-bold">+</span> <strong>Your logo and colors</strong> on every estimate</li>
           <li class="flex items-start gap-2"><span class="text-blue-600 mt-0.5 font-bold">+</span> <strong>Crew snapshots in other languages</strong> — Spanish, Portuguese, Romanian, Cantonese</li>
           <li class="flex items-start gap-2"><span class="text-blue-600 mt-0.5 font-bold">+</span> <strong>Your numbers dashboard</strong> — close rate and pricing trends from your own jobs</li>
           <li class="flex items-start gap-2"><span class="text-blue-600 mt-0.5 font-bold">+</span> <strong>3 user seats</strong> included</li>

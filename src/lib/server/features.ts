@@ -20,7 +20,8 @@ interface AccessState {
 
 const FEATURE_MATRIX: Record<PlanTier, { maxUsers: number; googleDocs: boolean; email: boolean; whiteLabel: boolean; multilingual: boolean; analytics: boolean }> = {
   trial: { maxUsers: 3, googleDocs: true, email: true, whiteLabel: true, multilingual: true, analytics: true },
-  gq: { maxUsers: 1, googleDocs: false, email: false, whiteLabel: false, multilingual: false, analytics: false },
+  // whiteLabel on GQ: Ryan's call (2026-06-12) — branding included at $49
+  gq: { maxUsers: 1, googleDocs: false, email: false, whiteLabel: true, multilingual: false, analytics: false },
   gq_pro: { maxUsers: 3, googleDocs: true, email: true, whiteLabel: true, multilingual: true, analytics: true },
 };
 

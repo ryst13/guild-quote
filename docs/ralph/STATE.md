@@ -129,9 +129,8 @@
   !canUseWhiteLabel; non-EN snapshots Pro-only; benchmarks Pro-only (basic stats stay
   for all). 402 messages actually REACH users (clients read error bodies); GQ tenants
   no longer see a fake "files missing" failure state. 6 matrix unit tests. **DONE
-  iter 20.** NOTE for Ryan: per the sales page, GQ ($49) estimates render with neutral
-  branding (no logo/colors) — severe but as sold; easy to soften by moving
-  whiteLabel into the GQ column if desired.
+  iter 20.** NOTE resolved iter 22: Ryan opted to include branding at $49; whiteLabel moved
+  into the GQ column.
 
 ### LR — Launch readiness (added 2026-06-11 from Ryan's launch decisions)
 - [x] LR-1 Drop `gmail.send` restricted scope (Ryan: option C). All email — estimates,
@@ -411,6 +410,14 @@ claims removed (no annual SKU exists), logged-in-aware CTAs, blank-email warning
 send page linking to Settings, email-provider privacy bullet, docs mention trial.
 **Standing rule:** when the iteration is "purge false promises," grep the WHOLE
 surface for the promise class — not just the lines that mention the old mechanism.
+
+### Iteration 22 — Ryan-directed: branding included at GQ ($49)
+Ryan reviewed the iter-20 note and decided branding belongs in the base tier.
+FEATURE_MATRIX gq.whiteLabel -> true; sales copy moved the logo/branding bullet from
+the Pro column to the GQ column on billing, /upgrade, and homepage; docs already said
+"every document carries your branding" and are now simply true. The brandTenant
+neutralization stays in the endpoints (still guards expired/edge states and
+future tiers). Matrix test asserts GQ canUseWhiteLabel=true.
 
 ## Discovered items
 
