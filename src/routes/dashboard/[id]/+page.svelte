@@ -438,7 +438,7 @@
           </div>
           {#if editingClient}
             <div class="space-y-3">
-              <div class="grid grid-cols-2 gap-3">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label class="block text-xs text-gray-500 mb-1">Name</label>
                   <input type="text" bind:value={clientName} class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm outline-none focus:border-blue-500" />
@@ -639,10 +639,17 @@
         <!-- Primary Action -->
         <div class="rounded-xl bg-white border border-gray-200 p-5 space-y-2">
           {#if sub.estimate_status === 'draft'}
-            <button onclick={sendToClient} class="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">
-              Send to Client
-            </button>
-          {:else if sub.estimate_status === 'sent' || sub.estimate_status === 'viewed'}
+            {#if data.canSendEmail}
+              <button onclick={sendToClient} class="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">
+                Send to Client
+              </button>
+            {:else if sub.estimate_pdf_url}
+              <a href={sub.estimate_pdf_url} target="_blank" class="block w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 text-center">
+                Download PDF to send
+              </a>
+              <p class="text-xs text-gray-400 text-center">Emailing from GuildQuote is part of GQ Pro.</p>
+            {/if}
+          {:else if (sub.estimate_status === 'sent' || sub.estimate_status === 'viewed') && data.canSendEmail}
             <button onclick={sendToClient} class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
               Resend / Follow Up
             </button>

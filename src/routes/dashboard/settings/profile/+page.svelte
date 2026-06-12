@@ -151,7 +151,7 @@
           <label for="company-name" class="block text-sm font-medium text-gray-700 mb-1">Company name</label>
           <input id="company-name" type="text" bind:value={companyName} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
         </div>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label for="contact-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input id="contact-email" type="email" bind:value={contactEmail} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
@@ -176,7 +176,7 @@
     <div class="rounded-xl bg-white border border-gray-200 p-6">
       <h2 class="font-semibold text-gray-900 mb-1">Brand Colors</h2>
       <p class="text-sm text-gray-500 mb-4">Applied to your estimate headers, section dividers, and totals.</p>
-      <div class="grid grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div>
           <label for="primary-color" class="block text-sm font-medium text-gray-700 mb-2">Primary color</label>
           <div class="flex items-center gap-3">

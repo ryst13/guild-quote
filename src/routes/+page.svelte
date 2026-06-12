@@ -49,7 +49,7 @@
         <span class="text-gray-300">|</span>
         <span>3 trades: <strong class="text-gray-900">Interior, Exterior, Epoxy</strong></span>
         <span class="text-gray-300">|</span>
-        <span>Output in <strong class="text-gray-900">PDF, Google Docs, Google Sheets</strong></span>
+        <span>Branded <strong class="text-gray-900">PDF estimates</strong> on every plan</span>
       </div>
     </div>
   </div>
@@ -77,7 +77,7 @@
       <div class="rounded-xl bg-white border border-gray-200 p-6">
         <div class="text-2xl mb-3">&#128196;</div>
         <h4 class="font-semibold text-gray-900 mb-2">Branded documents</h4>
-        <p class="text-sm text-gray-500">Your logo, your colors, your name. Professional PDFs, Google Docs, or Sheets — with your company name on every email, and replies straight to your inbox.</p>
+        <p class="text-sm text-gray-500">Your logo, your colors, your name on every PDF estimate — on every plan. Add Google Docs &amp; Sheets output and one-tap email with GQ Pro.</p>
       </div>
     </div>
   </div>
@@ -105,7 +105,7 @@
         <div class="text-center">
           <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-bold text-sm mb-3">4</div>
           <h4 class="font-semibold text-gray-900 text-sm mb-1">Send & track</h4>
-          <p class="text-xs text-gray-500">Email the estimate with one tap — PDF attached, your company name on it. Track who accepted and who ghosted.</p>
+          <p class="text-xs text-gray-500">Download the branded PDF and send it, or email it in one tap with GQ Pro. Mark each estimate Won or Lost to see your win rate.</p>
         </div>
       </div>
     </div>
@@ -126,14 +126,14 @@
         </ul>
       </div>
       <div class="rounded-xl bg-white border border-gray-200 p-8">
-        <h4 class="font-bold text-gray-900 mb-2">Your prices, your brand, your Drive</h4>
-        <p class="text-sm text-gray-500 mb-4">Set up your pricing catalog once — or use our Quick Calibrate to get started in 60 seconds. Every estimate comes out with your branding, saved directly to your Google Drive where you own the file.</p>
+        <h4 class="font-bold text-gray-900 mb-2">Your prices, your brand</h4>
+        <p class="text-sm text-gray-500 mb-4">Set up your pricing once — or use Quick Calibrate to get started in 60 seconds. Every estimate comes out with your branding. On GQ Pro, files save straight to your Google Drive, where you own them.</p>
         <ul class="space-y-2 text-sm text-gray-600">
           <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> Logo, colors, company name on every estimate</li>
-          <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> PDF, Google Docs, or Google Sheets output</li>
-          <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> Email estimates with one tap</li>
-          <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> Editable Docs — tweak before you send</li>
-          <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> Multilingual crew snapshots (EN / ES / PT / RO / Cantonese)</li>
+          <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> Branded PDF estimates, saved and ready to send</li>
+          <li class="flex items-start gap-2"><span class="text-blue-600 mt-0.5 font-bold">+</span> Google Docs &amp; Sheets output <span class="text-xs text-blue-600 font-medium">GQ Pro</span></li>
+          <li class="flex items-start gap-2"><span class="text-blue-600 mt-0.5 font-bold">+</span> Email estimates with one tap <span class="text-xs text-blue-600 font-medium">GQ Pro</span></li>
+          <li class="flex items-start gap-2"><span class="text-blue-600 mt-0.5 font-bold">+</span> Multilingual crew snapshots (EN / ES / PT / RO / Cantonese) <span class="text-xs text-blue-600 font-medium">GQ Pro</span></li>
         </ul>
       </div>
     </div>

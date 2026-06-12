@@ -214,7 +214,7 @@
           </select>
         </div>
 
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <!-- Crew Wage -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Crew Hourly Wage</label>
@@ -272,7 +272,7 @@
           {@const sampleWallPrice = sampleWallHours * billingRate}
           <div class="rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
             <p class="font-medium mb-2">Preview at these settings:</p>
-            <div class="grid grid-cols-3 gap-4 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
               <div>
                 <span class="text-gray-400">Your billing rate</span>
                 <div class="font-semibold text-gray-900">${billingRate.toFixed(2)}/hr per painter</div>
@@ -313,7 +313,7 @@
               Setup &amp; Mobilization only works with Cost-Based pricing. Choose Cost-Based above to turn this on.
             </div>
           {/if}
-          <div class="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-4">
+          <div class="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label for="mobilization-hours" class="block text-sm font-medium text-gray-700 mb-1">Mobilization Hours</label>
               <p class="text-xs text-gray-500 mb-2">Crew-hours per job for loading, travel, protection, and cleanup. Typical: 2–7.</p>
@@ -338,7 +338,7 @@
           {@const largeLine = (eosMob + eosSetup * 12) * eosBilling}
           <div class="mt-4 rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
             <p class="font-medium mb-2">Preview at these settings:</p>
-            <div class="grid grid-cols-2 gap-4 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
                 <span class="text-gray-400">4-room job</span>
                 <div class="font-semibold text-gray-900">Setup &amp; Mobilization line: ${Math.round(smallLine)}</div>
@@ -404,7 +404,7 @@
             </label>
           </div>
           {#if config.surcharges.trash_enabled}
-            <div class="grid grid-cols-2 gap-4 ml-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 ml-6">
               <div>
                 <label class="block text-xs text-gray-500 mb-1">Interior ($)</label>
                 <input type="number" step="0.01" bind:value={config.surcharges.trash_interior} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none" />
@@ -475,7 +475,7 @@
             <p class="text-sm text-gray-500 mb-4">Set your preferred products, coverage rates, and per-gallon pricing.</p>
             <div class="space-y-4">
               {#each Object.entries(config.materials.interior) as [key, mat]}
-                <div class="grid grid-cols-3 gap-3 items-end">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                   <div>
                     <label class="block text-xs text-gray-500 mb-1 capitalize">{key} — Product</label>
                     <input type="text" bind:value={mat.product} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none" />
@@ -503,7 +503,7 @@
             <p class="text-sm text-gray-500 mb-4">Set your preferred exterior products and pricing.</p>
             <div class="space-y-4">
               {#each Object.entries(config.materials.exterior) as [key, mat]}
-                <div class="grid grid-cols-3 gap-3 items-end">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                   <div>
                     <label class="block text-xs text-gray-500 mb-1 capitalize">{key} — Product</label>
                     <input type="text" bind:value={mat.product} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none" />
@@ -531,7 +531,7 @@
             <p class="text-sm text-gray-500 mb-4">Set your preferred epoxy products and pricing.</p>
             <div class="space-y-4">
               {#each Object.entries(config.materials.epoxy) as [key, mat]}
-                <div class="grid grid-cols-3 gap-3 items-end">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                   <div>
                     <label class="block text-xs text-gray-500 mb-1 capitalize">{key} — Product</label>
                     <input type="text" bind:value={mat.product} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none" />
@@ -559,7 +559,7 @@
         <h2 class="font-semibold text-gray-900">Payment Terms</h2>
         <p class="text-sm text-gray-500">These appear in the "Your Home Investment" section of every estimate.</p>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Deposit (%)</label>
             <input type="number" step="5" min="0" max="90" bind:value={config.payment_terms.deposit_pct} class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none" />

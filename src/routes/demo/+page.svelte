@@ -264,9 +264,9 @@
                 <span class="text-gray-300 text-xs">&rarr;</span>
                 <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700">Sent</span>
                 <span class="text-gray-300 text-xs">&rarr;</span>
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-100 text-purple-700">Viewed</span>
-                <span class="text-gray-300 text-xs">&rarr;</span>
                 <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-700">Won</span>
+                <span class="text-gray-400 text-[10px]">or</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-700">Lost</span>
               </div>
               <div class="mt-2 flex gap-3 text-[10px] text-gray-500">
                 <span>Close price tracking</span>

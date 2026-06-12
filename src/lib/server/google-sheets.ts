@@ -179,7 +179,7 @@ export async function createEstimateSheet(
 
   if (Math.abs(doc.recap_table.other_total) > 0.005) {
     const otherAmt = doc.recap_table.other_total;
-    addRow(['', '', '', '', '', '', '', otherAmt >= 0 ? 'Setup & fees' : 'Discounts', `${otherAmt < 0 ? '-' : ''}$${Math.abs(otherAmt).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`], { bold: true });
+    addRow(['', '', '', '', '', '', '', otherAmt >= 0 ? 'Setup & surcharges' : 'Adjustments & discounts', `${otherAmt < 0 ? '-' : ''}$${Math.abs(otherAmt).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`], { bold: true });
   }
   addRow(['', '', '', '', '', '', '', 'Materials', `$${doc.recap_table.materials_total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`], { bold: true });
   addBlank();

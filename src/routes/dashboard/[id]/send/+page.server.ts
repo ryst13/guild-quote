@@ -3,6 +3,7 @@ import { db } from '$lib/server/db.js';
 import { submissions } from '$lib/server/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { getTenantById } from '$lib/server/tenant.js';
+import { getAccessState } from '$lib/server/features.js';
 import type { PageServerLoad } from './$types.js';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -11,6 +12,11 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
   const tenantConfig = getTenantById(locals.user.tenant_id);
   if (!tenantConfig) throw redirect(303, '/auth/register');
+
+  // Email is GQ Pro — don't let a GQ user compose a message that can't send
+  if (!getAccessState(tenantConfig).canSendEmail) {
+    throw redirect(303, `/dashboard/${params.id}`);
+  }
 
   const sub = db.select().from(submissions)
     .where(and(

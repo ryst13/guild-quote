@@ -46,6 +46,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
     plan: access.plan,
     isPro: access.plan === 'gq_pro' || access.isTrialing,
     canUseGoogleDocs: access.canUseGoogleDocs,
+    canSendEmail: access.canSendEmail,
     estimateCount: total,
   };
 };

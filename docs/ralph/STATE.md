@@ -471,6 +471,27 @@ Price does); maxUsers unenforced (no add-user flow exists to enforce it on).
 Per the constitution this sweep found criticals, so the two-clean-sweeps counter is
 still at ZERO. Next iteration: sweep #2.
 
+### Iteration 24 — Full-app Critic sweep #2 — FINDINGS → fixed → green
+Second completion-check sweep. **Security lens: PASS, zero critical/high** — adversarially
+re-verified every iter-23 fix holds (logo traversal, PDF IDOR, upload magic-bytes, email
+escape, tenant isolation, OAuth state, webhook signature, rate limits). **Correctness lens:
+zero critical/high, all 11 iter-23 fixes verified holding with no regressions, 93 tests** —
+one MODERATE: snapshot endpoint missed the PDF-only guard that generate/regenerate got
+(fixed: `&& output_format !== 'pdf'`). **Marcos lens: 2 HIGH on the homepage** — these block:
+the homepage still sold email + Google Docs/Sheets as universal (they're GQ Pro) with no
+labeling, and re-floated "track who accepted and who ghosted" (no open/view tracking exists;
+status is manual). Both were copy I'd written before the tier split fully landed. Fixed: every
+Pro capability on the homepage now carries a "GQ Pro" tag and PDF/branding is stated as the
+base-tier truth; tracking copy reduced to the real manual Won/Lost win-rate. Plus moderates:
+demo pipeline "Viewed" chip removed (implied auto view-tracking) → Draft→Sent→Won/Lost; GQ
+"Send to Client" button now shows "Download PDF to send" + the send page server-load redirects
+GQ users (no composing into a 402); pricing/profile/client-edit number-entry grids made
+`grid-cols-1 sm:grid-cols-N` (phone number entry); Sheets recap "other" label aligned to
+PDF/Docs ("Setup & surcharges" / "Adjustments & discounts").
+
+Sweep found HIGHs → **two-clean-sweeps counter stays at ZERO.** Next: sweep #3 must come back
+fully clean, then sweep #4 clean, to pass the completion check.
+
 ## Discovered items
 
 - [ ] D-1 (from iter 2 Critic, MEDIUM): Materials/Surcharges inputs need inline

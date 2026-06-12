@@ -78,9 +78,9 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
     console.error('[snapshot] PDF generation failed:', err);
   }
 
-  // Generate Google Sheet snapshot (if Google connected)
+  // Generate Google Sheet snapshot (if Google connected; "PDF Only" tenants opted out)
   let snapshotDocUrl: string | null = null;
-  if (tenant.google_refresh_token) {
+  if (tenant.google_refresh_token && tenant.output_format !== 'pdf') {
     try {
       snapshotDocUrl = access.canUseGoogleDocs ? await createSnapshotSheet(tenant, snapshot) : null;
       if (snapshotDocUrl) {
