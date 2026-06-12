@@ -9,7 +9,6 @@
   let result = $state<{ quote: Omit<QuoteResult, 'profitability'> } | null>(null);
   let errorMsg = $state('');
   let captureEmail = $state('');
-  let emailCaptured = $state(false);
 
   const tradeLabels: Record<string, string> = {
     interior: 'Interior Painting',
@@ -64,7 +63,7 @@
         <h1 class="text-xl font-bold text-gray-900">GuildQuote</h1>
         <p class="text-sm text-gray-500">Interactive Demo</p>
       </div>
-      <a href="/" class="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+      <a href="/auth/register" class="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700">
         Start Free Trial
       </a>
     </div>
@@ -354,24 +353,16 @@
           </div>
         {/if}
 
-        <!-- Email Capture CTA -->
+        <!-- Trial CTA — goes straight into real registration, email prefilled -->
         <div class="rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-center text-white">
-          {#if emailCaptured}
-            <div class="text-lg font-bold mb-2">You're in.</div>
-            <p class="text-sm text-blue-100">We'll reach out when your trial is ready.</p>
-          {:else}
-            <h3 class="text-lg font-bold mb-2">Build estimates like this for your business</h3>
-            <p class="text-sm text-blue-100 mb-4">Branded PDF estimates, crew snapshots, pipeline tracking — from scope to close. 14-day free trial, no credit card.</p>
-            <div class="flex justify-center gap-2 max-w-sm mx-auto">
-              <input type="email" bind:value={captureEmail} placeholder="Your email" class="flex-1 rounded-lg px-4 py-2.5 text-sm text-gray-900 outline-none" />
-              <button
-                onclick={() => { if (captureEmail) emailCaptured = true; }}
-                class="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-50"
-              >
-                Start Trial
-              </button>
-            </div>
-          {/if}
+          <h3 class="text-lg font-bold mb-2">Build estimates like this for your business</h3>
+          <p class="text-sm text-blue-100 mb-4">Branded PDF estimates, crew snapshots, pipeline tracking — from scope to close. 14-day free trial, no credit card.</p>
+          <form method="get" action="/auth/register" class="flex justify-center gap-2 max-w-sm mx-auto">
+            <input type="email" name="email" bind:value={captureEmail} placeholder="Your email" class="flex-1 rounded-lg px-4 py-2.5 text-sm text-gray-900 outline-none" />
+            <button type="submit" class="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-50">
+              Start Trial
+            </button>
+          </form>
         </div>
 
         <div class="text-center">

@@ -36,7 +36,7 @@ When building features — be a sharp SvelteKit/TypeScript engineer following th
 - `/dashboard/new` — Trade selection → 4-step scope form → estimate generation
 - `/dashboard/[id]` — Estimate editor: quote breakdown, price adjustment with PDF/Doc regen, quick actions
 - `/dashboard/settings/pricing` — "My Prices": Price Book (live engine-computed prices) + Labor & Margins, Surcharges, Materials, Payment Terms, Estimate Output tabs. `/dashboard/settings/catalog` permanently redirects here (catalog_json is vestigial and unread)
-- `/demo` — Public demo: scope form → pricing calculation → email capture
+- `/demo` — Public demo: scope form → live pricing → straight into trial registration (email prefilled)
 - `/api/estimates/generate` — Generate estimate (pricing engine + PDF + Google Doc)
 - `/api/submissions/[id]/regenerate` — Regenerate PDF/Doc with adjusted price
 - `/api/submissions/[id]/duplicate` — Duplicate an estimate

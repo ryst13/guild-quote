@@ -57,10 +57,11 @@
 </div>
 
 <script lang="ts">
+  import { page } from '$app/state';
   let companyName = $state('');
   let firstName = $state('');
   let lastName = $state('');
-  let email = $state('');
+  let email = $state((page.url.searchParams.get('email') ?? '').trim());
   let loading = $state(false);
   let error = $state('');
 

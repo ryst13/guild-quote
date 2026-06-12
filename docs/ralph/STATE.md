@@ -108,7 +108,11 @@
   three forms (tenant-scoped, deduped, hidden in demo; fills + clears validation);
   estimate Copy (dashboard + detail) and per-room Copy shipped in iters 5/12.
   **DONE iter 17, Critic ACCEPT.**
-- [ ] P2-2 Demo route parity with current scope forms + output (it's the sales tool).
+- [x] P2-2 Demo: structural parity verified (shared forms + live engine output); the
+  "Start Trial" lead capture was a FALSE PROMISE — email went into local state, nobody
+  would "reach out" — now a real form straight into trial registration with the email
+  prefilled (works on Enter and without JS); header CTA aligned; stale docs fixed.
+  **DONE iter 18, Critic ACCEPT.**
 - [ ] P2-3 Docs pages (`/docs/*`) updated to match post-overhaul reality.
 - [ ] P2-4 Dead schema cleanup decision: `stages_json`, `thresholds_json`, `subscription_tier` (SET-064..066) — document or deprecate (additive-only: mark deprecated, don't drop).
 - [ ] P2-5 Tier gating review: which knobs are Pro-only per spec (complexity factors, economy-of-scale hours)? Implement gating consistent with $49/$129 positioning.
@@ -340,6 +344,13 @@ hide — render signed truth instead.**
 Tenant-scoping verified (no cross-tenant leak); all three forms verified for state-var
 names, balanced blocks, demo exclusion. LOWs fixed: chip tap now clears the stale name
 validation message; dead projection field dropped.
+
+### Iteration 18 — P2-2 demo — Critic: ACCEPT (P3 nits swept)
+The sales tool's only conversion button silently discarded every lead behind "We'll
+reach out when your trial is ready." Now it starts the actual 14-day trial. Critic
+verified $app/state usage, SSR safety, XSS-escaping of the reflected param, and that
+no backend capture ever existed (strictly-better change). P3s applied: GET form for
+Enter/no-JS, import hoist, trim, header CTA consistency, CLAUDE.md staleness.
 
 ## Discovered items
 
