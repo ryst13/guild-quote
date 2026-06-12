@@ -26,6 +26,10 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
     if (field in body) updates[field] = body[field];
   }
 
+  const prevStatus = db.select({ estimate_status: submissions.estimate_status }).from(submissions)
+    .where(and(eq(submissions.id, params.id), eq(submissions.tenant_id, locals.user.tenant_id)))
+    .get()?.estimate_status;
+
   db.update(submissions)
     .set(updates)
     .where(and(
@@ -34,8 +38,11 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
     ))
     .run();
 
-  // If status changed to declined, move project folder from Active to Inactive
-  if (body.estimate_status === 'declined') {
+  // Folder moves mirror status: declined -> Inactive; leaving declined -> back
+  // to Active (this is what makes Undo on a mis-tapped "Lost" complete).
+  const leavingDeclined =
+    prevStatus === 'declined' && body.estimate_status && body.estimate_status !== 'declined';
+  if (body.estimate_status === 'declined' || leavingDeclined) {
     try {
       const tenant = getTenantById(locals.user.tenant_id);
       const sub = db.select().from(submissions).where(eq(submissions.id, params.id)).get();
@@ -47,7 +54,12 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
           const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
           oauth2Client.setCredentials({ refresh_token: tenant.google_refresh_token });
           const drive = google.drive({ version: 'v3', auth: oauth2Client });
-          await moveProjectToInactive(drive, sub.google_drive_project_folder_id, tenant.google_drive_active_folder_id, tenant.google_drive_inactive_folder_id);
+          if (leavingDeclined) {
+            // Same parent-swap, reversed direction
+            await moveProjectToInactive(drive, sub.google_drive_project_folder_id, tenant.google_drive_inactive_folder_id, tenant.google_drive_active_folder_id);
+          } else {
+            await moveProjectToInactive(drive, sub.google_drive_project_folder_id, tenant.google_drive_active_folder_id, tenant.google_drive_inactive_folder_id);
+          }
         }
       }
     } catch (err) {

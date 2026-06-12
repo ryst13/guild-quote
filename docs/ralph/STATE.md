@@ -62,7 +62,14 @@
   URL 308-redirects; nav unified to one "My Prices" entry. **DONE iter 11.** Critic
   REJECT round fixed: admin nav not renamed, /docs still teaching the dead catalog
   editor, CLAUDE.md/README/audit-register staleness, whitespace residue.
-- [ ] P1-4 Dashboard: Jobber-style status-at-a-glance + one-tap quick actions (send, mark accepted/declined, duplicate). Surface "needs action" first.
+- [x] P1-4 Dashboard quick actions: status-aware one-tap row actions (Send / Won /
+  Lost / Copy / View) with an 8-second Undo toast; undoing a mis-tapped Lost also moves
+  the Drive folder back (update endpoint now mirrors folder state symmetrically);
+  needs-action-first ordering (drafts, then sent, newest within groups); plain-language
+  failure banner; all actions disabled while any request is in flight. **DONE iter 12.**
+  Critic REJECT round: one-tap irreversible status changes with no recovery (fixed via
+  undo + symmetric folder move), busy-state leak, toSorted browser floor, misleading
+  partial-failure errors — all fixed.
 - [ ] P1-5 Onboarding: measure and minimize time-to-first-estimate; sample-data preview before any setup; skip-everything path that still works.
 - [ ] P1-6 Error handling sweep: no raw error text reaches the user; every failure says what happened and what to do, in plain words.
 - [ ] P1-7 Estimate output polish vs PaintScout bar: typography, branding consistency (logo/colors actually applied), section order, mobile-readable PDF.
@@ -238,6 +245,17 @@ structure — "one mental model" includes the documentation. All fixed; 308 over
 **LOW noted (latent):** activeTab doesn't track ?tab= changes during client-side nav —
 no in-app link does this today.
 
+### Iteration 12 — P1-4 dashboard quick actions — Critic: REJECT → fixed → green
+**Builder:** one-tap Send/Won/Lost/Copy per row, needs-action sort, error banner.
+**Critic REJECT (the right call):** one mis-tap permanently corrupted win-rate analytics
+and fired a one-way Drive folder move, with zero recovery affordance anywhere in the app
+— while the detail page gates the same transitions behind confirm modals. Fix shipped:
+Jobber-style 8s Undo toast; the update endpoint now moves the Drive folder BOTH ways
+(leaving declined restores Active), so undo is complete; busy state disables all rows;
+toSorted replaced for older-browser safety; partial-failure error messages no longer lie.
+**D-8 ruled KEEP** (see backlog). Verified fine: close_price one-tap default matches the
+detail modal's own fallback; decline_reason has no downstream consumer; cmd-click works.
+
 ## Discovered items
 
 - [ ] D-1 (from iter 2 Critic, MEDIUM): Materials/Surcharges inputs need inline
@@ -262,6 +280,7 @@ no in-app link does this today.
   terms (PaintScout/Jobber convention) on top of the per-room bullets; rephrase
   Window/Room Cleaning as "separate services available on request". Exterior recap
   filter keys on the literal section label — tag sections structurally instead.
-- [ ] D-8 (from iter 7, decision): duplicating a disabled-trade estimate creates a new
-  draft of that trade. Keep (reversibility-coherent) or gate? Decide during P1-4
-  dashboard quick-actions work.
+- [x] D-8 RULED (iter 12 Critic): KEEP — dashboard Copy mirrors the pre-existing
+  ungated detail-page action; duplication copies an already-priced quote (no
+  disabled-trade pricing path runs); trades are reversible. Cosmetic caveat logged:
+  a disabled-trade draft has no matching filter chip (visible under "All").

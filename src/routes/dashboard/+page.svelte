@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { PageData } from './$types.js';
 
+  import { invalidateAll, goto } from '$app/navigation';
+
   let { data }: { data: PageData } = $props();
 
   let tradeFilter = $state('all');
@@ -12,12 +14,94 @@
       if (statusFilter !== 'all' && s.estimate_status !== statusFilter) return false;
       return true;
     })
-  );
+  .slice().sort((a, b) => (STATUS_PRIORITY[a.estimate_status] ?? 3) - (STATUS_PRIORITY[b.estimate_status] ?? 3) || b.created_at.localeCompare(a.created_at)));
 
   // Action-needed counts
   const STATUS_DISPLAY: Record<string, string> = {
     draft: 'Draft', sent: 'Sent', viewed: 'Viewed', accepted: 'Won', declined: 'Lost', expired: 'Expired',
   };
+
+  let actionError = $state('');
+  let busyId = $state('');
+
+  // Work to do floats to the top; newest first inside each group.
+  const STATUS_PRIORITY: Record<string, number> = { draft: 0, sent: 1, viewed: 1, accepted: 2, declined: 2, expired: 2 };
+
+  let undoState = $state<{ id: string; prevStatus: string; label: string } | null>(null);
+  let undoTimer: ReturnType<typeof setTimeout> | null = null;
+
+  async function quickMark(id: string, status: 'accepted' | 'declined', salesPrice: number | null, e: Event) {
+    e.stopPropagation();
+    busyId = id;
+    actionError = '';
+    const prevStatus = data.submissions.find((s) => s.id === id)?.estimate_status ?? 'sent';
+    let saved = false;
+    try {
+      const body: Record<string, unknown> = {
+        estimate_status: status,
+        outcome_date: new Date().toISOString(),
+      };
+      if (status === 'accepted' && salesPrice) body.close_price = salesPrice;
+      const res = await fetch(`/api/submissions/${id}/update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      saved = res.ok;
+    } catch {
+      saved = false;
+    }
+    if (!saved) {
+      actionError = "That didn't save. Check your connection and try again.";
+      busyId = '';
+      return;
+    }
+    if (undoTimer) clearTimeout(undoTimer);
+    undoState = { id, prevStatus, label: status === 'accepted' ? 'Marked as Won' : 'Marked as Lost' };
+    undoTimer = setTimeout(() => (undoState = null), 8000);
+    await invalidateAll().catch(() => {});
+    busyId = '';
+  }
+
+  async function undoMark() {
+    if (!undoState) return;
+    const { id, prevStatus } = undoState;
+    undoState = null;
+    if (undoTimer) clearTimeout(undoTimer);
+    busyId = id;
+    try {
+      const res = await fetch(`/api/submissions/${id}/update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estimate_status: prevStatus, close_price: null, decline_reason: null, outcome_date: null }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      actionError = "Couldn't undo that. Open the estimate to fix its status.";
+    }
+    await invalidateAll().catch(() => {});
+    busyId = '';
+  }
+
+  async function quickCopy(id: string, e: Event) {
+    e.stopPropagation();
+    busyId = id;
+    actionError = '';
+    let newId: string | null = null;
+    try {
+      const res = await fetch(`/api/submissions/${id}/duplicate`, { method: 'POST' });
+      if (!res.ok) throw new Error();
+      const result = await res.json();
+      newId = result.id ?? null;
+    } catch {
+      actionError = "Couldn't copy that estimate. Try again in a minute.";
+      busyId = '';
+      return;
+    }
+    busyId = '';
+    if (newId) await goto(`/dashboard/${newId}`);
+    else await invalidateAll().catch(() => {});
+  }
 
   let draftsCount = $derived(data.submissions.filter(s => s.estimate_status === 'draft').length);
   let sentCount = $derived(data.submissions.filter(s => s.estimate_status === 'sent').length);
@@ -209,6 +293,9 @@
           <button onclick={() => { tradeFilter = 'all'; statusFilter = 'all'; }} class="mt-2 text-sm text-blue-600 hover:text-blue-700">Clear filters</button>
         </div>
       {:else}
+        {#if actionError}
+          <div class="mx-4 mt-3 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{actionError}</div>
+        {/if}
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
@@ -243,7 +330,16 @@
                   </td>
                   <td class="px-4 py-3 text-gray-500 text-xs">{timeAgo(sub.created_at)}</td>
                   <td class="px-4 py-3">
-                    <a href="/dashboard/{sub.id}" class="text-blue-600 hover:text-blue-700 text-sm font-medium">View</a>
+                    <div class="flex items-center justify-end gap-1.5" role="group" aria-label="Quick actions">
+                      {#if sub.estimate_status === 'draft'}
+                        <a href="/dashboard/{sub.id}/send" onclick={(e) => e.stopPropagation()} class="rounded-lg bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">Send</a>
+                      {:else if sub.estimate_status === 'sent' || sub.estimate_status === 'viewed'}
+                        <button onclick={(e) => quickMark(sub.id, 'accepted', sub.sales_price, e)} disabled={busyId !== ''} class="rounded-lg border border-green-200 bg-green-50 px-2.5 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-100 disabled:opacity-50">Won</button>
+                        <button onclick={(e) => quickMark(sub.id, 'declined', null, e)} disabled={busyId !== ''} class="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-50">Lost</button>
+                      {/if}
+                      <button onclick={(e) => quickCopy(sub.id, e)} disabled={busyId !== ''} class="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-50">Copy</button>
+                      <a href="/dashboard/{sub.id}" onclick={(e) => e.stopPropagation()} class="px-1.5 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700">View</a>
+                    </div>
                   </td>
                 </tr>
               {/each}
@@ -252,5 +348,11 @@
         </div>
       {/if}
     </div>
+  {#if undoState}
+    <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-xl bg-gray-900 text-white px-4 py-3 shadow-lg">
+      <span class="text-sm">{undoState.label}</span>
+      <button onclick={undoMark} class="rounded-lg bg-white/15 px-3 py-1.5 text-sm font-semibold hover:bg-white/25">Undo</button>
+    </div>
+  {/if}
   </div>
 </div>
