@@ -31,7 +31,7 @@ When building features — be a sharp SvelteKit/TypeScript engineer following th
 
 ## Key Routes
 - `/auth/login` — Magic link + Google OAuth login
-- `/onboarding` — 5-step tenant setup (trades, profile, branding, catalog preview, Google connect)
+- `/onboarding` — 3-step tenant setup (trades + company name, Quick Calibrate pricing, optional Google connect); finishes into /dashboard/new
 - `/dashboard` — Estimate list with analytics, trade/status filters, action-needed banners
 - `/dashboard/new` — Trade selection → 4-step scope form → estimate generation
 - `/dashboard/[id]` — Estimate editor: quote breakdown, price adjustment with PDF/Doc regen, quick actions

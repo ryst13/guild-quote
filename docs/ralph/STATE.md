@@ -70,7 +70,14 @@
   Critic REJECT round: one-tap irreversible status changes with no recovery (fixed via
   undo + symmetric folder move), busy-state leak, toSorted browser floor, misleading
   partial-failure errors — all fixed.
-- [ ] P1-5 Onboarding: measure and minimize time-to-first-estimate; sample-data preview before any setup; skip-everything path that still works.
+- [x] P1-5 Onboarding: finishing now lands on /dashboard/new ("Create Your First
+  Estimate"); step 2 opens with a real engine-computed sample ("a typical 3-room
+  repaint quotes around $X") using the tenant's ACTUAL engine + demo link; banner
+  recomputes after calibration; skip paths verified intact; D-4 closed (dead catalog
+  payload removed); stale CLAUDE.md 5-step claim fixed. **DONE iter 13.** Critic
+  REJECT round: my sample used the bottom-up engine for top-down tenants — a 16%
+  mis-anchor on the default path (computed both engines to prove it) → engine now
+  selected by pricing_mode via the exported runInteriorEngine.
 - [ ] P1-6 Error handling sweep: no raw error text reaches the user; every failure says what happened and what to do, in plain words.
 - [ ] P1-7 Estimate output polish vs PaintScout bar: typography, branding consistency (logo/colors actually applied), section order, mobile-readable PDF.
 
@@ -255,6 +262,19 @@ Jobber-style 8s Undo toast; the update endpoint now moves the Drive folder BOTH 
 toSorted replaced for older-browser safety; partial-failure error messages no longer lie.
 **D-8 ruled KEEP** (see backlog). Verified fine: close_price one-tap default matches the
 detail modal's own fallback; decline_reason has no downstream consumer; cmd-click works.
+
+### Iteration 13 — P1-5 onboarding — Critic: REJECT → fixed → green
+**Builder:** finish lands in estimate creation; real sample number on the pricing step;
+D-4 dead payload removed. **Critic REJECT:** the sample ran calculateInteriorBottomUp
+unconditionally while fresh tenants are top_down — it computed both engines on the exact
+sample scope and proved a −15.9% mis-anchor at fresh-tenant defaults (parity only holds
+near the calibration point). Fixed by exporting price-book's engine selector
+(runInteriorEngine) and using it; banner now recomputes after calibration
+(invalidateAll); noopener added. Pre-existing noted: Google connect re-enters onboarding
+at step 1 (step is local state) — log for P1-6/P2 if it bites.
+**The recurring lesson now has a name in this ledger: ANCHOR NUMBERS RUN THE REAL PATH —
+any displayed dollar figure must be produced by exactly the code path the tenant's real
+estimates will take.**
 
 ## Discovered items
 

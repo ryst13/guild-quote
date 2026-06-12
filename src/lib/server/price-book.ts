@@ -53,7 +53,8 @@ function baselineScope(
   };
 }
 
-function runEngine(tenant: TenantConfig, scope: InteriorScopeData): QuoteResult {
+// Exported: the one place that picks the right interior engine for a tenant.
+export function runInteriorEngine(tenant: TenantConfig, scope: InteriorScopeData): QuoteResult {
   if (tenant.pricing_mode === 'bottom_up') {
     return calculateInteriorBottomUp(scope, tenant.catalog, tenant);
   }
@@ -74,7 +75,7 @@ export function roomSectionPrice(
 ): number | null {
   try {
     const scope = baselineScope(roomType, roomSize, items);
-    const quote = runEngine(tenant, scope);
+    const quote = runInteriorEngine(tenant, scope);
     const section = quote.sections.find((s) => s.label === `${roomType} (${roomSize})`);
     return section ? section.sales_price : null;
   } catch {

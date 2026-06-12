@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { invalidateAll } from '$app/navigation';
   import type { PageData } from './$types.js';
 
   let { data }: { data: PageData } = $props();
@@ -127,6 +128,7 @@
       calibrateSaved = true;
     }
     saving = false;
+    await invalidateAll().catch(() => {});
   }
 
   async function saveTrades() {
@@ -166,13 +168,13 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ onboarding_completed: true }),
     });
-    window.location.href = '/dashboard';
+    window.location.href = '/dashboard/new';
   }
 
   function nextStep() { step = Math.min(step + 1, totalSteps); }
   function prevStep() { step = Math.max(step - 1, 1); }
 
-  const stepLabels = ['Trades', 'Pricing', 'Google Connect'];
+  const stepLabels = ['Trades', 'Pricing', 'Google (optional)'];
 </script>
 
 <svelte:head>
@@ -247,6 +249,16 @@
       </div>
 
     {:else if step === 2}
+      {#if data.sampleEstimateTotal}
+        <div class="mb-4 rounded-xl border border-blue-100 bg-blue-50 px-5 py-4">
+          <p class="text-sm text-blue-900">
+            With the prices you have right now, a typical 3-room repaint quotes around
+            <span class="font-bold">${data.sampleEstimateTotal.toLocaleString()}</span>.
+            Tune the numbers below — or skip this and adjust anytime under My Prices.
+          </p>
+          <p class="text-xs text-blue-700 mt-1">Want to see what a finished estimate looks like? <a href="/demo" target="_blank" rel="noopener" class="underline font-medium">Try the demo</a> — it opens in a new tab.</p>
+        </div>
+      {/if}
       <!-- Quick Calibrate -->
       <div class="rounded-2xl bg-white p-8 shadow-sm border border-gray-200">
         <h2 class="text-xl font-bold text-gray-900 mb-1">Set Your Pricing</h2>
@@ -419,7 +431,7 @@
         <div class="flex justify-between">
           <button onclick={prevStep} class="rounded-lg border border-gray-300 px-6 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Back</button>
           <button onclick={finishOnboarding} class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-            Go to Dashboard
+            Create Your First Estimate
           </button>
         </div>
       </div>
