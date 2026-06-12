@@ -688,7 +688,7 @@
             {#if priceChanged}
               {@const adj = parseFloat(adjustedPrice) || 0}
               {@const diff = adj - originalPrice}
-              {@const pct = Math.round((diff / originalPrice) * 100)}
+              {@const pct = originalPrice > 0 ? Math.round((diff / originalPrice) * 100) : 0}
               <div class="rounded-lg bg-gray-50 p-3 text-xs space-y-1">
                 <div class="flex justify-between text-gray-500">
                   <span>Current total</span>

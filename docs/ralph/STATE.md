@@ -521,6 +521,27 @@ Sweep #3 found two HIGHs that were purely un-twinned sweep-2 fixes.
 
 Sweep found HIGHs → **counter stays at 0/2.** Next: sweep #4 must come back fully clean.
 
+### Iteration 26 — Full-app Critic sweep #4 — ALL THREE LENSES CLEAN ✓ (first of two)
+**Security: CLEAN** — zero critical/high; full tenant-isolation re-audit clean; verified the
+sweep-3 token-leak fix and every prior fix holds; only 2 informational NITs (email-builder
+name interpolation, rate-limit proxy note). **Correctness: CLEAN** — zero critical/high, 93
+tests; all sweep-3 edits verified, the new "Won/Lost from draft" path confirmed consistent
+(no sent_at column exists; win-rate counts any non-draft as sent). **Marcos/truth: CLEAN** —
+zero critical/high/moderate; no false promises, no reverse-vapor, no contradictions, no dead
+ends, no brand violations, no 390px breakage; cross-surface consistency spot-checks all pass
+(14-day trial, English-snapshot-base/other-langs-Pro, branding-base-on-gq all agree
+front-to-back); one NIT (dead `viewed` status string in label maps — unreachable, no code
+writes it).
+
+Closed the NITs anyway as cheap hardening: guarded the price-adjust pct against a 0 base
+(Infinity% display); routed all email-builder name/company interpolation through an HTML
+escape helper (defense in depth — values are tenant/Google-profile data, rendered in a mail
+client, never reflected into the app, so not exploitable, but now clean). 93 tests, build ✓.
+
+**COMPLETION CHECK: clean sweep 1 of 2.** Sweep #5 must also come back fully clean to satisfy
+the constitution's two-consecutive-clean requirement, then the GAN overhaul is complete
+(only LR-2 deploy, gated on Ryan's banking, would remain).
+
 ## Discovered items
 
 - [ ] D-1 (from iter 2 Critic, MEDIUM): Materials/Surcharges inputs need inline
