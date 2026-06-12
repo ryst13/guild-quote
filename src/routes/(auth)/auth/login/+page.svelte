@@ -21,10 +21,10 @@
       if (res.ok) {
         message = data.message || 'Check your email for a login link!';
       } else {
-        errorMsg = data.error || 'Something went wrong.';
+        errorMsg = data.error || 'Something went wrong. Wait a minute and try again.';
       }
     } catch {
-      errorMsg = 'Network error. Please try again.';
+      errorMsg = 'No connection. Check your internet and try again.';
     } finally {
       loading = false;
     }

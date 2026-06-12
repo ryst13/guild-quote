@@ -23,6 +23,7 @@
     sending = true;
     sendError = '';
 
+    try {
     const res = await fetch(`/api/submissions/${sub.id}/send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -35,11 +36,14 @@
       }),
     });
 
-    if (res.ok) {
+    const result = await res.json().catch(() => null);
+    if (res.ok && result?.success) {
       sent = true;
     } else {
-      const result = await res.json().catch(() => ({ error: "The email didn't send. Wait a minute and try again." }));
-      sendError = result.error || "The email didn't send. Check the address and try again.";
+      sendError = "The email didn't send. Check the address, wait a minute, and try again.";
+    }
+    } catch {
+      sendError = "Couldn't connect. Check your internet and try again.";
     }
     sending = false;
   }

@@ -80,10 +80,10 @@
       if (res.ok) {
         window.location.href = data.redirect || '/onboarding';
       } else {
-        error = data.error || 'Something went wrong.';
+        error = data.error || 'Something went wrong. Wait a minute and try again.';
       }
     } catch {
-      error = 'Network error. Please try again.';
+      error = 'No connection. Check your internet and try again.';
     } finally {
       loading = false;
     }

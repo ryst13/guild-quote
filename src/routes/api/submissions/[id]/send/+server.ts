@@ -127,5 +127,8 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
     }).where(eq(submissions.id, params.id)).run();
   }
 
-  return json({ success: sent });
+  if (!sent) {
+    return json({ error: "The email didn't send. Wait a minute and try again." }, { status: 502 });
+  }
+  return json({ success: true });
 };

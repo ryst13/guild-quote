@@ -9,6 +9,8 @@
   let regenerating = $state(false);
   let regeneratingDoc = $state(false);
   let docRegenError = $state('');
+  let actionError = $state('');
+  let snapshotError = $state('');
   let deleting = $state(false);
   let showDeleteConfirm = $state(false);
   let showAcceptModal = $state(false);
@@ -59,46 +61,64 @@
   async function savePricingEdits() {
     if (!sub.quote) return;
     savingPricing = true;
-    // Save updated quote_json
-    await fetch(`/api/submissions/${sub.id}/update`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ quote_json: JSON.stringify(sub.quote), sales_price: sub.quote.grand_total }),
-    });
-    // Regenerate PDF/Doc with new prices
-    const res = await fetch(`/api/submissions/${sub.id}/regenerate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adjusted_price: null }),
-    });
-    if (res.ok) {
-      const result = await res.json();
-      if (result.pdf_url) sub.estimate_pdf_url = result.pdf_url;
-      if (result.google_doc_url) sub.google_doc_url = result.google_doc_url;
+    actionError = '';
+    try {
+      // Save updated quote_json
+      const saveRes = await fetch(`/api/submissions/${sub.id}/update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quote_json: JSON.stringify(sub.quote), sales_price: sub.quote.grand_total }),
+      });
+      if (!saveRes.ok) {
+        actionError = "The new prices didn't save. Wait a minute and try again.";
+        savingPricing = false;
+        return;
+      }
+      // Regenerate PDF/Doc with new prices
+      const res = await fetch(`/api/submissions/${sub.id}/regenerate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adjusted_price: null }),
+      });
+      if (res.ok) {
+        const result = await res.json();
+        if (result.pdf_url) sub.estimate_pdf_url = result.pdf_url;
+        if (result.google_doc_url) sub.google_doc_url = result.google_doc_url;
+      } else {
+        actionError = "Prices saved, but the files didn't update. Use Try Again under the documents section.";
+      }
+      sub.sales_price = sub.quote.grand_total;
+      adjustedPrice = sub.quote.grand_total.toFixed(2);
+      originalPrice = sub.quote.grand_total;
+      editingPricing = false;
+      if (!actionError) {
+        saved = true;
+        setTimeout(() => { saved = false; }, 2000);
+      }
+    } catch {
+      actionError = "Couldn't connect. Check your internet and try again.";
     }
-    sub.sales_price = sub.quote.grand_total;
-    adjustedPrice = sub.quote.grand_total.toFixed(2);
-    originalPrice = sub.quote.grand_total;
-    editingPricing = false;
     savingPricing = false;
-    saved = true;
-    setTimeout(() => { saved = false; }, 2000);
   }
 
 
   async function generateSnapshot() {
     generatingSnapshot = true;
-    const res = await fetch(`/api/submissions/${sub.id}/snapshot`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lang: snapshotLang }),
-    });
-    const result = await res.json();
-    if (result.pdf_url) {
-      snapshotUrl = result.pdf_url;
-    }
-    if (result.snapshot_doc_url) {
-      snapshotDocUrl = result.snapshot_doc_url;
+    snapshotError = '';
+    try {
+      const res = await fetch(`/api/submissions/${sub.id}/snapshot`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lang: snapshotLang }),
+      });
+      const result = res.ok ? await res.json() : null;
+      if (result?.pdf_url) snapshotUrl = result.pdf_url;
+      if (result?.snapshot_doc_url) snapshotDocUrl = result.snapshot_doc_url;
+      if (!result?.pdf_url && !result?.snapshot_doc_url) {
+        snapshotError = "The snapshot didn't get made. Wait a minute and try again.";
+      }
+    } catch {
+      snapshotError = "Couldn't connect. Check your internet and try again.";
     }
     generatingSnapshot = false;
   }
@@ -129,43 +149,56 @@
 
   async function saveNotes() {
     saving = true;
-    const res = await fetch(`/api/submissions/${sub.id}/update`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ estimator_notes: notes }),
-    });
-    if (res.ok) {
-      saved = true;
-      setTimeout(() => { saved = false; }, 2000);
+    actionError = '';
+    try {
+      const res = await fetch(`/api/submissions/${sub.id}/update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estimator_notes: notes }),
+      });
+      if (res.ok) {
+        saved = true;
+        setTimeout(() => { saved = false; }, 2000);
+      } else {
+        actionError = "Your notes didn't save. Wait a minute and try again.";
+      }
+    } catch {
+      actionError = "Couldn't connect. Check your internet and try again.";
     }
     saving = false;
   }
 
   async function regenerateEstimate() {
     regenerating = true;
-    const res = await fetch(`/api/submissions/${sub.id}/regenerate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adjusted_price: parseFloat(adjustedPrice) || null }),
-    });
-    if (res.ok) {
-      const result = await res.json();
-      if (result.pdf_url) sub.estimate_pdf_url = result.pdf_url;
-      if (result.google_doc_url) sub.google_doc_url = result.google_doc_url;
-      if (result.quote) {
-        sub.quote = result.quote;
-        sub.sales_price = result.quote.grand_total;
+    actionError = '';
+    try {
+      const res = await fetch(`/api/submissions/${sub.id}/regenerate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adjusted_price: parseFloat(adjustedPrice) || null }),
+      });
+      if (res.ok) {
+        const result = await res.json();
+        if (result.pdf_url) sub.estimate_pdf_url = result.pdf_url;
+        if (result.google_doc_url) sub.google_doc_url = result.google_doc_url;
+        if (result.quote) {
+          sub.quote = result.quote;
+          sub.sales_price = result.quote.grand_total;
+        }
+        originalPrice = parseFloat(adjustedPrice) || originalPrice;
+        saved = true;
+        setTimeout(() => { saved = false; }, 2000);
+      } else {
+        actionError = "The new price didn't apply. Wait a minute and try again.";
       }
-      originalPrice = parseFloat(adjustedPrice) || originalPrice;
-      saved = true;
-      setTimeout(() => { saved = false; }, 2000);
-    } else {
-      console.error('[regenerate] Failed:', await res.text());
+    } catch {
+      actionError = "Couldn't connect. Check your internet and try again.";
     }
     regenerating = false;
   }
 
   async function regenerateDocuments() {
+    actionError = '';
     regeneratingDoc = true;
     docRegenError = '';
     try {
@@ -197,32 +230,60 @@
   }
 
   async function duplicateEstimate() {
-    const res = await fetch(`/api/submissions/${sub.id}/duplicate`, { method: 'POST' });
-    if (res.ok) {
-      const result = await res.json();
-      window.location.href = `/dashboard/${result.id}`;
+    actionError = '';
+    try {
+      const res = await fetch(`/api/submissions/${sub.id}/duplicate`, { method: 'POST' });
+      if (res.ok) {
+        const result = await res.json();
+        window.location.href = `/dashboard/${result.id}`;
+      } else {
+        actionError = "The copy didn't get made. Wait a minute and try again.";
+      }
+    } catch {
+      actionError = "Couldn't connect. Check your internet and try again.";
     }
   }
 
   async function deleteEstimate() {
     deleting = true;
-    const res = await fetch(`/api/submissions/${sub.id}/delete`, { method: 'POST' });
-    if (res.ok) {
-      window.location.href = '/dashboard';
+    actionError = '';
+    try {
+      const res = await fetch(`/api/submissions/${sub.id}/delete`, { method: 'POST' });
+      if (res.ok) {
+        window.location.href = '/dashboard';
+        return;
+      }
+      actionError = "The estimate didn't delete. Wait a minute and try again.";
+    } catch {
+      actionError = "Couldn't connect. Check your internet and try again.";
     }
     deleting = false;
+    showDeleteConfirm = false;
   }
 
   async function markAccepted() {
-    await fetch(`/api/submissions/${sub.id}/update`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        estimate_status: 'accepted',
-        close_price: parseFloat(closePrice) || sub.sales_price,
-        outcome_date: new Date().toISOString(),
-      }),
-    });
+    actionError = '';
+    let acceptRes;
+    try {
+      acceptRes = await fetch(`/api/submissions/${sub.id}/update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          estimate_status: 'accepted',
+          close_price: parseFloat(closePrice) || sub.sales_price,
+          outcome_date: new Date().toISOString(),
+        }),
+      });
+    } catch {
+      actionError = "Couldn't connect. Check your internet and try again.";
+      showAcceptModal = false;
+      return;
+    }
+    if (!acceptRes.ok) {
+      actionError = "The win didn't get recorded. Wait a minute and try again.";
+      showAcceptModal = false;
+      return;
+    }
     sub.estimate_status = 'accepted';
     sub.close_price = parseFloat(closePrice) || sub.sales_price;
     showAcceptModal = false;
@@ -234,15 +295,28 @@
   }
 
   async function markDeclined() {
-    await fetch(`/api/submissions/${sub.id}/update`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        estimate_status: 'declined',
-        decline_reason: declineReason,
-        outcome_date: new Date().toISOString(),
-      }),
-    });
+    actionError = '';
+    let declineRes;
+    try {
+      declineRes = await fetch(`/api/submissions/${sub.id}/update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          estimate_status: 'declined',
+          decline_reason: declineReason,
+          outcome_date: new Date().toISOString(),
+        }),
+      });
+    } catch {
+      actionError = "Couldn't connect. Check your internet and try again.";
+      showDeclineModal = false;
+      return;
+    }
+    if (!declineRes.ok) {
+      actionError = "The loss didn't get recorded. Wait a minute and try again.";
+      showDeclineModal = false;
+      return;
+    }
     sub.estimate_status = 'declined';
     showDeclineModal = false;
     saved = true;
@@ -251,14 +325,21 @@
 
   async function saveClient() {
     saving = true;
+    actionError = '';
+    try {
     const parts = clientName.trim().split(' ');
     const firstName = parts[0] || '';
     const lastName = parts.slice(1).join(' ') || '';
-    await fetch(`/api/submissions/${sub.id}/update`, {
+    const clientRes = await fetch(`/api/submissions/${sub.id}/update`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ first_name: firstName, last_name: lastName, email: clientEmail, phone: clientPhone, address: clientAddress }),
     });
+    if (!clientRes.ok) {
+      actionError = "The client info didn't save. Wait a minute and try again.";
+      saving = false;
+      return;
+    }
     sub.first_name = firstName;
     sub.last_name = lastName;
     sub.email = clientEmail;
@@ -272,11 +353,12 @@
       scope.client.email = clientEmail;
       scope.client.phone = clientPhone;
       scope.client.address = clientAddress;
-      await fetch(`/api/submissions/${sub.id}/update`, {
+      const scopeRes = await fetch(`/api/submissions/${sub.id}/update`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scope_json: JSON.stringify(scope) }),
       });
+      if (!scopeRes.ok) actionError = "Saved the basics, but part of the update failed. Wait a minute and save again.";
     }
 
     // Regenerate PDF and Sheet/Doc with updated client info
@@ -292,9 +374,12 @@
     }
 
     editingClient = false;
-    saving = false;
     saved = true;
     setTimeout(() => { saved = false; }, 2000);
+    } catch {
+      actionError = "Couldn't connect. Check your internet and try again.";
+    }
+    saving = false;
   }
 
   function sendToClient() {
@@ -326,6 +411,8 @@
       {/if}
       {#if saved}
         <span class="text-sm text-green-600 font-medium ml-auto">Saved</span>
+      {:else if actionError}
+        <span class="text-sm text-red-600 font-medium ml-auto">{actionError}</span>
       {/if}
     </div>
   </div>
@@ -745,6 +832,9 @@
               {generatingSnapshot ? 'Creating...' : 'Create'}
             </button>
           </div>
+          {#if snapshotError}
+            <p class="text-xs text-red-600 mb-2">{snapshotError}</p>
+          {/if}
           {#if snapshotUrl || snapshotDocUrl}
             <div class="grid grid-cols-2 gap-2">
               {#if snapshotUrl}
@@ -800,13 +890,17 @@
             <div class="space-y-2">
               <input type="date" value={sub.scheduled_start_date || ''} onchange={async (e) => {
                 const val = e.currentTarget.value;
-                await fetch(`/api/submissions/${sub.id}/update`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scheduled_start_date: val }) });
-                sub.scheduled_start_date = val;
+                try {
+                  const r = await fetch(`/api/submissions/${sub.id}/update`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scheduled_start_date: val }) });
+                  if (r.ok) { sub.scheduled_start_date = val; } else { actionError = "The start date didn't save. Try again."; }
+                } catch { actionError = "Couldn't connect. Check your internet and try again."; }
               }} class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-xs outline-none focus:border-blue-500" />
               <input type="text" value={sub.assigned_crew || ''} placeholder="Crew name or size" onchange={async (e) => {
                 const val = e.currentTarget.value;
-                await fetch(`/api/submissions/${sub.id}/update`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ assigned_crew: val }) });
-                sub.assigned_crew = val;
+                try {
+                  const r = await fetch(`/api/submissions/${sub.id}/update`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ assigned_crew: val }) });
+                  if (r.ok) { sub.assigned_crew = val; } else { actionError = "The crew didn't save. Try again."; }
+                } catch { actionError = "Couldn't connect. Check your internet and try again."; }
               }} class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-xs outline-none focus:border-blue-500" />
             </div>
           {:else}

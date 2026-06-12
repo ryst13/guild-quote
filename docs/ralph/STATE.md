@@ -78,7 +78,15 @@
   REJECT round: my sample used the bottom-up engine for top-down tenants — a 16%
   mis-anchor on the default path (computed both engines to prove it) → engine now
   selected by pricing_mode via the exported runInteriorEngine.
-- [ ] P1-6 Error handling sweep: no raw error text reaches the user; every failure says what happened and what to do, in plain words.
+- [x] P1-6 Error sweep: 20 silent failure paths fixed across 9 files (sub-builder
+  inventory: 20 SILENT / 0 RAW / 4 OK). Headline: the send endpoint returned HTTP 200
+  {success:false} on email failure and the page celebrated "Estimate Sent" anyway —
+  endpoint now 502s with a plain error, page checks success + offline. Billing buttons
+  can't wedge disabled; onboarding saves await + gate step advance; estimate-detail's
+  ten handlers share a header error indicator; profile/pricing saves gated on res.ok;
+  auth wording de-jargoned. **DONE iter 14.** Critic REJECT round: regenerateEstimate
+  was still unwrapped (stranded spinner), saveClient still false-successed, stale
+  actionError re-surfaced after later successes, dead onboarding state — all fixed.
 - [ ] P1-7 Estimate output polish vs PaintScout bar: typography, branding consistency (logo/colors actually applied), section order, mobile-readable PDF.
 
 ### P2 — Robustness & polish
@@ -275,6 +283,19 @@ at step 1 (step is local state) — log for P1-6/P2 if it bites.
 **The recurring lesson now has a name in this ledger: ANCHOR NUMBERS RUN THE REAL PATH —
 any displayed dollar figure must be produced by exactly the code path the tenant's real
 estimates will take.**
+
+### Iteration 14 — P1-6 error sweep — Critic: REJECT → fixed → green
+**Builder:** 24-path inventory (sub-builder), then three scripted batches. The send
+false-success was the worst trust bug found by the whole loop: contractor walks away
+believing the client got the estimate when both Gmail AND SMTP failed.
+**Critic:** verified the send 502 is strictly more truthful even in no-SMTP dev (the old
+behavior showed success while NO email left and the DB was never marked sent — a lie);
+verified onboarding gating order and brace integrity of script-applied wraps. REJECTED
+because two of ten claimed handlers weren’t actually wrapped (regenerateEstimate spinner
+strand, saveClient false Saved) and stale errors re-surfaced — i.e., the sweep’s own
+defect classes in its flagship file. All fixed.
+**Backlogged for the demo (P2-2): the demo’s "Start Trial" email capture performs no
+network call at all — emails go nowhere (sub-builder discovery).**
 
 ## Discovered items
 

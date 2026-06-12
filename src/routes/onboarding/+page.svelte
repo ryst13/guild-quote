@@ -6,7 +6,7 @@
 
   let step = $state(1);
   let saving = $state(false);
-  let saved = $state(false);
+  let errorMsg = $state('');
   const totalSteps = 3;
 
   // Step 1: Trade Selection
@@ -84,24 +84,30 @@
 
   async function saveCalibration() {
     saving = true;
+    errorMsg = '';
     if (calibrateMode === 'costs' && crewWage && grossMargin) {
       // Save via costs mode
-      await fetch('/api/tenant/calibrate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mode: 'costs',
-          crew_hourly_wage: crewWage,
-          target_gross_margin: grossMargin / 100,
-        }),
-      });
-      // Also save metro
-      await fetch('/api/tenant/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ metro_area: metroArea || null }),
-      });
-      calibrateSaved = true;
+      try {
+        const r1 = await fetch('/api/tenant/calibrate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode: 'costs',
+            crew_hourly_wage: crewWage,
+            target_gross_margin: grossMargin / 100,
+          }),
+        });
+        // Also save metro
+        const r2 = await fetch('/api/tenant/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ metro_area: metroArea || null }),
+        });
+        if (r1.ok && r2.ok) calibrateSaved = true;
+        else errorMsg = "Your pricing didn't save. Press Continue again — or skip and set prices later under My Prices.";
+      } catch {
+        errorMsg = "Couldn't connect. Check your internet and try again.";
+      }
     } else if (calibrateMode === 'prices' && anchorBedroom) {
       // Save via anchor prices mode
       await fetch('/api/tenant/calibrate', {
@@ -124,8 +130,12 @@
           transportation_fee: 50,
           trash_fee: 50,
         }),
+      }).then((r) => {
+        if (r.ok) calibrateSaved = true;
+        else errorMsg = "Your pricing didn't save. Press Continue again — or skip and set prices later under My Prices.";
+      }).catch(() => {
+        errorMsg = "Couldn't connect. Check your internet and try again.";
       });
-      calibrateSaved = true;
     }
     saving = false;
     await invalidateAll().catch(() => {});
@@ -133,42 +143,58 @@
 
   async function saveTrades() {
     saving = true;
+    errorMsg = '';
     const enabledTrades = Object.entries(trades).filter(([, v]) => v).map(([k]) => k);
-    await fetch('/api/tenant/update', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ enabled_trades: JSON.stringify(enabledTrades) }),
-    });
+    try {
+      const res = await fetch('/api/tenant/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled_trades: JSON.stringify(enabledTrades) }),
+      });
+      if (!res.ok) errorMsg = "Your info didn't save. Check your internet and press Continue again.";
+    } catch {
+      errorMsg = "Couldn't connect. Check your internet and try again.";
+    }
     saving = false;
-    saved = true;
-    setTimeout(() => { saved = false; }, 2000);
   }
 
   async function saveProfile() {
     saving = true;
-    await fetch('/api/tenant/update', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        company_name: companyName,
-        contact_email: contactEmail,
-        contact_phone: contactPhone,
-        website_url: websiteUrl,
-        service_areas: serviceAreas,
-      }),
-    });
+    try {
+      const res = await fetch('/api/tenant/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          company_name: companyName,
+          contact_email: contactEmail,
+          contact_phone: contactPhone,
+          website_url: websiteUrl,
+          service_areas: serviceAreas,
+        }),
+      });
+      if (!res.ok) errorMsg = "Your info didn't save. Check your internet and press Continue again.";
+    } catch {
+      errorMsg = "Couldn't connect. Check your internet and try again.";
+    }
     saving = false;
-    saved = true;
-    setTimeout(() => { saved = false; }, 2000);
   }
 
   async function finishOnboarding() {
-    await fetch('/api/tenant/update', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ onboarding_completed: true }),
-    });
-    window.location.href = '/dashboard/new';
+    errorMsg = '';
+    try {
+      const res = await fetch('/api/tenant/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ onboarding_completed: true }),
+      });
+      if (!res.ok) {
+        errorMsg = "That didn't work. Wait a minute and press the button again.";
+        return;
+      }
+      window.location.href = '/dashboard/new';
+    } catch {
+      errorMsg = "Couldn't connect. Check your internet and try again.";
+    }
   }
 
   function nextStep() { step = Math.min(step + 1, totalSteps); }
@@ -203,8 +229,8 @@
   </div>
 
   <div class="mx-auto max-w-3xl px-4 py-8">
-    {#if saved}
-      <div class="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-800">Saved!</div>
+    {#if errorMsg}
+      <div class="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-800">{errorMsg}</div>
     {/if}
 
     {#if step === 1}
@@ -242,7 +268,7 @@
         </div>
 
         <div class="mt-6 flex justify-end">
-          <button onclick={() => { saveTrades(); saveProfile(); nextStep(); }} disabled={saving || !hasTradeSelected} class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
+          <button onclick={async () => { await saveTrades(); await saveProfile(); if (!errorMsg) nextStep(); }} disabled={saving || !hasTradeSelected} class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
             {saving ? 'Saving...' : 'Continue'}
           </button>
         </div>
@@ -395,7 +421,7 @@
           <button onclick={prevStep} class="rounded-lg border border-gray-300 px-6 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Back</button>
           <div class="flex gap-3">
             <button onclick={nextStep} class="rounded-lg border border-gray-300 px-6 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Skip</button>
-            <button onclick={() => { saveCalibration(); nextStep(); }} disabled={saving}
+            <button onclick={async () => { await saveCalibration(); if (!errorMsg) nextStep(); }} disabled={saving}
               class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
               {saving ? 'Saving...' : 'Continue'}
             </button>

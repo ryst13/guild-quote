@@ -8,6 +8,7 @@
   let showLosp = $state(data.showLosp);
   let saving = $state(false);
   let saved = $state(false);
+  let saveError = $state('');
   let activeTab = $state(data.tab as 'pricebook' | 'labor' | 'surcharges' | 'materials' | 'payment' | 'output');
 
   // Bottom-up pricing settings
@@ -67,8 +68,10 @@
 
   async function saveConfig() {
     saving = true;
+    saveError = '';
+    try {
     // Save output format, LOSP toggle, and bottom-up pricing settings
-    await fetch('/api/tenant/update', {
+    const settingsRes = await fetch('/api/tenant/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -86,6 +89,11 @@
         setup_hours_per_area: setupHoursPerArea || null,
       }),
     });
+    if (!settingsRes.ok) {
+      saveError = "Your settings didn't save. Wait a minute and press Save again.";
+      saving = false;
+      return;
+    }
     const res = await fetch('/api/tenant/update-pricing', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -94,6 +102,11 @@
     if (res.ok) {
       saved = true;
       setTimeout(() => { saved = false; }, 2000);
+    } else {
+      saveError = "Your prices didn't save. Wait a minute and press Save again.";
+    }
+    } catch {
+      saveError = "Couldn't connect. Check your internet and try again.";
     }
     saving = false;
   }
@@ -117,6 +130,8 @@
       <div class="flex items-center gap-3">
         {#if saved}
           <span class="text-sm text-green-600 font-medium">Saved</span>
+        {:else if saveError}
+          <span class="text-sm text-red-600 font-medium">{saveError}</span>
         {/if}
         <button onclick={resetToDefaults} class="text-xs text-gray-500 hover:text-gray-700">Reset to Defaults</button>
         <button onclick={saveConfig} disabled={saving} class="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">

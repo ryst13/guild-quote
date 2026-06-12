@@ -4,6 +4,8 @@
   let { data }: { data: PageData } = $props();
   let saving = $state(false);
   let saved = $state(false);
+  let saveError = $state('');
+  let uploadError = $state('');
 
   let companyName = $state(data.tenant.company_name);
   let contactEmail = $state(data.tenant.contact_email);
@@ -25,7 +27,9 @@
 
   async function save() {
     saving = true;
-    await fetch('/api/tenant/update', {
+    saveError = '';
+    try {
+    const res = await fetch('/api/tenant/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -42,9 +46,16 @@
         ),
       }),
     });
+    if (res.ok) {
+      saved = true;
+      setTimeout(() => { saved = false; }, 2000);
+    } else {
+      saveError = "Your changes didn't save. Wait a minute and try again.";
+    }
+    } catch {
+      saveError = "Couldn't connect. Check your internet and try again.";
+    }
     saving = false;
-    saved = true;
-    setTimeout(() => { saved = false; }, 2000);
   }
 
   async function uploadLogo(e: Event) {
@@ -56,10 +67,18 @@
     const formData = new FormData();
     formData.append('logo', file);
 
-    const res = await fetch('/api/upload-logo', { method: 'POST', body: formData });
-    if (res.ok) {
-      const result = await res.json();
-      logoUrl = result.url;
+    uploadError = '';
+    try {
+      const res = await fetch('/api/upload-logo', { method: 'POST', body: formData });
+      if (res.ok) {
+        const result = await res.json();
+        logoUrl = result.url;
+      } else {
+        const result = await res.json().catch(() => null);
+        uploadError = (res.status === 400 && result?.message) || "The logo didn't upload. Use a PNG or JPEG under 2MB and try again.";
+      }
+    } catch {
+      uploadError = "Couldn't connect. Check your internet and try again.";
     }
     uploading = false;
   }
@@ -82,6 +101,7 @@
       </div>
       <div class="flex items-center gap-3">
         {#if saved}<span class="text-sm text-green-600 font-medium">Saved</span>{/if}
+        {#if saveError}<span class="text-sm text-red-600 font-medium">{saveError}</span>{/if}
         <button onclick={save} disabled={saving} class="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
           {saving ? 'Saving...' : 'Save'}
         </button>
@@ -118,6 +138,9 @@
           </label>
         {/if}
       </div>
+      {#if uploadError}
+        <p class="text-sm text-red-600 mt-3">{uploadError}</p>
+      {/if}
     </div>
 
     <!-- Company Info -->

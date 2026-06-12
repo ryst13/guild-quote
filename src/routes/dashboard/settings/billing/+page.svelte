@@ -3,6 +3,7 @@
 
   let { data }: { data: PageData } = $props();
   let loading = $state('');
+  let billingError = $state('');
 
   const planLabels: Record<string, string> = {
     trial: 'Free Trial',
@@ -27,27 +28,38 @@
 
   async function checkout(plan: 'gq' | 'gq_pro', interval: 'month' | 'year' = 'month') {
     loading = `${plan}-${interval}`;
-    const res = await fetch('/api/billing/create-checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan, interval }),
-    });
-    const result = await res.json();
-    if (result.url) {
-      window.location.href = result.url;
+    billingError = '';
+    try {
+      const res = await fetch('/api/billing/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan, interval }),
+      });
+      const result = await res.json().catch(() => null);
+      if (res.ok && result?.url) {
+        window.location.href = result.url;
+        return;
+      }
+      billingError = "The checkout page didn't open. Wait a minute and try again.";
+    } catch {
+      billingError = "Couldn't connect. Check your internet and try again.";
     }
     loading = '';
   }
 
   async function openPortal() {
     loading = 'portal';
-    const res = await fetch('/api/billing/portal', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    });
-    const result = await res.json();
-    if (result.url) {
-      window.location.href = result.url;
+    billingError = '';
+    try {
+      const res = await fetch('/api/billing/portal', { method: 'POST' });
+      const result = await res.json().catch(() => null);
+      if (res.ok && result?.url) {
+        window.location.href = result.url;
+        return;
+      }
+      billingError = "The billing page didn't open. Wait a minute and try again.";
+    } catch {
+      billingError = "Couldn't connect. Check your internet and try again.";
     }
     loading = '';
   }
@@ -72,6 +84,9 @@
   </div>
 
   <div class="mx-auto max-w-3xl px-4 py-6 space-y-6">
+    {#if billingError}
+      <div class="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800">{billingError}</div>
+    {/if}
     <!-- Current Plan -->
     <div class="rounded-xl bg-white border border-gray-200 p-6">
       <h2 class="font-semibold text-gray-900 mb-4">Current Plan</h2>
