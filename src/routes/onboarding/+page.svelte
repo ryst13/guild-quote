@@ -433,7 +433,7 @@
       <!-- Connect Google Account -->
       <div class="rounded-2xl bg-white p-8 shadow-sm border border-gray-200">
         <h2 class="text-xl font-bold text-gray-900 mb-1">Connect Google Account</h2>
-        <p class="text-sm text-gray-500 mb-6">Connect your Google account to generate estimates as Google Docs in your Drive and send them from your Gmail.</p>
+        <p class="text-sm text-gray-500 mb-6">Connect your Google account to save estimates as Google Docs in your Drive. You own the files.</p>
 
         {#if data.tenant.google_refresh_token}
           <div class="rounded-lg bg-green-50 border border-green-200 p-4 flex items-center gap-3 mb-6">

@@ -16,7 +16,14 @@ interface SendEmailOptions {
   subject: string;
   html: string;
   from?: string;
+  replyTo?: string;
   attachments?: { filename: string; content: Buffer }[];
+}
+
+// All tenant-facing email goes out from GuildQuote's own domain so SPF/DKIM
+// align; the contractor's address belongs in replyTo, never in from.
+export function senderAddress(): string {
+  return process.env.SMTP_SENDER || process.env.SMTP_USER || 'estimates@guildquote.com';
 }
 
 export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
@@ -29,6 +36,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
   try {
     await transporter.sendMail({
       from: options.from || process.env.SMTP_FROM || `"GuildQuote" <${process.env.SMTP_USER}>`,
+      replyTo: options.replyTo,
       to: options.to,
       subject: options.subject,
       html: options.html,

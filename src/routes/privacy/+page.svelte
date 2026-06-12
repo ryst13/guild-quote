@@ -68,7 +68,8 @@
       <h2>5. Data Sharing</h2>
       <p>We share data only with:</p>
       <ul>
-        <li><strong>Google:</strong> To create documents in your Drive and send emails via your Gmail (only with your authorization)</li>
+        <li><strong>Google:</strong> To create estimate documents in your Google Drive (only with your authorization)</li>
+        <li><strong>Email delivery provider:</strong> To send estimates and account emails on your behalf (recipient name, email address, and the estimate document pass through the provider)</li>
         <li><strong>Stripe:</strong> To process payments (see <a href="https://stripe.com/privacy" target="_blank" rel="noopener">Stripe's Privacy Policy</a>)</li>
         <li><strong>Hosting providers:</strong> For infrastructure (data encrypted in transit and at rest)</li>
         <li><strong>Law enforcement:</strong> Only when legally required</li>

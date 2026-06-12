@@ -84,7 +84,7 @@
           <li><strong>Google Docs</strong> -- saved to your Drive, shareable link</li>
           <li><strong>Google Sheets</strong> -- full line-item breakdown in spreadsheet format</li>
         </ul>
-        <p>If you have connected Gmail, you can email the estimate directly from GuildQuote. The email includes your branding and the PDF as an attachment.</p>
+        <p>On GQ Pro, you can email the estimate right from GuildQuote. The email carries your company name and the PDF as an attachment, and replies go to your email address.</p>
         <p>Once sent, the estimate moves to "Sent" in your pipeline. Mark it Won or Lost when you hear back. See <a href="/docs/tracking" class="text-blue-600 hover:text-blue-700">Tracking & Analytics</a> for details.</p>
       </div>
     </div>

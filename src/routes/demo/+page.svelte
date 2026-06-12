@@ -184,7 +184,7 @@
               <div class="shrink-0 w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-sm">&#9993;</div>
               <div>
                 <h4 class="font-semibold text-gray-900 text-sm">Send to Client</h4>
-                <p class="text-xs text-gray-500 mt-0.5">Email the estimate with the PDF attached — via your connected Gmail or GuildQuote's built-in sender.</p>
+                <p class="text-xs text-gray-500 mt-0.5">Email the estimate with the PDF attached. Replies go straight to your inbox.</p>
               </div>
             </div>
             <div class="rounded-lg bg-gray-50 border border-gray-100 p-3 space-y-2">

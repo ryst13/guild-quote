@@ -25,8 +25,8 @@ When building features — be a sharp SvelteKit/TypeScript engineer following th
 
 ## Tech Stack
 - SvelteKit 5 (runes mode), Tailwind CSS v4, SQLite/Drizzle, Node adapter
-- Google APIs: OAuth (auth), Docs (estimate output), Drive (file storage), Gmail (email delivery)
-- pdf-lib for PDF generation, Resend for transactional email
+- Google APIs: OAuth (auth), Docs (estimate output), Drive (file storage) — no gmail.send scope (dropped, LR-1)
+- pdf-lib for PDF generation; ALL email (estimates + transactional) via SMTP/Resend from GuildQuote's domain, contractor as Reply-To
 - Multi-tenant: single SQLite DB, `tenant_id` on all data tables
 
 ## Key Routes

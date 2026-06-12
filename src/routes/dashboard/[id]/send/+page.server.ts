@@ -45,7 +45,6 @@ export const load: PageServerLoad = async ({ locals, params }) => {
       contact_phone: tenantConfig.contact_phone,
       contact_email: tenantConfig.contact_email,
       primary_color: tenantConfig.primary_color,
-      has_google: !!tenantConfig.google_refresh_token,
     },
     tradeLabel,
   };

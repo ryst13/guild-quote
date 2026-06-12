@@ -3,7 +3,7 @@ MOD-001,/,Page,Marketing landing page,Public,,,,
 MOD-002,/auth/login,Page,Magic link + Google OAuth login,Public,Redirects to /dashboard if logged in,,,
 MOD-003,/auth/register,Page,Account creation,Public,Creates tenant with 14-day trial + referral code; ?ref= extends trial +30d,,,
 MOD-004,/auth/verify,API GET,Magic link verification; creates session,Public,15-min token expiry; httpOnly session cookie,,,
-MOD-005,/auth/google + /callback,API GET,Google OAuth flow,Public,"Scopes: openid, email, profile, drive.file, documents, gmail.send",,,
+MOD-005,/auth/google + /callback,API GET,Google OAuth flow,Public,"Scopes: openid, email, profile, drive.file, documents (gmail.send DROPPED iter 21)",SCOPE REDUCED (ralph iter 21),,"gmail.send removed — all email via SMTP/Resend from GuildQuote domain, contractor as Reply-To"
 MOD-006,/r/[code],API GET,Referral redirect,Public,Sets ref_code cookie -> register,,,
 MOD-007,/onboarding,Page,3-step setup (trades+name; calibration; Google),Contractor,Sets onboarding_completed,,,
 MOD-008,/dashboard,Page,Estimate list + analytics + filters,Contractor,"Statuses: draft, sent, viewed, accepted, declined",TIER-GATED (ralph iter 20),,Benchmarks render only if canUseAnalytics (Pro) and 10+ estimates; basic stats for all
@@ -25,12 +25,12 @@ MOD-023,/api/auth/register,API,Create tenant + admin user,Public,,,,
 MOD-024,/api/auth/logout,API,Clear session,Contractor,,,,
 MOD-025,/api/estimates/generate,API,Pricing engines + PDF + Doc/Sheet generation,Contractor,Runs BOTH engines (one primary by pricing_mode; other logged for validation),TIER-GATED (ralph iter 20),,canGenerate gate (402); Docs/Sheets only if canUseGoogleDocs (PDF always); branding neutral unless canUseWhiteLabel
 MOD-026,/api/submissions/[id]/update,API,Edit submission fields,Contractor + owner,Decline -> moves Drive folder to Inactive,,,
-MOD-027,/api/submissions/[id]/send,API,Email estimate (Gmail API or SMTP),Contractor + owner,Sets estimate_status=sent,TIER-GATED (ralph iter 20),,canSendEmail gate (402) — email is GQ Pro
+MOD-027,/api/submissions/[id]/send,API,Email estimate (SMTP/Resend only),Contractor + owner,Sets estimate_status=sent,TIER-GATED (ralph iter 20),,"canSendEmail gate (402) — email is GQ Pro; Gmail-API branch deleted iter 21; from=GuildQuote domain, replyTo=contact_email"
 MOD-028,/api/submissions/[id]/delete,API,Delete submission + PDF,Contractor + owner,,,,
 MOD-029,/api/submissions/[id]/duplicate,API,Clone estimate as draft,Contractor + owner,,TIER-GATED (ralph iter 20),,canGenerate gate (402) — expired tenants read-only
 MOD-030,/api/submissions/[id]/regenerate,API,Regenerate with adjusted price,Contractor + owner,Saves previous version; proportional line rescale,TIER-GATED (ralph iter 20),,canGenerate gate (402); brandTenant + Docs gating same as generate
 MOD-031,/api/submissions/[id]/snapshot,API,Condensed multilingual snapshot PDF/Sheet,Contractor + owner,Langs: en/es/fr in API; UI offers EN/ES/PT/RO/YUE — reconcile,TIER-GATED (ralph iter 20),KEEP,Original audit claimed API langs en/es/fr — wrong (git history confirms en/es/pt/ro/zh-yue from first commit). Language list now single-sourced in lib/languages.ts; lang input allowlisted (iter 6); canGenerate gate; non-EN langs Pro-only (402); Sheet only if canUseGoogleDocs; brandTenant
-MOD-032,/api/submissions/[id]/notify,API,Basic reminder email,Contractor + owner,,TIER-GATED (ralph iter 20),,canSendEmail gate (402)
+MOD-032,/api/submissions/[id]/notify,API,Basic reminder email,Contractor + owner,DELETED iter 21 — unreachable (no UI caller); was ungated email surface,REMOVED (ralph iter 21),,canSendEmail gate (402)
 MOD-033,/api/estimate-pdf/[id],API GET,Serve PDF from disk,Public GET,Unauthenticated if ID known — security review,SECURED (ralph iter 6),CHANGE,"Done: 401 unauthenticated (HTML hits redirect to login), 404 for other tenants (no existence leak), traversal-proof filename regex (fuzz-verified by critic); snapshot lang write-traversal also closed"
 MOD-034,/api/upload-logo + /api/logo/[filename],API,Logo upload / serve,Contractor / Public,2MB cap; 24h cache,,,
 MOD-035,/api/tenant/update,API,Update tenant fields (allowlist),Contractor,,,,

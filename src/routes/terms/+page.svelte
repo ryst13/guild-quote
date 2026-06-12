@@ -36,7 +36,7 @@
       <p>When you enter your clients' personal information (names, addresses, phone numbers, email addresses) into the Service, you represent that you have the right to share this information for the purpose of generating estimates and business communications. You are responsible for compliance with applicable privacy laws regarding your clients' data.</p>
 
       <h2>7. Google Integration</h2>
-      <p>GuildQuote integrates with Google Workspace (Docs, Sheets, Drive, Gmail). By connecting your Google account, you authorize us to create and manage documents in your Google Drive and send emails on your behalf through Gmail. Documents are stored in your Google Drive — you retain full ownership and control.</p>
+      <p>GuildQuote integrates with Google Workspace (Docs, Sheets, Drive). By connecting your Google account, you authorize us to create and manage documents in your Google Drive. Documents are stored in your Google Drive — you retain full ownership and control.</p>
 
       <h2>8. Acceptable Use</h2>
       <p>You agree not to: (a) use the Service for any unlawful purpose; (b) attempt to gain unauthorized access to any part of the Service; (c) interfere with other users' use of the Service; (d) reverse engineer, decompile, or disassemble the Service; (e) use the Service to send spam or unsolicited communications.</p>

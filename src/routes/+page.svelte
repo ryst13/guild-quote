@@ -105,7 +105,7 @@
         <div class="text-center">
           <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-bold text-sm mb-3">4</div>
           <h4 class="font-semibold text-gray-900 text-sm mb-1">Send & track</h4>
-          <p class="text-xs text-gray-500">Email the estimate from your own Gmail. Track who opened it, who accepted, who ghosted.</p>
+          <p class="text-xs text-gray-500">Email the estimate with one tap — PDF attached, your company name on it. Track who accepted and who ghosted.</p>
         </div>
       </div>
     </div>
@@ -131,7 +131,7 @@
         <ul class="space-y-2 text-sm text-gray-600">
           <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> Logo, colors, company name on every estimate</li>
           <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> PDF, Google Docs, or Google Sheets output</li>
-          <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> Send from your Gmail</li>
+          <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> Email estimates with one tap</li>
           <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> Editable Docs — tweak before you send</li>
           <li class="flex items-start gap-2"><span class="text-green-600 mt-0.5">&#10003;</span> Multilingual crew snapshots (EN / ES / PT / RO / Cantonese)</li>
         </ul>
@@ -153,14 +153,13 @@
   <div class="mx-auto max-w-5xl px-4 py-16">
     <div class="text-center max-w-2xl mx-auto mb-10">
       <h3 class="text-2xl font-bold text-gray-900 mb-3">Simple pricing</h3>
-      <p class="text-gray-500">One extra closed job per year pays for the annual plan.</p>
+      <p class="text-gray-500">One extra closed job pays for months of GuildQuote.</p>
     </div>
     <div class="grid grid-cols-2 gap-6 max-w-3xl mx-auto">
       <div class="rounded-2xl border border-gray-200 bg-white p-8 text-center">
         <h4 class="text-xl font-bold text-gray-900 mb-1">GQ</h4>
-        <div class="text-3xl font-bold text-gray-900 mb-1">$49<span class="text-base font-normal text-gray-400">/mo</span></div>
-        <p class="text-xs text-gray-400 mb-6">$490/yr (2 months free)</p>
-        <p class="text-sm text-gray-500 mb-6">Everything you need to scope, price, and deliver professional estimates.</p>
+        <div class="text-3xl font-bold text-gray-900 mb-6">$49<span class="text-base font-normal text-gray-400">/mo</span></div>
+        <p class="text-sm text-gray-500 mb-6">Everything you need to scope, price, and deliver professional PDF estimates.</p>
         <a href="/auth/register" class="block w-full rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
           Start Free Trial
         </a>
@@ -168,9 +167,8 @@
       <div class="rounded-2xl border-2 border-blue-600 bg-white p-8 text-center relative">
         <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-bold px-4 py-1 rounded-full">RECOMMENDED</div>
         <h4 class="text-xl font-bold text-gray-900 mb-1">GQ Pro</h4>
-        <div class="text-3xl font-bold text-gray-900 mb-1">$129<span class="text-base font-normal text-gray-400">/mo</span></div>
-        <p class="text-xs text-gray-400 mb-6">$1,490/yr (2 months free)</p>
-        <p class="text-sm text-gray-500 mb-6">Estimates + job tracking, scheduling, follow-ups, payments, and crew management.</p>
+        <div class="text-3xl font-bold text-gray-900 mb-6">$129<span class="text-base font-normal text-gray-400">/mo</span></div>
+        <p class="text-sm text-gray-500 mb-6">Everything in GQ, plus one-tap email delivery, Google Docs &amp; Sheets, your logo and colors, crew snapshots in more languages, and 3 user seats.</p>
         <a href="/auth/register" class="block w-full rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">
           Start Free Trial
         </a>

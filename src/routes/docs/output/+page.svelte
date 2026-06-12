@@ -1,6 +1,6 @@
 <svelte:head>
   <title>Output & Delivery — GuildQuote Docs</title>
-  <meta name="description" content="GuildQuote output formats: PDF, Google Docs, Google Sheets. White-label branding, Gmail email delivery, and multilingual crew snapshots for your painting crew." />
+  <meta name="description" content="GuildQuote output formats: PDF, Google Docs, Google Sheets. White-label branding, one-tap email delivery, and multilingual crew snapshots for your painting crew." />
 </svelte:head>
 
 <div class="space-y-8">
@@ -71,14 +71,13 @@
     <div class="rounded-xl border border-gray-200 bg-white p-6">
       <div class="prose prose-sm prose-gray max-w-none">
         <h2 class="text-xl font-bold text-gray-900 mt-0 mb-3">Email Delivery</h2>
-        <p>Send estimates directly from GuildQuote using your connected Gmail account. The email comes from your actual email address, not from a generic noreply.</p>
+        <p>Send estimates straight from GuildQuote. Available on GQ Pro and during your free trial.</p>
 
         <h3>How it works</h3>
         <ol>
-          <li>Connect your Google account during onboarding (one-time setup via Google OAuth).</li>
-          <li>When you are ready to send an estimate, click <strong>Send to Client</strong>.</li>
-          <li>GuildQuote composes the email with the PDF attached and a link to the Google Doc (if generated).</li>
-          <li>The email sends from your Gmail address. It shows up in your Sent folder.</li>
+          <li>When you are ready to send an estimate, tap <strong>Send to Client</strong>.</li>
+          <li>GuildQuote composes the email with the PDF attached and a link to the Google Doc (if generated). You can edit the message before it goes out.</li>
+          <li>GuildQuote sends it for you. The email shows your company name, and when your client hits reply, the reply goes to your email address.</li>
         </ol>
 
         <h3>What the client receives</h3>
@@ -89,10 +88,10 @@
         </ul>
 
         <div class="rounded-lg bg-blue-50 border border-blue-200 p-4 not-prose text-sm text-blue-800 my-4">
-          <strong>Why Gmail?</strong> Emails from your real address get better deliverability than emails from a generic SaaS sender. Your client sees your name and can reply directly to you. No middleman.
+          <strong>No setup needed.</strong> You don't have to connect anything or change your email. GuildQuote handles the sending, and replies land in your normal inbox.
         </div>
 
-        <p>If you have not connected Gmail, you can still download the PDF and send it yourself from your regular email client.</p>
+        <p>On the GQ plan, download the PDF and send it yourself from your regular email — it's the same document.</p>
       </div>
     </div>
   </section>

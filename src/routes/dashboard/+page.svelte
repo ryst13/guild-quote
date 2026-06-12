@@ -208,7 +208,7 @@
     {#if !data.benchmarks}
       <div class="rounded-xl border border-dashed border-gray-200 bg-white p-4 mb-6 flex items-center justify-between opacity-80">
         <div>
-          <span class="text-sm text-gray-500">With <span class="font-semibold text-blue-600">GQ Pro</span>: track jobs and payments, schedule crews, send automatic follow-ups, and see your numbers.</span>
+          <span class="text-sm text-gray-500">With <span class="font-semibold text-blue-600">GQ Pro</span>: email estimates with one tap, get Google Docs with your logo, and see your numbers.</span>
         </div>
         <a href="/upgrade" class="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 whitespace-nowrap ml-4 hover:bg-blue-200">Learn More</a>
       </div>

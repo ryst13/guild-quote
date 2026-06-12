@@ -140,13 +140,15 @@
 
         <!-- Send method indicator -->
         <div class="border-t border-gray-100 pt-4">
-          <div class="text-xs text-gray-400">
-            {#if data.tenant.has_google}
-              This email goes out from your Gmail account
-            {:else}
-              This email goes out from GuildQuote
-            {/if}
-          </div>
+          {#if data.tenant.contact_email}
+            <div class="text-xs text-gray-400">
+              GuildQuote sends this email with your company name on it. When your client replies, the reply goes to {data.tenant.contact_email}.
+            </div>
+          {:else}
+            <div class="text-xs text-amber-600">
+              Add your email in <a href="/dashboard/settings/profile" class="underline">Settings</a> first, so client replies reach you.
+            </div>
+          {/if}
         </div>
 
         <!-- Send button -->

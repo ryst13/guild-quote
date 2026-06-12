@@ -134,7 +134,16 @@
   whiteLabel into the GQ column if desired.
 
 ### LR — Launch readiness (added 2026-06-11 from Ryan's launch decisions)
-- [ ] LR-1 Google OAuth option C: drop the `gmail.send` scope (restricted — would
+- [x] LR-1 Drop `gmail.send` restricted scope (Ryan: option C). All email — estimates,
+  notify-style, transactional — now goes via SMTP/Resend from GuildQuote's domain with
+  the contractor's company name and their email as Reply-To (SPF/DKIM align; replies
+  still reach the contractor). Gmail-API send branch deleted; OAuth keeps only
+  drive.file + documents (no Google verification gauntlet for a restricted scope).
+  Every Gmail promise in copy fixed: homepage, demo, send page, docs (2), onboarding,
+  privacy, terms. /upgrade rewritten from vapor (Kanban/eSign/portal features that
+  don't exist; GQ column claiming Pro features) into an honest public Pricing page
+  matching FEATURE_MATRIX + billing 1:1, with logged-in-aware CTAs. Unreachable
+  notify endpoint deleted (Critic disposition). **DONE iter 21.**
   require Google security assessment); estimate emails default to Resend/SMTP from a
   GuildQuote domain; keep drive.file + documents scopes for Docs/Sheets output. Update
   the send flow copy accordingly.
@@ -387,6 +396,21 @@ Plus bypass hunt: notify endpoint sent ungated email; expired tenants could dupl
 regenerate/snapshot (generation by another name); snapshot sheets and snapshot-PDF
 branding missed their gates. All fixed; error bodies now flow to users everywhere;
 fail-closed gating on in-scope tenant; matrix unit-tested.
+
+### Iteration 21 — LR-1 drop gmail.send, SMTP-only email — Critic: REJECT → fixed → green
+**Builder:** scope drop + send-path rewrite + copy sweep + /upgrade de-vaporized.
+**Critic REJECT (3 MAJOR):** the iteration's own thesis — stop promising what the
+product doesn't do — and I left the homepage Pro card selling "job tracking,
+scheduling, follow-ups, payments, crew management" (none exist), left the dashboard
+Pro banner selling the same, and re-typed "Track who opened it" in a line I edited
+(no open tracking exists anywhere). Also: /upgrade's big CTA sent logged-in users to
+register (dead end: "account already exists"); "replies go to your email" unguaranteed
+when contact_email blanked; privacy policy stopped disclosing the email provider right
+as it became the only email path. All fixed: real Pro copy everywhere, annual-price
+claims removed (no annual SKU exists), logged-in-aware CTAs, blank-email warning on
+send page linking to Settings, email-provider privacy bullet, docs mention trial.
+**Standing rule:** when the iteration is "purge false promises," grep the WHOLE
+surface for the promise class — not just the lines that mention the old mechanism.
 
 ## Discovered items
 
