@@ -1,5 +1,8 @@
 import { redirect } from '@sveltejs/kit';
 import { getTenantById } from '$lib/server/tenant.js';
+import { db } from '$lib/server/db.js';
+import { submissions } from '$lib/server/schema.js';
+import { eq, desc } from 'drizzle-orm';
 import { resolveSurcharges } from '$lib/server/pricing-config.js';
 import type { PageServerLoad } from './$types.js';
 
@@ -13,7 +16,31 @@ export const load: PageServerLoad = async ({ locals }) => {
   const promptsShown = tenant.prompts_shown ? JSON.parse(tenant.prompts_shown as string) : {};
   const scfg = resolveSurcharges(tenant);
 
+  // Recent clients for one-tap prefill (deduped by name+address, newest first)
+  const recent = db.select({
+    first_name: submissions.first_name,
+    last_name: submissions.last_name,
+    email: submissions.email,
+    phone: submissions.phone,
+    address: submissions.address,
+  }).from(submissions)
+    .where(eq(submissions.tenant_id, locals.user.tenant_id))
+    .orderBy(desc(submissions.created_at))
+    .limit(30)
+    .all();
+  const seen = new Set<string>();
+  const recentClients: { name: string; email: string; phone: string; address: string }[] = [];
+  for (const r of recent) {
+    const name = `${r.first_name} ${r.last_name}`.trim();
+    const key = `${name}|${r.address}`.toLowerCase();
+    if (!name || seen.has(key)) continue;
+    seen.add(key);
+    recentClients.push({ name, email: r.email || '', phone: r.phone || '', address: r.address || '' });
+    if (recentClients.length >= 5) break;
+  }
+
   return {
+    recentClients,
     tenant: {
       company_name: tenant.company_name,
       enabled_trades: tenant.enabled_trades,

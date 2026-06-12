@@ -104,7 +104,10 @@
   now prints cents consistently. **DONE iter 16.**
 
 ### P2 — Robustness & polish
-- [ ] P2-1 Repeat-work speedups: duplicate-estimate flow prominence; recent clients; per-room "copy last room".
+- [x] P2-1 Repeat-work speedups: "Recent clients — tap to fill" chips on step 1 of all
+  three forms (tenant-scoped, deduped, hidden in demo; fills + clears validation);
+  estimate Copy (dashboard + detail) and per-room Copy shipped in iters 5/12.
+  **DONE iter 17, Critic ACCEPT.**
 - [ ] P2-2 Demo route parity with current scope forms + output (it's the sales tool).
 - [ ] P2-3 Docs pages (`/docs/*`) updated to match post-overhaul reality.
 - [ ] P2-4 Dead schema cleanup decision: `stages_json`, `thresholds_json`, `subscription_tier` (SET-064..066) — document or deprecate (additive-only: mark deprecated, don't drop).
@@ -332,6 +335,11 @@ happy path (real-PNG test, self-sufficient fixture), SVG/WebP honesty in profile
 Sheets exclusions placement + label clipping, Docs cents consistency.
 **Ledger lesson reinforced: clamps that "can't happen" are how reconciliation bugs
 hide — render signed truth instead.**
+
+### Iteration 17 — P2-1 recent clients — Critic: ACCEPT (2 LOWs fixed in-iteration)
+Tenant-scoping verified (no cross-tenant leak); all three forms verified for state-var
+names, balanced blocks, demo exclusion. LOWs fixed: chip tap now clears the stale name
+validation message; dead projection field dropped.
 
 ## Discovered items
 

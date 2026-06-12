@@ -2,7 +2,15 @@
   import type { EpoxyScopeData, EpoxyFloor } from '$lib/types/index.js';
   import { v4 as uuidv4 } from 'uuid';
 
-  let { onSubmit, demo = false }: { onSubmit: (data: EpoxyScopeData) => void; demo?: boolean } = $props();
+  let { onSubmit, demo = false , recentClients = [] }: { onSubmit: (data: EpoxyScopeData) => void; demo?: boolean; recentClients?: { name: string; email: string; phone: string; address: string }[] } = $props();
+
+  function fillClient(rc: { name: string; email: string; phone: string; address: string }) {
+    clientName = rc.name;
+    clientEmail = rc.email;
+    clientPhone = rc.phone;
+    clientAddress = rc.address;
+    validationMsg = '';
+  }
 
   let step = $state(1);
 
@@ -90,6 +98,19 @@
 
   {#if step === 1}
     <div class="space-y-4">
+      {#if recentClients.length > 0 && !demo}
+        <div>
+          <p class="text-xs font-medium text-gray-500 mb-1.5">Recent clients — tap to fill</p>
+          <div class="flex flex-wrap gap-2">
+            {#each recentClients as rc}
+              <button type="button" onclick={() => fillClient(rc)} class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs text-gray-700 hover:bg-blue-50 hover:border-blue-200">
+                {rc.name}{rc.address ? ` — ${rc.address}` : ''}
+              </button>
+            {/each}
+          </div>
+        </div>
+      {/if}
+
       {#if demo}
         <div class="rounded-lg bg-blue-50 border border-blue-100 px-4 py-2.5 text-sm text-blue-700">
           This is an example client, already filled in. Change anything, or skip ahead.
