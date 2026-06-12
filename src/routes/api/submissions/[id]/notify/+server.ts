@@ -4,11 +4,17 @@ import { submissions } from '$lib/server/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { getTenantById } from '$lib/server/tenant.js';
 import { sendEmail } from '$lib/server/email.js';
+import { getAccessState } from '$lib/server/features.js';
 import type { RequestHandler } from './$types.js';
 
 export const POST: RequestHandler = async ({ locals, params }) => {
   if (!locals.user) throw error(401, 'Unauthorized');
   if (!locals.user.tenant_id) throw error(400, 'No tenant');
+
+  const notifyTenant = getTenantById(locals.user.tenant_id!);
+  if (!notifyTenant || !getAccessState(notifyTenant).canSendEmail) {
+    throw error(402, 'Sending estimates by email is part of GQ Pro. You can still download the PDF and send it yourself.');
+  }
 
   const sub = db.select().from(submissions)
     .where(and(eq(submissions.id, params.id), eq(submissions.tenant_id, locals.user.tenant_id)))

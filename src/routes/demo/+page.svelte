@@ -35,7 +35,7 @@
       if (res.ok) {
         result = data;
       } else {
-        errorMsg = data.error || 'The estimate did not go through. Check your scope and try again.';
+        errorMsg = data.error || data.message || 'The estimate did not go through. Check your scope and try again.';
       }
     } catch {
       errorMsg = 'No connection. Check your internet and try again.';

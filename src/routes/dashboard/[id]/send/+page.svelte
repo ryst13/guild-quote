@@ -40,7 +40,7 @@
     if (res.ok && result?.success) {
       sent = true;
     } else {
-      sendError = "The email didn't send. Check the address, wait a minute, and try again.";
+      sendError = result?.message || result?.error || "The email didn't send. Check the address, wait a minute, and try again.";
     }
     } catch {
       sendError = "Couldn't connect. Check your internet and try again.";

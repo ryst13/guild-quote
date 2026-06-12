@@ -3,6 +3,7 @@ import { db } from '$lib/server/db.js';
 import { submissions, tenants } from '$lib/server/schema.js';
 import { eq, desc } from 'drizzle-orm';
 import { getTenantById } from '$lib/server/tenant.js';
+import { getAccessState } from '$lib/server/features.js';
 import type { PageServerLoad } from './$types.js';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -30,7 +31,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 
   // Self-benchmarking (only meaningful with 10+ estimates)
   let benchmarks = null;
-  if (subs.length >= 10) {
+  const access = getAccessState(tenantConfig);
+  if (access.canUseAnalytics && subs.length >= 10) {
     const withPrice = subs.filter(s => s.sales_price && s.sales_price > 0);
     const avgEstimate = withPrice.length > 0 ? Math.round(withPrice.reduce((s, sub) => s + (sub.sales_price || 0), 0) / withPrice.length) : 0;
 

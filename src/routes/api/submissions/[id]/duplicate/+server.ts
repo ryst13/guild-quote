@@ -3,11 +3,18 @@ import { db } from '$lib/server/db.js';
 import { submissions } from '$lib/server/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
+import { getTenantById } from '$lib/server/tenant.js';
+import { getAccessState } from '$lib/server/features.js';
 import type { RequestHandler } from './$types.js';
 
 export const POST: RequestHandler = async ({ locals, params }) => {
   if (!locals.user) throw error(401, 'Unauthorized');
   if (!locals.user.tenant_id) throw error(400, 'No tenant');
+
+  const dupTenant = getTenantById(locals.user.tenant_id!);
+  if (!dupTenant || !getAccessState(dupTenant).canGenerate) {
+    throw error(402, 'Your trial has ended. Choose a plan in Billing to keep working with estimates.');
+  }
 
   const sub = db.select().from(submissions)
     .where(and(eq(submissions.id, params.id), eq(submissions.tenant_id, locals.user.tenant_id)))

@@ -3,6 +3,7 @@ import { db } from '$lib/server/db.js';
 import { submissions } from '$lib/server/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { getTenantById } from '$lib/server/tenant.js';
+import { getAccessState } from '$lib/server/features.js';
 import { assembleInteriorSnapshot, assembleExteriorSnapshot, assembleEpoxySnapshot } from '$lib/server/snapshot-templates.js';
 import { generateSnapshotPDF } from '$lib/server/snapshot-pdf.js';
 import { createSnapshotSheet } from '$lib/server/snapshot-sheets.js';
@@ -31,6 +32,17 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
     ? (requested as SupportedLanguage)
     : 'en';
 
+  const access = getAccessState(tenant);
+  if (!access.canGenerate) {
+    throw error(402, 'Your trial has ended. Choose a plan in Billing to keep working with estimates.');
+  }
+  if (lang !== 'en' && !access.canUseMultilingual) {
+    throw error(402, 'Snapshots in other languages are part of GQ Pro. English snapshots are included in every plan.');
+  }
+  const brandTenant = access.canUseWhiteLabel
+    ? tenant
+    : { ...tenant, primary_color: '#2563eb', logo_url: null };
+
   const scope = sub.scope_json ? JSON.parse(sub.scope_json) : null;
   const quote = sub.quote_json ? JSON.parse(sub.quote_json) : null;
   if (!scope || !quote) throw error(400, 'Missing scope or quote data');
@@ -53,7 +65,7 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
   // Generate PDF
   let pdfUrl: string | null = null;
   try {
-    const pdfBuffer = await generateSnapshotPDF(snapshot, tenant);
+    const pdfBuffer = await generateSnapshotPDF(snapshot, brandTenant);
     mkdirSync('./data/pdfs', { recursive: true });
     const filename = `${params.id}-snapshot-${lang}.pdf`;
     writeFileSync(`./data/pdfs/${filename}`, pdfBuffer);
@@ -70,7 +82,7 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
   let snapshotDocUrl: string | null = null;
   if (tenant.google_refresh_token) {
     try {
-      snapshotDocUrl = await createSnapshotSheet(tenant, snapshot);
+      snapshotDocUrl = access.canUseGoogleDocs ? await createSnapshotSheet(tenant, snapshot) : null;
       if (snapshotDocUrl) {
         db.update(submissions).set({
           snapshot_doc_url: snapshotDocUrl,

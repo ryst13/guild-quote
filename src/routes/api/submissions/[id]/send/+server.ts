@@ -5,6 +5,7 @@ import { db } from '$lib/server/db.js';
 import { submissions } from '$lib/server/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { getTenantById } from '$lib/server/tenant.js';
+import { getAccessState } from '$lib/server/features.js';
 import { sendEmail } from '$lib/server/email.js';
 import { readFileSync, existsSync } from 'fs';
 import type { RequestHandler } from './$types.js';
@@ -15,6 +16,11 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
 
   const tenant = getTenantById(locals.user.tenant_id);
   if (!tenant) throw error(400, 'Tenant not found');
+
+  const access = getAccessState(tenant);
+  if (!access.canSendEmail) {
+    throw error(402, 'Sending estimates by email is part of GQ Pro. You can still download the PDF and send it yourself.');
+  }
 
   const sub = db.select().from(submissions)
     .where(and(eq(submissions.id, params.id), eq(submissions.tenant_id, locals.user.tenant_id)))

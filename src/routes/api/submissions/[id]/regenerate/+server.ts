@@ -5,6 +5,7 @@ import { db } from '$lib/server/db.js';
 import { submissions } from '$lib/server/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { getTenantById } from '$lib/server/tenant.js';
+import { getAccessState } from '$lib/server/features.js';
 import { generateEstimatePDF } from '$lib/server/pdf.js';
 import { assembleInteriorEstimate, assembleExteriorEstimate, assembleEpoxyEstimate } from '$lib/server/estimate-templates.js';
 import { resolvePaymentTerms } from '$lib/server/pricing-config.js';
@@ -95,6 +96,14 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
   let pdfUrl: string | null = null;
   let googleDocUrl: string | null = null;
 
+  const access = getAccessState(tenant);
+  if (!access.canGenerate) {
+    throw error(402, 'Your trial has ended. Choose a plan in Billing to keep working with estimates.');
+  }
+  const brandTenant = access.canUseWhiteLabel
+    ? tenant
+    : { ...tenant, primary_color: '#2563eb', logo_url: null };
+
   // One assembled document drives every output format, all three trades
   const paymentTerms = resolvePaymentTerms(tenant);
   const estimateDoc = sub.trade_type === 'interior'
@@ -105,7 +114,7 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
 
   // Regenerate PDF
   try {
-    const pdfBuffer = await generateEstimatePDF(estimateDoc, tenant);
+    const pdfBuffer = await generateEstimatePDF(estimateDoc, brandTenant);
 
     mkdirSync('./data/pdfs', { recursive: true });
     writeFileSync(`./data/pdfs/${params.id}.pdf`, pdfBuffer);
@@ -117,7 +126,7 @@ export const POST: RequestHandler = async ({ request, locals, params }) => {
   }
 
   // Regenerate Google Doc/Sheet if connected
-  if (tenant.google_refresh_token) {
+  if (tenant.google_refresh_token && access.canUseGoogleDocs) {
     try {
       const clientId = env.GOOGLE_CLIENT_ID;
       const clientSecret = env.GOOGLE_CLIENT_SECRET;

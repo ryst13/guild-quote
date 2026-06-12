@@ -111,11 +111,11 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lang: snapshotLang }),
       });
-      const result = res.ok ? await res.json() : null;
-      if (result?.pdf_url) snapshotUrl = result.pdf_url;
-      if (result?.snapshot_doc_url) snapshotDocUrl = result.snapshot_doc_url;
-      if (!result?.pdf_url && !result?.snapshot_doc_url) {
-        snapshotError = "The snapshot didn't get made. Wait a minute and try again.";
+      const result = await res.json().catch(() => null);
+      if (res.ok && result?.pdf_url) snapshotUrl = result.pdf_url;
+      if (res.ok && result?.snapshot_doc_url) snapshotDocUrl = result.snapshot_doc_url;
+      if (!res.ok || (!result?.pdf_url && !result?.snapshot_doc_url)) {
+        snapshotError = result?.message || "The snapshot didn't get made. Wait a minute and try again.";
       }
     } catch {
       snapshotError = "Couldn't connect. Check your internet and try again.";
@@ -752,7 +752,7 @@
           <h3 class="text-sm font-semibold text-gray-900 mb-3">Quick Actions</h3>
 
           <!-- Document generation warning -->
-          {#if !sub.estimate_pdf_url || (data.tenant.output_format && !sub.google_doc_url)}
+          {#if data.canUseGoogleDocs && (!sub.estimate_pdf_url || (data.tenant.output_format && !sub.google_doc_url))}
             <div class="mb-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3">
               <div class="flex items-start gap-2">
                 <svg class="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -11,6 +11,7 @@ import { assembleInteriorEstimate, assembleExteriorEstimate, assembleEpoxyEstima
 import { createEstimateDoc } from '$lib/server/google-docs.js';
 import { createEstimateSheet } from '$lib/server/google-sheets.js';
 import { v4 as uuidv4 } from 'uuid';
+import { getAccessState } from '$lib/server/features.js';
 import { writeFileSync, mkdirSync } from 'fs';
 import type { RequestHandler } from './$types.js';
 import type { InteriorScopeData, ExteriorScopeData, EpoxyScopeData, TradeType } from '$lib/types/index.js';
@@ -24,6 +25,17 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
   const body = await request.json();
   const { trade_type, scope } = body as { trade_type: TradeType; scope: any };
+
+  // Plan enforcement — mirrors the billing page promises exactly
+  const access = getAccessState(tenant);
+  if (!access.canGenerate) {
+    throw error(402, 'Your trial has ended. Choose a plan in Billing to keep creating estimates.');
+  }
+  // GQ ($49) is PDF output; Docs/Sheets and tenant branding are Pro
+  const googleAllowed = access.canUseGoogleDocs;
+  const brandTenant = access.canUseWhiteLabel
+    ? tenant
+    : { ...tenant, primary_color: '#2563eb', logo_url: null };
 
   if (!trade_type || !scope) throw error(400, 'Missing trade_type or scope');
 
@@ -110,7 +122,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       ? assembleExteriorEstimate(scope as ExteriorScopeData, quote, tenantInfo, submissionId, paymentTerms)
       : assembleEpoxyEstimate(scope as EpoxyScopeData, quote, tenantInfo, submissionId, paymentTerms);
 
-  if (tenant.google_refresh_token) {
+  if (tenant.google_refresh_token && googleAllowed) {
     if (tenant.output_format === 'google_sheets') {
       try {
         googleDocUrl = await createEstimateSheet(tenant, estimateDoc);
@@ -135,7 +147,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
   // Generate professional PDF using template engine
   try {
-    const pdfBuffer = await generateEstimatePDF(estimateDoc, tenant);
+    const pdfBuffer = await generateEstimatePDF(estimateDoc, brandTenant);
 
     mkdirSync('./data/pdfs', { recursive: true });
     const pdfPath = `./data/pdfs/${submissionId}.pdf`;

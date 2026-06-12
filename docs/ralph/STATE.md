@@ -120,7 +120,18 @@
   rows parsed but ignored by engines), stages_json/thresholds_json (never wired),
   subscription_tier (superseded by plan); register rows updated; columns kept
   additive-only. **DONE iter 19.**
-- [ ] P2-5 Tier gating review: which knobs are Pro-only per spec (complexity factors, economy-of-scale hours)? Implement gating consistent with $49/$129 positioning.
+- [x] P2-5 Tier gating: the FEATURE_MATRIX was pure decoration — a $49 tenant got every
+  Pro feature and an EXPIRED-TRIAL tenant could still generate, send, duplicate, and
+  regenerate. Now enforced server-side, mirroring the billing page promises 1:1:
+  generate/regenerate/duplicate/snapshot gate on canGenerate; send + notify on
+  canSendEmail; Docs/Sheets creation (incl. snapshot sheets) on canUseGoogleDocs (PDF
+  always produced — the GQ promise); PDF/snapshot branding neutralized when
+  !canUseWhiteLabel; non-EN snapshots Pro-only; benchmarks Pro-only (basic stats stay
+  for all). 402 messages actually REACH users (clients read error bodies); GQ tenants
+  no longer see a fake "files missing" failure state. 6 matrix unit tests. **DONE
+  iter 20.** NOTE for Ryan: per the sales page, GQ ($49) estimates render with neutral
+  branding (no logo/colors) — severe but as sold; easy to soften by moving
+  whiteLabel into the GQ column if desired.
 
 ### LR — Launch readiness (added 2026-06-11 from Ryan's launch decisions)
 - [ ] LR-1 Google OAuth option C: drop the `gmail.send` scope (restricted — would
@@ -365,6 +376,17 @@ docs claiming features that don't exist ("viewed is tracked when they open the e
 nothing sets viewed), wrong settings page names, and three-language claims vs five.
 All fixed. Standing rule reaffirmed: deprecation comments are claims — grep before
 asserting writers/readers.
+
+### Iteration 20 — P2-5 tier enforcement — Critic: REJECT → fixed → green
+**Builder:** server-side gates matching the billing page 1:1. **Critic REJECT (both
+MAJORs were the product's own prior lessons coming home):** my 402 messages were
+unreachable — the P1-6 error handlers masked them with generic retry advice (gates as
+dead ends, the exact P1-6 sin); and GQ+Google tenants would see a perpetual "files
+missing / check your Google connection" failure state for the Docs they aren't sold.
+Plus bypass hunt: notify endpoint sent ungated email; expired tenants could duplicate/
+regenerate/snapshot (generation by another name); snapshot sheets and snapshot-PDF
+branding missed their gates. All fixed; error bodies now flow to users everywhere;
+fail-closed gating on in-scope tenant; matrix unit-tested.
 
 ## Discovered items
 
