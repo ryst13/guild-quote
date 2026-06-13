@@ -1,0 +1,24 @@
+# ── Litestream: continuous SQLite backup ───────────────────────────────────
+# Streams the GuildQuote database to S3-compatible object storage (Fly's Tigris,
+# Backblaze B2, AWS S3, etc.). Credentials and the replica URL come from env so
+# nothing secret lives in the image.
+#
+# Required env (set as Fly secrets):
+#   LITESTREAM_REPLICA_URL        e.g. s3://guildquote-backups/db
+#   LITESTREAM_ACCESS_KEY_ID
+#   LITESTREAM_SECRET_ACCESS_KEY
+#   AWS_ENDPOINT_URL_S3 (Tigris/B2 only)  e.g. https://fly.storage.tigris.dev
+#
+# Litestream substitutes ${VAR} from the environment at startup.
+
+dbs:
+  - path: ${DATABASE_URL}
+    replicas:
+      - url: ${LITESTREAM_REPLICA_URL}
+        access-key-id: ${LITESTREAM_ACCESS_KEY_ID}
+        secret-access-key: ${LITESTREAM_SECRET_ACCESS_KEY}
+        # For non-AWS S3 (Tigris/B2), the endpoint is taken from AWS_ENDPOINT_URL_S3.
+        # Snapshot hourly, keep 72h of point-in-time recovery.
+        retention: 72h
+        snapshot-interval: 1h
+        validation-interval: 12h
