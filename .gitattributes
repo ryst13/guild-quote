@@ -1,0 +1,9 @@
+# Shell scripts and Docker/Litestream config run in Linux containers — they
+# MUST stay LF even when checked out on Windows, or the container breaks
+# (e.g. a `#!/bin/sh\r` shebang fails). Force LF on these regardless of
+# core.autocrlf.
+*.sh            text eol=lf
+Dockerfile      text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+.env.example    text eol=lf
